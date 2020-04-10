@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+ 
+<repositories version="1.0">
+	<repo priority="50" quality="experimental" status="unofficial">
+		<name>9skunks</name>
+		<description>some small overlay for extras</description>
+		<homepage>https://0xacab.org/tazy/9skunks</homepage>
+		<owner>
+			<email>tazy@riseup.net</email>
+		</owner>
+		<source type="git">https://0xacab.org/tazy/9skunks</source>
+	</repo>
+</repositories>
