@@ -10,7 +10,7 @@ LICENSE="ISC Apache-2.0 MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~x86"
 
-RDEPEND="!dev-util/ninja"
+RDEPEND=">=dev-util/ninja-999"
 
 src_install() {
 emake DESTDIR="${D}" PREFIX=/usr install

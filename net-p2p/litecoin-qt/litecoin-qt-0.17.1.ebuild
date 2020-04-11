@@ -1,7 +1,7 @@
-# Copyright 1999-2016 Gentoo Foundation
+# Copyright 1999-2020 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 
 DB_VER="4.8"
 
@@ -21,7 +21,7 @@ RESTRICT="mirror"
 LICENSE="MIT ISC GPL-3 LGPL-2.1 public-domain || ( CC-BY-SA-3.0 LGPL-2.1 )"
 SLOT="0"
 KEYWORDS="amd64 x86"
-IUSE="dbus kde +qrcode qt5 upnp zmq"
+IUSE="+dbus kde +qrcode upnp zmq"
 
 RDEPEND="
 	dev-libs/boost:=[threads(+)]
@@ -35,25 +35,16 @@ RDEPEND="
 	)
 	sys-libs/db:$(db_ver_to_slot "${DB_VER}")[cxx]
 	>=dev-libs/leveldb-1.18-r1
-	!qt5? (
-		dev-qt/qtcore:4[ssl]
-		dev-qt/qtgui:4
-		dbus? (
-			dev-qt/qtdbus:4
-		)
-	)
-	qt5? (
 		dev-qt/qtnetwork:5[ssl]
 		dev-qt/qtgui:5
 		dev-qt/qtwidgets:5
 		dbus? (
 			dev-qt/qtdbus:5
 		)
-	)
 	zmq? ( net-libs/zeromq )
 "
 DEPEND="${RDEPEND}
-	qt5? ( dev-qt/linguist-tools:5 )
+	dev-qt/linguist-tools
 	>=app-shells/bash-4.1
 	dev-libs/libevent
 "
@@ -64,6 +55,7 @@ S="${WORKDIR}/${MyP}"
 
 src_prepare() {
 	eautoreconf
+	eapply_user
 	#rm -r src/leveldb
 
 	cd src || die
@@ -86,7 +78,7 @@ src_configure() {
 		--without-libs \
 		--without-utils \
 		--without-daemon  \
-		--with-gui=$(usex qt5 qt5 qt4) \
+		--with-gui=qt5 \
 		$(use_with dbus qtdbus)  \
 		$(use_with qrcode qrencode)  \
 		$(use_enable zmq zmq) \
