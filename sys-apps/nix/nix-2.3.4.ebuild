@@ -14,12 +14,12 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86 ~arm64"
 IUSE="+etc-profile +gc doc s3 +sodium libressl"
 
-# sys-apps/busybox is needed for sandbox mount of /bin/sh
+# sys-apps/busybox-nix-sandbox-shell is needed for sandbox mount of /bin/sh
 RDEPEND="
 	app-arch/brotli
 	app-arch/bzip2
 	app-arch/xz-utils
-	sys-apps/busybox[static]
+	sys-apps/busybox-nix-sandbox-shell
 	dev-db/sqlite
 	dev-libs/editline:0=
 	>=dev-libs/boost-1.66:0=[context]
@@ -98,7 +98,7 @@ src_configure() {
 	econf \
 		--localstatedir="${EPREFIX}"/nix/var \
 		$(use_enable gc) \
-		--with-sandbox-shell=/bin/busybox
+		--with-sandbox-shell="${EPREFIX}"/usr/bin/busybox-nix-sandbox-shell
 }
 
 src_compile() {
