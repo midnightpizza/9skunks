@@ -10,17 +10,17 @@ PYTHON_REQ_USE='ncurses,sqlite,ssl,threads(+)'
 MOZ_PV="${PV/_p*}esr"
 
 # see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-9.0#n4
-# and https://gitweb.torproject.org/tor-browser.git/log/toolkit/torproject?h=tor-browser-68.4.1esr-9.0-1
+# and https://gitweb.torproject.org/tor-browser.git/log/toolkit/torproject?h=tor-browser-68.7.0esr-9.0-1
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-9.0#n2
-TOR_PV="9.0.9"
+TOR_PV="9.0.10"
 TOR_TAG="9.0-2-build1"
 TOR_COMMIT="tor-browser-${MOZ_PV}-${TOR_TAG}"
-#TOR_COMMIT="tor-browser-${MOZ_PV}-${TOR_PV%.*}-1-build1"
+#TOR_COMMIT="tor-browser-${MOZ_PV}-${TOR_PV%.*}-2-build1"
 TORBUTTON_COMMIT="690704a9bc3bd3a146db9689bc59d3b9e8702b1"
 TORLAUNCHER_VERSION="0.2.20.5"
 
 # Patch version
-PATCH="firefox-68.0-patches-12"
+PATCH="firefox-68.0-patches-14"
 
 LLVM_MAX_SLOT=10
 
@@ -264,6 +264,7 @@ src_prepare() {
 	# Apply gentoo firefox patches
 	rm "${WORKDIR}"/firefox/2013_avoid_noinline_on_GCC_with_skcms.patch
 	rm "${WORKDIR}"/firefox/2015_fix_cssparser.patch
+	rm "${WORKDIR}"/firefox/2016_rust-1.43_bug1580963.patch
 	eapply "${WORKDIR}/firefox"
 
 	# Revert "Change the default Firefox profile directory to be TBB-relative"
@@ -457,6 +458,9 @@ src_configure() {
 	mozconfig_annotate 'torbrowser' --disable-debug
 	mozconfig_annotate 'torbrowser' --disable-crashreporter
 	mozconfig_annotate 'torbrowser' --disable-webrtc
+	if ! use x86; then
+		mozconfig_annotate 'torbrowser' --disable-eme
+	fi
 	mozconfig_annotate 'torbrowser' --enable-proxy-bypass-protection
 	mozconfig_annotate 'torbrowser' MOZ_TELEMETRY_REPORTING=
 
