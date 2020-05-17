@@ -398,9 +398,6 @@ src_configure() {
 	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
 		mozconfig_annotate '' --enable-rust-simd
 	fi
-	if [[ ${CHOST} == x86* ]] ; then
-		mozconfig_annotate 'torbrowser' --disable-eme
-	fi
 	mozconfig_use_enable startup-notification
 	mozconfig_use_enable system-sqlite
 	mozconfig_use_with system-av1
