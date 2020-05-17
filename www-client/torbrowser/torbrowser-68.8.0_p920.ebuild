@@ -455,9 +455,6 @@ src_configure() {
 	mozconfig_annotate 'torbrowser' --disable-debug
 	mozconfig_annotate 'torbrowser' --disable-crashreporter
 	mozconfig_annotate 'torbrowser' --disable-webrtc
-	if ! use x86; then
-		mozconfig_annotate 'torbrowser' --disable-eme
-	fi
 	mozconfig_annotate 'torbrowser' --enable-proxy-bypass-protection
 	mozconfig_annotate 'torbrowser' MOZ_TELEMETRY_REPORTING=
 
