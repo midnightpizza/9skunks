@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI=5
+EAPI=6
 inherit toolchain-funcs
 
 DESCRIPTION="A port of various original Plan 9 tools for Unix, based on plan9port"
@@ -11,7 +11,7 @@ SRC_URI="http://dl.suckless.org/tools/${P}.tar.gz"
 
 LICENSE="9base MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~ppc ~x86"
+KEYWORDS=""
 IUSE=""
 
 MAKEOPTS="${MAKEOPTS} -j1"
