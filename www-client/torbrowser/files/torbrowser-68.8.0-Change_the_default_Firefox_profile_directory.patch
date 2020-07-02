@@ -1,10 +1,10 @@
-From 7f61329b380ea126d8ae8e44829952cd547f3b30 Mon Sep 17 00:00:00 2001
+From 5caf734f72dca1a40cf39aac476b14fac746e337 Mon Sep 17 00:00:00 2001
 From: Poncho <poncho@spahan.ch>
-Date: Wed, 16 Oct 2019 11:17:34 +0200
+Date: Sat, 23 May 2020 12:59:59 +0200
 Subject: [PATCH 2/2] Revert "Bug 9173: Change the default Firefox profile
  directory to be TBB-relative."
 
-This reverts commit cd0e2a08bf01c0155b8089eaff0ab2a11edf55dc.
+This reverts commit 90207624ae1263985737ddccee3e9c9abaeeeea3.
 ---
  toolkit/profile/nsToolkitProfileService.cpp |   5 +-
  toolkit/xre/nsAppRunner.cpp                 |   2 +-
@@ -15,10 +15,10 @@ This reverts commit cd0e2a08bf01c0155b8089eaff0ab2a11edf55dc.
  6 files changed, 188 insertions(+), 84 deletions(-)
 
 diff --git a/toolkit/profile/nsToolkitProfileService.cpp b/toolkit/profile/nsToolkitProfileService.cpp
-index 3a426aac22e0..ca363830be26 100644
+index 0f5f5a1e6e63..88dfbafcdc3d 100644
 --- a/toolkit/profile/nsToolkitProfileService.cpp
 +++ b/toolkit/profile/nsToolkitProfileService.cpp
-@@ -694,11 +694,10 @@ nsresult nsToolkitProfileService::Init() {
+@@ -695,11 +695,10 @@ nsresult nsToolkitProfileService::Init() {
    NS_ASSERTION(gDirServiceProvider, "No dirserviceprovider!");
    nsresult rv;
  
@@ -33,10 +33,10 @@ index 3a426aac22e0..ca363830be26 100644
  
    rv = mAppData->Clone(getter_AddRefs(mProfileDBFile));
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 727fc087aef5..83553158b782 100644
+index de8d8761985b..8d3ad1a8e821 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
-@@ -3320,7 +3320,7 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
+@@ -3350,7 +3350,7 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
    if ((mAppData->flags & NS_XRE_ENABLE_CRASH_REPORTER) &&
        NS_SUCCEEDED(CrashReporter::SetExceptionHandler(xreBinDirectory))) {
      nsCOMPtr<nsIFile> file;
@@ -480,5 +480,5 @@ index 9f2656e4b90a..e79c8303fe12 100644
  
    return rv;
 -- 
-2.21.0
+2.26.2
 

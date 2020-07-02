@@ -4,53 +4,48 @@
 EAPI="6"
 WANT_AUTOCONF="2.1"
 
-PYTHON_COMPAT=( python3_{6,7,8} )
+PYTHON_COMPAT=( python3_{6,7,8,9} )
 PYTHON_REQ_USE='ncurses,sqlite,ssl,threads(+)'
 
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-9.0#n4
-# and https://gitweb.torproject.org/tor-browser.git/log/toolkit/torproject?h=tor-browser-68.4.1esr-9.0-1
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-9.0#n2
-TOR_PV="9.0.7"
+# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-9.5#n4
+# and https://gitweb.torproject.org/tor-browser.git/log/toolkit/torproject?h=tor-browser-68.9.0esr-9.5-1
+# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-9.5#n2
+TOR_PV="9.5.1"
 TOR_TAG="9.5-1-build2"
-TOR_COMMIT="tor-browser-${MOZ_PV}-${TOR_TAG}"
-#TOR_COMMIT="tor-browser-${MOZ_PV}-${TOR_PV%.*}-1-build1"
-TORBUTTON_COMMIT="690704a9bc3bd3a146db9689bc59d3b9e8702b1"
-TORLAUNCHER_VERSION="0.2.20.5"
+TORLAUNCHER_VERSION="0.2.21.8"
 
 # Patch version
-PATCH="firefox-68.0-patches-12"
+PATCH="firefox-68.0-patches-14"
 
 LLVM_MAX_SLOT=10
 
 inherit check-reqs desktop flag-o-matic toolchain-funcs eutils \
 	gnome2-utils llvm mozcoreconf-v6 pax-utils xdg-utils \
-	autotools eapi7-ver
+	multiprocessing autotools
 
 DESCRIPTION="The Tor Browser"
 HOMEPAGE="https://www.torproject.org/projects/torbrowser.html
 	https://gitweb.torproject.org/tor-browser.git"
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 
 SLOT="0"
 # BSD license applies to torproject-related code like the patches
 # icons are under CCPL-Attribution-3.0
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+clang cpu_flags_x86_avx2 dbus hardened pulseaudio startup-notification
+IUSE="clang cpu_flags_x86_avx2 dbus hardened pulseaudio startup-notification
 	+system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent
 	+system-sqlite +system-libvpx +system-webp  hwaccel jack cpu_flags_arm_neon"
 
 PATCH_URIS=( https://dev.gentoo.org/~{anarchy,axs,polynomial-c,whissi}/mozilla/patchsets/${PATCH}.tar.xz )
 SRC_URI="${SRC_URI}
-	https://gitweb.torproject.org/tor-browser.git/snapshot/${TOR_COMMIT}.tar.gz \
-		-> ${TOR_COMMIT}.tar.gz
-	https://gitweb.torproject.org/torbutton.git/snapshot/${TORBUTTON_COMMIT}.tar.gz \
-		-> torbutton-${TORBUTTON_COMMIT}.tar.gz
-	https://gitweb.torproject.org/tor-launcher.git/snapshot/${TORLAUNCHER_VERSION}.tar.gz \
-		-> tor-launcher-${TORLAUNCHER_VERSION}.tar.gz
+	https://dist.torproject.org/torbrowser/${TOR_PV}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
+	https://dist.torproject.org/torbrowser/${TOR_PV}/src-tor-launcher-${TORLAUNCHER_VERSION}.tar.xz
 	https://dist.torproject.org/torbrowser/${TOR_PV}/tor-browser-linux64-${TOR_PV}_en-US.tar.xz
+	https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_PV}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
+	https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_PV}/src-tor-launcher-${TORLAUNCHER_VERSION}.tar.xz
 	https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_PV}/tor-browser-linux64-${TOR_PV}_en-US.tar.xz
 	${PATCH_URIS[@]}"
 
@@ -70,8 +65,8 @@ CDEPEND="
 	>=media-libs/freetype-2.4.10
 	kernel_linux? ( !pulseaudio? ( media-libs/alsa-lib ) )
 	virtual/freedesktop-icon-theme
-	sys-apps/dbus
-	dev-libs/dbus-glib
+	dbus? ( >=sys-apps/dbus-0.60
+		>=dev-libs/dbus-glib-0.72 )
 	startup-notification? ( >=x11-libs/startup-notification-0.8 )
 	>=x11-libs/pixman-0.19.2
 	>=dev-libs/glib-2.26:2
@@ -109,7 +104,7 @@ DEPEND="${CDEPEND}
 	>=sys-devel/binutils-2.30
 	sys-apps/findutils
 	|| (
-			(
+		(
 			sys-devel/clang:10
 			!clang? ( sys-devel/llvm:10 )
 			clang? (
@@ -133,14 +128,6 @@ DEPEND="${CDEPEND}
 				sys-devel/llvm:8[gold]
 			)
 		)
-		(
-			sys-devel/clang:7
-			!clang? ( sys-devel/llvm:7 )
-			clang? (
-				=sys-devel/lld-7*
-				sys-devel/llvm:7[gold]
-			)
-		)
 	)
 	pulseaudio? ( media-sound/pulseaudio )
 	>=virtual/rust-1.41.0
@@ -151,11 +138,9 @@ DEPEND="${CDEPEND}
 		x86? ( >=dev-lang/nasm-2.13 )
 	)"
 
-S="${WORKDIR}/${TOR_COMMIT}"
+S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
 
-QA_PRESTRIPPED="usr/lib*/${PN}/torbrowser"
-
-BUILD_OBJ_DIR="${S}/torbrowser-build"
+BUILD_OBJ_DIR="${S}/tbb"
 
 llvm_check_deps() {
 	if ! has_version --host-root "sys-devel/clang:${LLVM_SLOT}" ; then
@@ -173,6 +158,13 @@ llvm_check_deps() {
 	einfo "Will use LLVM slot ${LLVM_SLOT}!" >&2
 }
 
+pkg_pretend() {
+	# Ensure we have enough disk space to compile
+	CHECKREQS_DISK_BUILD="4G"
+
+	check-reqs_pkg_pretend
+}
+
 pkg_setup() {
 	moz_pkgsetup
 
@@ -181,6 +173,7 @@ pkg_setup() {
 		DISPLAY \
 		ORBIT_SOCKETDIR \
 		SESSION_MANAGER \
+		XDG_CACHE_HOME \
 		XDG_SESSION_COOKIE \
 		XAUTHORITY
 
@@ -189,28 +182,14 @@ pkg_setup() {
 	llvm_pkg_setup
 }
 
-pkg_pretend() {
-	# Ensure we have enough disk space to compile
-	CHECKREQS_DISK_BUILD="4G"
-
-	check-reqs_pkg_setup
-}
-
 src_unpack() {
 	for a in ${A} ; do
 		case "${a}" in
-			"${TOR_COMMIT}".tar.gz)
+			"src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz")
 				unpack "${a}"
 				;;
 
-			torbutton-"${TORBUTTON_COMMIT}".tar.gz)
-				local destdir="${S}"/toolkit/torproject/torbutton
-				echo ">>> Unpacking ${a} to ${destdir}"
-				tar -C "${destdir}" -x -o --strip-components 1 \
-					-f "${DISTDIR}/${a}" || die
-				;;
-
-			tor-launcher-"${TORLAUNCHER_VERSION}".tar.gz)
+			"src-tor-launcher-${TORLAUNCHER_VERSION}.tar.xz")
 				local destdir="${S}"/browser/extensions/tor-launcher
 				echo ">>> Unpacking ${a} to ${destdir}"
 				mkdir "${destdir}" || die
@@ -218,7 +197,7 @@ src_unpack() {
 					-f "${DISTDIR}/${a}" || die
 				;;
 
-			tor-browser-linux64-"${TOR_PV}"_en-US.tar.xz)
+			"tor-browser-linux64-${TOR_PV}_en-US.tar.xz")
 				local destdir="${WORKDIR}"/profile
 				echo ">>> Unpacking ${a} to ${destdir}"
 				mkdir "${destdir}" || die
@@ -242,12 +221,18 @@ src_prepare() {
 	eapply "${WORKDIR}/firefox"
 
 	# Revert "Change the default Firefox profile directory to be TBB-relative"
-	eapply "${FILESDIR}"/${PN}-68.1.0-Do_not_store_data_in_the_app_bundle.patch
-	eapply "${FILESDIR}"/${PN}-68.1.0-Change_the_default_Firefox_profile_directory.patch
+	eapply "${FILESDIR}"/${PN}-68.8.0-Do_not_store_data_in_the_app_bundle.patch
+	eapply "${FILESDIR}"/${PN}-68.8.0-Change_the_default_Firefox_profile_directory.patch
 	eapply "${FILESDIR}"/${PN}-68.1.0-hide_about_tbbupdate.patch
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
+
+	# Make LTO respect MAKEOPTS
+	sed -i \
+		-e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
+		"${S}"/build/moz.configure/toolchain.configure \
+		|| die "sed failed to set num_cores"
 
 	# Fix sandbox violations during make clean, bug 372817
 	sed -e "s:\(/no-such-file\):${T}\1:g" \
@@ -372,9 +357,7 @@ src_configure() {
 	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
 		mozconfig_annotate '' --enable-rust-simd
 	fi
-	if [[ ${CHOST} == x86* ]] ; then
-		mozconfig_annotate 'torbrowser' --disable-eme
-	fi
+
 	mozconfig_use_enable startup-notification
 	mozconfig_use_enable system-sqlite
 	mozconfig_use_with system-av1
@@ -551,7 +534,7 @@ src_install() {
 	dosym torbrowser ${MOZILLA_FIVE_HOME}/torbrowser-bin
 
 	# Required in order to use plugins and even run torbrowser on hardened.
-	pax-mark m "${ED}"${MOZILLA_FIVE_HOME}/{torbrowser,plugin-container}
+	pax-mark m "${ED%/}"${MOZILLA_FIVE_HOME}/{torbrowser,plugin-container}
 
 	# Default Extensions
 	insinto ${MOZILLA_FIVE_HOME}/browser

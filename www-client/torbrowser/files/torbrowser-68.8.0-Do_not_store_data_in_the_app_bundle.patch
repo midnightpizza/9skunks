@@ -1,147 +1,20 @@
-From 9b87e5c016114102cb82fb4b584c6f3dd17305b8 Mon Sep 17 00:00:00 2001
+From 8909031f03fab648061f3873038fb9fddca9324f Mon Sep 17 00:00:00 2001
 From: Poncho <poncho@spahan.ch>
-Date: Wed, 16 Oct 2019 11:16:29 +0200
+Date: Sat, 23 May 2020 12:59:07 +0200
 Subject: [PATCH 1/2] Revert "Bug 13252: Do not store data in the app bundle"
 
-This reverts commit 38bc8f5290eb1ad3843b442a3fa0b288d15071c1.
+This reverts commit 715d22f6e15b0ee855ad5da2a5f9522e39ad274c.
 ---
- .mozconfig-mac                         |   2 +-
- toolkit/xre/nsAppRunner.cpp            |  60 +----------
  toolkit/xre/nsXREDirProvider.cpp       |  43 ++++----
  toolkit/xre/nsXREDirProvider.h         |   6 --
  xpcom/io/TorFileUtils.cpp              | 142 -------------------------
  xpcom/io/TorFileUtils.h                |  33 ------
  xpcom/io/moz.build                     |   5 -
  xpcom/io/nsAppFileLocationProvider.cpp |  53 +++++----
- 8 files changed, 59 insertions(+), 285 deletions(-)
+ 6 files changed, 55 insertions(+), 227 deletions(-)
  delete mode 100644 xpcom/io/TorFileUtils.cpp
  delete mode 100644 xpcom/io/TorFileUtils.h
 
-diff --git a/.mozconfig-mac b/.mozconfig-mac
-index 5fdf0262e862..54915ac8cddf 100644
---- a/.mozconfig-mac
-+++ b/.mozconfig-mac
-@@ -53,4 +53,4 @@ ac_add_options --disable-eme
- ac_add_options --enable-proxy-bypass-protection
- 
- # Disable telemetry
--ac_add_options MOZ_TELEMETRY_REPORTING=
-\ No newline at end of file
-+ac_add_options MOZ_TELEMETRY_REPORTING=
-diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 7e1899f4413a..727fc087aef5 100644
---- a/toolkit/xre/nsAppRunner.cpp
-+++ b/toolkit/xre/nsAppRunner.cpp
-@@ -1799,8 +1799,6 @@ static nsresult ProfileMissingDialog(nsINativeAppSupport* aNative) {
-   }
- }
- 
--// If aUnlocker is NULL, it is also OK for the following arguments to be NULL:
--//   aProfileDir, aProfileLocalDir, aResult.
- static ReturnAbortOnError ProfileErrorDialog(nsIFile* aProfileDir,
-                                              nsIFile* aProfileLocalDir,
-                                              ProfileStatus aStatus,
-@@ -1819,7 +1817,7 @@ static ReturnAbortOnError ProfileErrorDialog(nsIFile* aProfileDir,
-   rv = xpcom.Initialize();
-   NS_ENSURE_SUCCESS(rv, rv);
- 
--  if (aProfileDir) mozilla::Telemetry::WriteFailedProfileLock(aProfileDir);
-+  mozilla::Telemetry::WriteFailedProfileLock(aProfileDir);
- 
-   rv = xpcom.SetWindowCreator(aNative);
-   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
-@@ -1909,8 +1907,7 @@ static ReturnAbortOnError ProfileErrorDialog(nsIFile* aProfileDir,
-       }
-     } else {
- #ifdef MOZ_WIDGET_ANDROID
--      if (aProfileDir && aProfileLocalDir && aResult &&
--          java::GeckoAppShell::UnlockProfile()) {
-+      if (java::GeckoAppShell::UnlockProfile()) {
-         return NS_LockProfilePath(aProfileDir, aProfileLocalDir, nullptr,
-                                   aResult);
-       }
-@@ -2022,23 +2019,6 @@ static ReturnAbortOnError ShowProfileManager(
-   return LaunchChild(aNative);
- }
- 
--#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
--static ProfileStatus CheckTorBrowserDataWriteAccess(nsIFile* aAppDir) {
--  // Check whether we can write to the directory that will contain
--  // TorBrowser-Data.
--  nsCOMPtr<nsIFile> tbDataDir;
--  RefPtr<nsXREDirProvider> dirProvider = nsXREDirProvider::GetSingleton();
--  if (!dirProvider) return PROFILE_STATUS_OTHER_ERROR;
--  nsresult rv =
--      dirProvider->GetTorBrowserUserDataDir(getter_AddRefs(tbDataDir));
--  NS_ENSURE_SUCCESS(rv, PROFILE_STATUS_OTHER_ERROR);
--  nsCOMPtr<nsIFile> tbDataDirParent;
--  rv = tbDataDir->GetParent(getter_AddRefs(tbDataDirParent));
--  NS_ENSURE_SUCCESS(rv, PROFILE_STATUS_OTHER_ERROR);
--  return nsToolkitProfileService::CheckProfileWriteAccess(tbDataDirParent);
--}
--#endif
--
- static bool gDoMigration = false;
- static bool gDoProfileReset = false;
- static nsCOMPtr<nsIToolkitProfile> gResetOldProfile;
-@@ -3221,14 +3201,6 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
-   if (PR_GetEnv("XRE_MAIN_BREAK")) NS_BREAK();
- #endif
- 
--#if defined(XP_MACOSX) && defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
--  bool hideDockIcon = (CheckArg("invisible") == ARG_FOUND);
--  if (hideDockIcon) {
--    ProcessSerialNumber psn = {0, kCurrentProcess};
--    TransformProcessType(&psn, kProcessTransformToBackgroundApplication);
--  }
--#endif
--
-   IncreaseDescriptorLimits();
- 
- #ifdef USE_GLX_TEST
-@@ -4094,34 +4066,7 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
-     return 0;
-   }
- 
--#if (defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)) || \
--    defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
--  nsCOMPtr<nsIFile> exeFile, exeDir;
--  bool persistent;
--  rv = mDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
--                            getter_AddRefs(exeFile));
--  NS_ENSURE_SUCCESS(rv, 1);
--  rv = exeFile->GetParent(getter_AddRefs(exeDir));
--  NS_ENSURE_SUCCESS(rv, 1);
--#endif
--
-   rv = NS_NewToolkitProfileService(getter_AddRefs(mProfileSvc));
--#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
--  if (NS_FAILED(rv)) {
--    // NS_NewToolkitProfileService() returns a generic NS_ERROR_FAILURE error
--    // if creation of the TorBrowser-Data directory fails due to access denied
--    // or because of a read-only disk volume. Do an extra check here to detect
--    // these errors so we can display an informative error message.
--    ProfileStatus status = CheckTorBrowserDataWriteAccess(exeDir);
--    if ((PROFILE_STATUS_ACCESS_DENIED == status) ||
--        (PROFILE_STATUS_READ_ONLY == status)) {
--      ProfileErrorDialog(nullptr, nullptr, status, nullptr, mNativeApp,
--                         nullptr);
--      return 1;
--    }
--  }
-- #endif
--
-   if (rv == NS_ERROR_FILE_ACCESS_DENIED) {
-     PR_fprintf(PR_STDERR,
-                "Error: Access was denied while trying to open files in "
-@@ -4188,6 +4133,7 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
- #if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
-   // Check for and process any available updates
-   nsCOMPtr<nsIFile> updRoot;
-+  bool persistent;
-   rv = mDirProvider.GetFile(XRE_UPDATE_ROOT_DIR, &persistent,
-                             getter_AddRefs(updRoot));
-   // XRE_UPDATE_ROOT_DIR may fail. Fallback to appDir if failed
 diff --git a/toolkit/xre/nsXREDirProvider.cpp b/toolkit/xre/nsXREDirProvider.cpp
 index ec3c102e1c87..d2864b6aa7f3 100644
 --- a/toolkit/xre/nsXREDirProvider.cpp
@@ -527,5 +400,5 @@ index 273a509877d2..9f2656e4b90a 100644
  
    if (aLocal) {
 -- 
-2.21.0
+2.26.2
 
