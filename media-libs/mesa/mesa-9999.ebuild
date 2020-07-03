@@ -262,6 +262,14 @@ llvm_check_deps() {
 }
 
 pkg_pretend() {
+	if use vulkan; then
+		if ! use video_cards_i965 &&
+		   ! use video_cards_iris &&
+		   ! use video_cards_radeonsi; then
+			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain i965, iris, or radeonsi"
+		fi
+	fi
+
 	if use opencl; then
 		if ! use video_cards_r600 &&
 		   ! use video_cards_radeonsi; then
@@ -326,6 +334,15 @@ pkg_setup() {
 	if use llvm && has_version sys-devel/llvm[!debug=]; then
 		ewarn "Mismatch between debug USE flags in media-libs/mesa and sys-devel/llvm"
 		ewarn "detected! This can cause problems. For details, see bug 459306."
+	fi
+
+	# os_same_file_description requires the kcmp syscall,
+	# which is only available with CONFIG_CHECKPOINT_RESTORE=y.
+	# Currently only AMDGPU utilizes this function, so only AMDGPU users would
+	# get a spooky warning message if the syscall fails.
+	if use gallium && use video_cards_radeonsi; then
+		CONFIG_CHECK="~CHECKPOINT_RESTORE"
+		linux-info_pkg_setup
 	fi
 
 	if use gallium && use llvm; then
@@ -495,6 +512,7 @@ multilib_src_configure() {
 		-Ddri-drivers=$(driver_list "${DRI_DRIVERS[*]}")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
+		$(meson_use vulkan vulkan-device-select-layer)
 		$(meson_use vulkan-overlay vulkan-overlay-layer)
 		--buildtype $(usex debug debug plain)
 		-Db_ndebug=$(usex debug false true)
