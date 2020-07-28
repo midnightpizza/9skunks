@@ -49,7 +49,7 @@ RDEPEND="${PYTHON_DEPS}
 	virtual/jpeg:0=
 	virtual/libintl
 	virtual/opengl
-	collada? ( >=media-libs/opencollada-1.6.18:= )
+	collada? ( =media-libs/opencollada-1.6.63-r1:= )
 	color-management? ( media-libs/opencolorio )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	ffmpeg? ( media-video/ffmpeg:=[x264,mp3,encode,theora,jpeg2k?] )
