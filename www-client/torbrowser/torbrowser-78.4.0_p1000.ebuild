@@ -540,7 +540,6 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-webrtc \
 		--disable-parental-controls \
-		--disable-eme \
 		--enable-proxy-bypass-protection \
 		MOZ_TELEMETRY_REPORTING= \
 		--with-tor-browser-version=${TOR_PV}  \
