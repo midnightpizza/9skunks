@@ -498,8 +498,6 @@ src_configure() {
 
 	mozconfig_use_enable dbus
 
-	mozconfig_add_options_ac '' --disable-eme
-
 	mozconfig_add_options_ac '' --disable-geckodriver
 
 	if use hardened ; then
