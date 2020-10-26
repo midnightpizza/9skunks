@@ -58,7 +58,7 @@ LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="clang dbus
 	hardened pulseaudio
 	+system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent
-	+system-libvpx +system-webp"
+	+system-libvpx +system-webp eme-free"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
@@ -497,6 +497,8 @@ src_configure() {
 	mozconfig_use_with system-webp
 
 	mozconfig_use_enable dbus
+
+	use eme-free && mozconfig_add_options_ac '+eme-free' --disable-eme
 
 	mozconfig_add_options_ac '' --disable-geckodriver
 
