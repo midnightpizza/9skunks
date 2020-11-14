@@ -17,7 +17,7 @@ else
 	MY_PV="${PV/_pre/b}"
 	MY_PV="${PV/_rc/rc}"
 	EGIT_COMMIT="${MY_PV}"
-	KEYWORDS="~amd64 ~x86"
+	KEYWORDS="amd64 x86"
 fi
 
 LICENSE="GPL-3"
