@@ -43,6 +43,7 @@ REQUIRED_USE="
 	d3d9?   ( dri3 || ( video_cards_iris video_cards_r300 video_cards_r600 video_cards_radeonsi video_cards_nouveau video_cards_vmware ) )
 	gles1?  ( egl )
 	gles2?  ( egl )
+	osmesa? ( gallium )
 	vulkan? ( dri3
 			  video_cards_radeonsi? ( llvm ) )
 	vulkan-overlay? ( vulkan )
@@ -152,6 +153,7 @@ RDEPEND="${RDEPEND}
 LLVM_MAX_SLOT="11"
 LLVM_DEPSTR="
 	|| (
+		sys-devel/llvm:12[${MULTILIB_USEDEP}]
 		sys-devel/llvm:11[${MULTILIB_USEDEP}]
 		sys-devel/llvm:10[${MULTILIB_USEDEP}]
 		sys-devel/llvm:9[${MULTILIB_USEDEP}]
@@ -324,6 +326,10 @@ pkg_pretend() {
 	if ! use llvm; then
 		use opencl     && ewarn "Ignoring USE=opencl     since USE does not contain llvm"
 	fi
+
+	if use osmesa && ! use llvm; then
+		ewarn "OSMesa will be slow without enabling USE=llvm"
+	fi
 }
 
 python_check_deps() {
@@ -354,6 +360,8 @@ multilib_src_configure() {
 	local emesonargs=()
 
 	if use classic; then
+		dri_driver_enable !gallium swrast
+
 		# Intel code
 		dri_driver_enable video_cards_i915 i915
 		dri_driver_enable video_cards_i965 i965
@@ -439,6 +447,7 @@ multilib_src_configure() {
 			gallium_enable -- kmsro
 		fi
 
+		gallium_enable -- swrast
 		gallium_enable video_cards_lima lima
 		gallium_enable video_cards_panfrost panfrost
 		gallium_enable video_cards_v3d v3d
@@ -510,6 +519,7 @@ multilib_src_configure() {
 		$(meson_feature gles1)
 		$(meson_feature gles2)
 		$(meson_use libglvnd glvnd)
+		$(meson_use osmesa)
 		$(meson_use selinux)
 		$(meson_feature zstd)
 		-Dvalgrind=$(usex valgrind auto false)
