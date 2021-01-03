@@ -321,6 +321,7 @@ src_unpack() {
 
 src_prepare() {
 
+	eapply_user
 	eapply_bin(){
 		local patch
 		for patch in ${PATCHES_BIN[@]}; do
