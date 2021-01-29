@@ -2,11 +2,11 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 <maintainer type="person">
-	<email>tazy at riseup.net</email>
-	<name>Tazy</name>
+	<email>myau at riseup.net</email>
+	<name>emmy</name>
 </maintainer>
 <maintainer type="project">
-	<email>9skunks.tech</email>
+	<email>raccoons.tech</email>
 	<name>Raccoon Virtualization Project</name>
 </maintainer>
 <use>

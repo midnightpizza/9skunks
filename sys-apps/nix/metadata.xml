@@ -2,8 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>tazy@riseup.net</email>
-		<name>Tazy</name>
+		<email>myau at riseup.net</email>
+		<name>emmy</name>
 	</maintainer>
 	<use>
 		<flag name="etc-profile">Install /etc/profile.d/ entry to inject nix support for all users.</flag>
