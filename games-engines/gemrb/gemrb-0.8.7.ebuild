@@ -5,7 +5,7 @@ EAPI=6
 
 PYTHON_COMPAT=( python2_7 )
 
-inherit eutils gnome2-utils python-single-r1 cmake-utils
+inherit eutils gnome2-utils python-utils-r1 cmake-utils
 
 DESCRIPTION="Reimplementation of the Infinity engine"
 HOMEPAGE="https://github.com/gemrb/gemrb/"
