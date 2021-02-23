@@ -15,10 +15,11 @@ SLOT="0"
 KEYWORDS="amd64 ~ppc x86"
 
 # Fails to build without ipv6
-IUSE="archive perl tcl ruby socks5 valgrind" #ipv6
+IUSE="archive perl tcl ruby socks5 valgrind libressl"
 
 RDEPEND="
-	>=dev-libs/openssl-0.9.8e-r3:0=
+	!libressl? ( dev-libs/openssl:0[-bindist] )
+	            libressl? ( dev-libs/libressl )	
 	>=sys-libs/ncurses-5.6-r2:0=
 	virtual/libiconv
 	archive? ( app-arch/libarchive )

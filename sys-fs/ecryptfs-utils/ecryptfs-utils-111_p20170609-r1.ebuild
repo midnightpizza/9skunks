@@ -14,7 +14,7 @@ S="${WORKDIR}/~${MY_PN}/${MY_PN}/trunk/"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~ppc ~ppc64 ~x86"
-IUSE="doc gpg gtk nls openssl pam pkcs11 suid tpm"
+IUSE="doc gpg gtk nls openssl pam pkcs11 suid tpm libressl"
 
 BDEPEND="
 	>=dev-util/intltool-0.41.0
@@ -28,10 +28,12 @@ RDEPEND="
 	sys-process/lsof
 	gpg? ( app-crypt/gpgme:= )
 	gtk? ( x11-libs/gtk+:2 )
-	openssl? ( >=dev-libs/openssl-0.9.7:= )
+	!libressl? ( dev-libs/openssl:0[-bindist] )
+	libressl? ( dev-libs/libressl )
 	pam? ( sys-libs/pam )
 	pkcs11? (
-		>=dev-libs/openssl-0.9.7:=
+		!libressl? ( dev-libs/openssl:0[-bindist] )
+		libressl? ( dev-libs/libressl )
 		>=dev-libs/pkcs11-helper-1.04
 	)
 	tpm? ( app-crypt/trousers )"

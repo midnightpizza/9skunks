@@ -16,12 +16,15 @@ SRC_URI="
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="alpha amd64 hppa ia64 ppc sparc x86 ~amd64-linux ~x86-linux ~ppc-macos"
-IUSE="ipv6 perl ssl"
+IUSE="ipv6 perl ssl libressl"
 
 DEPEND="
 	>=sys-libs/ncurses-5.2
 	perl? ( dev-lang/perl )
-	ssl? ( >=dev-libs/openssl-0.9.5:0 )"
+	ssl? (
+			!libressl? ( dev-libs/openssl:0[-bindist] )
+			libressl? ( dev-libs/libressl )
+	)"
 RDEPEND="${DEPEND}"
 
 src_prepare() {
