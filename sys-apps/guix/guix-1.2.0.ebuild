@@ -146,7 +146,7 @@ src_configure() {
 
 src_compile() {
 	# guile occasionally fails with 'bad address'
-	emake -j1
+	emake 
 }
 
 src_install() {
