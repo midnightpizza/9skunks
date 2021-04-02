@@ -12,7 +12,7 @@ MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="experimental_proton_5.13"
+	EGIT_BRANCH="experimental_5.13"
 	inherit git-r3
 	KEYWORDS="-* ~amd64 ~x86"
 
