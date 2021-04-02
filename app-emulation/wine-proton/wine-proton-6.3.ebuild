@@ -5,25 +5,18 @@ EAPI=6
 
 PLOCALES="ar ast bg ca cs da de el en en_US eo es fa fi fr he hi hr hu it ja ko lt ml nb_NO nl or pa pl pt_BR pt_PT rm ro ru si sk sl sr_RS@cyrillic sr_RS@latin sv ta te th tr uk wa zh_CN zh_TW"
 PLOCALE_BACKUP="en"
-
+SLOT="613"
 inherit autotools eapi7-ver estack eutils flag-o-matic gnome2-utils l10n multilib multilib-minimal pax-utils toolchain-funcs virtualx xdg-utils
 
 MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
-if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="experimental_5.13"
+	EGIT_BRANCH="proton_6.3"
 	inherit git-r3
-	SRC_URI=""
-	#KEYWORDS=""
-else
-	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton_5.13"
-	inherit git-r3
-    SRC_URI=""
 	KEYWORDS="-* ~amd64 ~x86"
-fi
+
+
 S="${WORKDIR}/${MY_P}"
 
 GWP_V="20200523"
@@ -148,10 +141,7 @@ PATCHES=(
 )
 PATCHES_BIN=()
 
-# https://bugs.gentoo.org/show_bug.cgi?id=635222
-if [[ ${#PATCHES_BIN[@]} -ge 1 ]] || [[ ${PV} == 9999 ]]; then
 	DEPEND+=" dev-util/patchbin"
-fi
 
 wine_compiler_check() {
 	[[ ${MERGE_TYPE} = "binary" ]] && return 0
@@ -310,9 +300,7 @@ pkg_setup() {
 }
 
 src_unpack() {
-	if [[ ${PV} == "9999" ]] ; then
 		EGIT_CHECKOUT_DIR="${S}" git-r3_src_unpack
-	fi
 
 	default
 
