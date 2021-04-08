@@ -11,7 +11,7 @@ SLOT="0"
 
 IUSE="replace-ninja"
 
-KEYWORDS="~amd64 ~arm ~x86"
+KEYWORDS="~amd64 ~arm ~x86 ~arm64"
 
 RDEPEND="replace-ninja? (
 		>=dev-util/ninja-999
