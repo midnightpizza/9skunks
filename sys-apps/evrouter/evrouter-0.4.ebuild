@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="2"
+EAPI="7"
 
-inherit autotools
+inherit autotools flag-o-matic
 
 DESCRIPTION="An input event router"
 HOMEPAGE="http://www.bedroomlan.org/~alexios/coding_evrouter.html"
@@ -13,7 +13,7 @@ SRC_URI="http://debian.bedroomlan.org/debian/pool/main/e/${PN}/${PN}_${PV}.tar.g
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 IUSE=""
 
 DEPEND="x11-libs/libX11
@@ -25,8 +25,15 @@ DEPEND="x11-libs/libX11
 
 RDEPEND="${DEPEND}"
 
+src_configure() {
+	autoreconf --install
+	econf
+}
+
 src_prepare() {
-	eautoreconf
+	append-ldflags "-Wl,-z,relro -Wl,-z,now"
+	append-flags "-fcommon"
+	eapply_user
 }
 
 src_install() {
