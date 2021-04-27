@@ -8,6 +8,7 @@ PLOCALE_BACKUP="en"
 SLOT="613"
 inherit autotools eapi7-ver estack eutils flag-o-matic gnome2-utils l10n multilib multilib-minimal pax-utils toolchain-funcs virtualx xdg-utils
 
+MY_SHA="372d299ed666b1cec66edbad0034435d7bf70233"
 MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
