@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit cmake-utils xdg
+inherit cmake xdg
 
 MY_PN="CPU-X"
 DESCRIPTION="A Free software that gathers information on CPU, motherboard and more"
@@ -44,7 +44,7 @@ PATCHES=(
 )
 
 src_prepare() {
-	cmake-utils_src_prepare
+	cmake_src_prepare
 }
 
 src_configure() {
@@ -64,7 +64,7 @@ src_configure() {
 		-DIGNORE_STATICLIBS=$(usex ignore-staticlibs)
 	)
 
-	cmake-utils_src_configure
+	cmake_src_configure
 }
 
 pkg_postinst() {
