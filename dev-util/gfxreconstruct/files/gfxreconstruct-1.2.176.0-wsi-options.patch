@@ -1,0 +1,82 @@
+From f69997869e8ab0d21c8559509cdf251b534014c2 Mon Sep 17 00:00:00 2001
+From: orbea <orbea@riseup.net>
+Date: Thu, 20 May 2021 19:25:30 -0700
+Subject: [PATCH] build: Replace NO_XCB with BUILD_WSI_XCB_SUPPORT
+
+This matches other vulkan-sdk related projects.
+
+Signed-off-by: orbea <orbea@riseup.net>
+---
+ CMakeLists.txt | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 90d22282..fc2a244e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -45,10 +45,6 @@ set(GFXRECONSTRUCT_PROJECT_VERSION_PATCH 8)
+ set(GFXRECON_PROJECT_VERSION_DESIGNATION "-unknown")
+ set(GFXRECON_PROJECT_VERSION_SHA1 "unknown-build-source")
+ 
+-if (NOT DEFINED NO_XCB)
+-    set(NO_XCB FALSE)
+-endif()
+-
+ if (NOT DEFINED HEADLESS)
+     set(HEADLESS TRUE)
+ endif()
+@@ -139,10 +135,10 @@ endif()
+ find_package(LZ4)
+ find_package(ZSTD)
+ if(UNIX)
+-    if (NOT ${NO_XCB})
++    option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
++
++    if(BUILD_WSI_XCB_SUPPORT)
+         find_package(XCB)
+-    else()
+-        set(XCB_FOUND FALSE)
+     endif()
+     find_package(WAYLAND)
+ endif(UNIX)
+From 4ea42e1d214b3e222ffe6c44739a74aae1b13152 Mon Sep 17 00:00:00 2001
+From: orbea <orbea@riseup.net>
+Date: Thu, 20 May 2021 19:31:03 -0700
+Subject: [PATCH] build: Allow enabling and disabling xlib and wayland support
+
+Signed-off-by: orbea <orbea@riseup.net>
+---
+ CMakeLists.txt | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc2a244e..06a1a175 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -136,17 +136,24 @@ find_package(LZ4)
+ find_package(ZSTD)
+ if(UNIX)
+     option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
++    option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
+ 
+     if(BUILD_WSI_XCB_SUPPORT)
+         find_package(XCB)
+     endif()
+-    find_package(WAYLAND)
++
++    if(BUILD_WSI_WAYLAND_SUPPORT)
++        find_package(WAYLAND)
++    endif()
+ endif(UNIX)
+ 
+ # CMake provided find modules
+ find_package(ZLIB)
+ if(UNIX)
+-    find_package(X11)
++    option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
++    if(BUILD_WSI_XLIB_SUPPORT)
++        find_package(X11)
++    endif()
+ endif(UNIX)
+ 
+ add_library(windows_specific INTERFACE)
