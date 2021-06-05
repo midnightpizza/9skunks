@@ -22,7 +22,7 @@ MOZ_PV="${PV/_p*}esr"
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-10.0-desktop#n80
 TOR_PV="10.0.17"
 TOR_TAG="10.0-1-build1"
-TORLAUNCHER_VERSION="0.2.26"
+TORLAUNCHER_VERSION="0.2.28"
 HTTPSEVERYWHERE_VERSION="2021.4.15"
 NOSCRIPT_VERSION="11.2.8"
 
@@ -68,6 +68,13 @@ BDEPEND="${PYTHON_DEPS}
 	virtual/pkgconfig
 	>=virtual/rust-1.41.0
 	|| (
+		(
+			sys-devel/clang:12
+			sys-devel/llvm:12
+			clang? (
+				=sys-devel/lld-12*
+			)
+		)
 		(
 			sys-devel/clang:11
 			sys-devel/llvm:11
