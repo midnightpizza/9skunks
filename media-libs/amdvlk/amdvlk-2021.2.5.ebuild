@@ -13,7 +13,7 @@ DESCRIPTION="AMD Open Source Driver for Vulkan"
 HOMEPAGE="https://github.com/GPUOpen-Drivers/AMDVLK"
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="debug wayland"
 REQUIRED_USE="|| ( abi_x86_32 abi_x86_64 )"
 ###DEPENDS
