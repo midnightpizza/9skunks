@@ -1,9 +1,9 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
-inherit eutils qmake-utils systemd toolchain-funcs readme.gentoo-r1 desktop
+inherit desktop qmake-utils readme.gentoo-r1 systemd toolchain-funcs
 
 DESCRIPTION="IEEE 802.1X/WPA supplicant for secure wireless transfers"
 HOMEPAGE="https://w1.fi/wpa_supplicant/"
@@ -56,6 +56,7 @@ DEPEND="${CDEPEND}
 RDEPEND="${CDEPEND}
 	selinux? ( sec-policy/selinux-networkmanager )
 "
+BDEPEND="virtual/pkgconfig"
 
 DOC_CONTENTS="
 	If this is a clean installation of wpa_supplicant, you
@@ -129,7 +130,8 @@ src_prepare() {
 	# bug (640492)
 	sed -i 's#-Werror ##' wpa_supplicant/Makefile || die
 
-	#CVE-2019-16275 bug #696030
+	## Security patches
+	# CVE-2019-16275 (bug #696030)
 	eapply "${FILESDIR}/wpa_supplicant-2.9-AP-Silently-ignore-management-frame-from-unexpected.patch"
 	# 2020-2, 2021-1 security advisories (bug #768759)
 	eapply "${WORKDIR}"/wpa_supplicant-2.9-r3-patches/security-{2020-2,2021-1}/*.patch
@@ -139,7 +141,7 @@ src_prepare() {
 
 src_configure() {
 	# Toolchain setup
-	tc-export CC
+	tc-export CC PKG_CONFIG
 
 	cp defconfig .config || die
 
