@@ -5,15 +5,15 @@ EAPI=6
 
 PLOCALES="ar ast bg ca cs da de el en en_US eo es fa fi fr he hi hr hu it ja ko lt ml nb_NO nl or pa pl pt_BR pt_PT rm ro ru si sk sl sr_RS@cyrillic sr_RS@latin sv ta te th tr uk wa zh_CN zh_TW"
 PLOCALE_BACKUP="en"
-SLOT="613"
+SLOT="513"
 inherit autotools eapi7-ver estack eutils flag-o-matic gnome2-utils l10n multilib multilib-minimal pax-utils toolchain-funcs virtualx xdg-utils
 
-MY_SHA="372d299ed666b1cec66edbad0034435d7bf70233"
 MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton_6.3"
+	EGIT_BRANCH="experimental_6.3"
+	EGIT_OVERRIDE_COMMIT_WINE="50015f7e0bcd8099c7fb5928788727b98ad1bf6d"
 	inherit git-r3
 	KEYWORDS="-* ~amd64 ~x86"
 

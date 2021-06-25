@@ -8,12 +8,12 @@ PLOCALE_BACKUP="en"
 SLOT="613"
 inherit autotools eapi7-ver estack eutils flag-o-matic gnome2-utils l10n multilib multilib-minimal pax-utils toolchain-funcs virtualx xdg-utils
 
-MY_SHA="372d299ed666b1cec66edbad0034435d7bf70233"
 MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton-6.3-5"
+	EGIT_BRANCH="proton_6.3"
+	EGIT_OVERRIDE_COMMIT_WINE="eef39a6e9c0a9b939521c7a5119225b4823b83cc"
 	inherit git-r3
 	KEYWORDS="-* ~amd64 ~x86"
 
