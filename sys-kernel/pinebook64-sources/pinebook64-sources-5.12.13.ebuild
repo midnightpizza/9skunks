@@ -21,7 +21,7 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/config
 		-> kernel-aarch64-manjaro.config-${PV}
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0009-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
-		-> 0009-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
+	-> 0009-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0011-typec-displayport-some-devices-have-pin-assignments-reversed.patch
 		-> 0011-typec-displayport-some-devices-have-pin-assignments-reversed-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0012-usb-typec-tcpm-Add-generic-extcon-for-tcpm-enabled-devices.patch
@@ -33,8 +33,7 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0016-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch
 		-> 0016-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
 
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0017-tty-serdev-support-shutdown-op.patch
-		-> 0017-tty-serdev-support-shutdown-op-${PV}.patch
+	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0017-tty-serdev-support-shutdown-op.patch		-> 0017-tty-serdev-support-shutdown-op-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0018-bluetooth-hci_serdev-Clear-registered-bit-on-unregister.patch
 		-> 0018-bluetooth-hci_serdev-Clear-registered-bit-on-unregister-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0019-bluetooth-hci_bcm-disable-power-on-shutdown.patch
