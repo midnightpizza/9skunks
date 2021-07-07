@@ -5,12 +5,12 @@ EAPI=7
 
 MY_PN=Vulkan-ValidationLayers
 CMAKE_ECLASS="cmake"
-PYTHON_COMPAT=( python3_{7,8,9} )
+PYTHON_COMPAT=( python3_{8,9} )
 inherit cmake-multilib python-any-r1
 
-SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk.${PV}-TAG.tar.gz -> ${P}.tar.gz"
-KEYWORDS="amd64 ~ppc64"
-S="${WORKDIR}"/${MY_PN}-sdk.${PV}-TAG
+SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk-${PV}.tar.gz -> ${P}.tar.gz"
+KEYWORDS="~amd64 ~ppc64"
+S="${WORKDIR}"/${MY_PN}-sdk-${PV}
 
 DESCRIPTION="Vulkan Validation Layers"
 HOMEPAGE="https://github.com/KhronosGroup/Vulkan-ValidationLayers"
@@ -23,7 +23,7 @@ DEPEND="${PYTHON_DEPS}
 	dev-cpp/robin-hood-hashing
 	>=dev-util/glslang-11.4.0:=[${MULTILIB_USEDEP}]
 	>=dev-util/spirv-tools-2021.0_pre20210526:=[${MULTILIB_USEDEP}]
-	~dev-util/vulkan-headers-${PV}
+	>=dev-util/vulkan-headers-${PV}
 	wayland? ( dev-libs/wayland:=[${MULTILIB_USEDEP}] )
 	X? (
 		x11-libs/libX11:=[${MULTILIB_USEDEP}]
@@ -38,9 +38,9 @@ multilib_src_configure() {
 		-DBUILD_WSI_XCB_SUPPORT=$(usex X)
 		-DBUILD_WSI_XLIB_SUPPORT=$(usex X)
 		-DBUILD_TESTS=OFF
-		-DGLSLANG_INSTALL_DIR="${EPREFIX}/usr"
+		-DGLSLANG_INSTALL_DIR="${ESYSROOT}/usr"
 		-DCMAKE_INSTALL_INCLUDEDIR="${EPREFIX}/usr/include/vulkan/"
-		-DSPIRV_HEADERS_INSTALL_DIR="${EPREFIX}/usr/include/spirv"
+		-DSPIRV_HEADERS_INSTALL_DIR="${ESYSROOT}/usr/include/spirv"
 	)
 	cmake_src_configure
 }
