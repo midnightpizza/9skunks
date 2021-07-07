@@ -5,12 +5,12 @@ EAPI=7
 
 MY_PN=Vulkan-Tools
 CMAKE_ECLASS="cmake"
-PYTHON_COMPAT=( python3_{7,8,9} )
+PYTHON_COMPAT=( python3_{8,9} )
 inherit cmake-multilib python-any-r1
 
-SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk.${PV}-TAG.tar.gz -> ${P}.tar.gz"
-KEYWORDS="amd64 ~ppc64"
-S="${WORKDIR}"/${MY_PN}-sdk.${PV}-TAG
+SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk-${PV}.tar.gz -> ${P}.tar.gz"
+KEYWORDS="~amd64 ~ppc64"
+S="${WORKDIR}"/${MY_PN}-sdk-${PV}
 
 DESCRIPTION="Official Vulkan Tools and Utilities for Windows, Linux, Android, and MacOS"
 HOMEPAGE="https://github.com/KhronosGroup/Vulkan-Tools"
@@ -20,13 +20,13 @@ SLOT="0"
 IUSE="+cube wayland +X"
 
 # Cube demo only supports one window system at a time
-REQUIRED_USE="!cube? ( || ( X wayland ) ) cube? ( ^^ ( X wayland ) )"
+REQUIRED_USE="cube? ( ^^ ( X wayland ) )"
 
 BDEPEND="${PYTHON_DEPS}
 	cube? ( dev-util/glslang:=[${MULTILIB_USEDEP}] )
 "
 RDEPEND="
-	~media-libs/vulkan-loader-${PV}:=[${MULTILIB_USEDEP},wayland?,X?]
+	>=media-libs/vulkan-loader-${PV}:=[${MULTILIB_USEDEP},wayland?,X?]
 	wayland? ( dev-libs/wayland:=[${MULTILIB_USEDEP}] )
 	X? (
 		x11-libs/libX11:=[${MULTILIB_USEDEP}]
@@ -34,7 +34,7 @@ RDEPEND="
 	)
 "
 DEPEND="${RDEPEND}
-	~dev-util/vulkan-headers-${PV}
+	>=dev-util/vulkan-headers-${PV}
 "
 
 pkg_setup() {
@@ -57,11 +57,11 @@ multilib_src_configure() {
 		-DBUILD_WSI_WAYLAND_SUPPORT=$(usex wayland)
 		-DBUILD_WSI_XCB_SUPPORT=$(usex X)
 		-DBUILD_WSI_XLIB_SUPPORT=$(usex X)
-		-DVULKAN_HEADERS_INSTALL_DIR="${EPREFIX}/usr"
+		-DVULKAN_HEADERS_INSTALL_DIR="${ESYSROOT}/usr"
 	)
 
 	use cube && mycmakeargs+=(
-		-DGLSLANG_INSTALL_DIR="${EPREFIX}/usr"
+		-DGLSLANG_INSTALL_DIR="${ESYSROOT}/usr"
 		-DCUBE_WSI_SELECTION=$(usex X XCB WAYLAND)
 	)
 
