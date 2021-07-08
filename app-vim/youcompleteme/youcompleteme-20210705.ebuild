@@ -3,7 +3,7 @@
 
 EAPI=7
 
-PYTHON_COMPAT=( python3_{6..9} )
+PYTHON_COMPAT=( python3_{7..9} )
 inherit python-single-r1
 
 DESCRIPTION="A code-completion engine for Vim."
@@ -12,13 +12,13 @@ LICENSE="GPL-3"
 KEYWORDS="~amd64 ~x86"
 
 SLOT="0"
-MY_SHA="ed423e8a1d2a5842a126d33b824ad3b65f85f3ba"
+MY_SHA="c83c240e1397291bf1babcba173253d7f753a0b6"
 MY_PN="YouCompleteMe"
 SRC_URI="https://github.com/ycm-core/${MY_PN}/archive/${MY_SHA}.tar.gz -> ${P}.tar.gz"
 
 DEPEND="|| ( >=app-editors/vim-7.3 >=app-editors/gvim-7.3 )"
 RDEPEND="${DEPEND}
-	|| ( sys-devel/clang:10 sys-devel/clang:11 )
+	|| ( sys-devel/clang:10 sys-devel/clang:11 sys-devel/clang:12 )
 	$(python_gen_cond_dep 'dev-python/requests-futures[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/requests[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-util/ycmd[${PYTHON_SINGLE_USEDEP}]' ${PYTHON_COMPAT[*]})"
