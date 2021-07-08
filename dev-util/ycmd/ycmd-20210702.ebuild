@@ -17,6 +17,7 @@ KEYWORDS="~amd64 ~x86"
 
 DEPEND="dev-cpp/abseil-cpp"
 RDEPEND="
+	${DEPEND}
 	$(python_gen_cond_dep 'dev-python/bottle[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/jedi[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/regex[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
