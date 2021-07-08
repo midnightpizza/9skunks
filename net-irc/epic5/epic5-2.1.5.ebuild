@@ -7,7 +7,7 @@ USE_RUBY="ruby23 ruby24 ruby25"
 inherit autotools ruby-single toolchain-funcs
 
 DESCRIPTION="Epic5 IRC Client"
-SRC_URI="ftp://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
+SRC_URI="http://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
 HOMEPAGE="http://epicsol.org/"
 
 LICENSE="BSD"
@@ -19,7 +19,7 @@ IUSE="archive perl tcl ruby socks5 valgrind libressl"
 
 RDEPEND="
 	!libressl? ( dev-libs/openssl:0[-bindist] )
-	            libressl? ( dev-libs/libressl )	
+	            libressl? ( dev-libs/libressl )
 	>=sys-libs/ncurses-5.6-r2:0=
 	virtual/libiconv
 	archive? ( app-arch/libarchive )
@@ -36,7 +36,6 @@ S="${WORKDIR}/${P}"
 
 PATCHES=(
 	# From Debian
-	"${FILESDIR}/${P}-openssl-1.1.patch"
 )
 
 src_configure() {

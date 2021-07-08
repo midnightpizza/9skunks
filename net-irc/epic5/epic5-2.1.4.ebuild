@@ -7,7 +7,7 @@ USE_RUBY="ruby23 ruby24 ruby25"
 inherit autotools ruby-single toolchain-funcs
 
 DESCRIPTION="Epic5 IRC Client"
-SRC_URI="ftp://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
+SRC_URI="http://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
 HOMEPAGE="http://epicsol.org/"
 
 LICENSE="BSD"
