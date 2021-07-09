@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
-USE_RUBY="ruby23 ruby24 ruby25"
+USE_RUBY="ruby24 ruby25 ruby26"
 
-inherit autotools ruby-single toolchain-funcs
+inherit autotools ruby-single
 
 DESCRIPTION="Epic5 IRC Client"
 SRC_URI="http://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
@@ -34,9 +34,6 @@ DEPEND="${RDEPEND}
 
 S="${WORKDIR}/${P}"
 
-PATCHES=(
-	# From Debian
-)
 
 src_configure() {
 	# Because of our REQUIRED_USE constraints above, we know that
@@ -58,7 +55,7 @@ src_compile() {
 	emake -j1
 }
 
-src_install () {
+src_install() {
 	default
 
 	dodoc BUG_FORM COPYRIGHT EPIC4-USERS-README README KNOWNBUGS VOTES
