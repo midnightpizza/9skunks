@@ -33,7 +33,6 @@ ac_add_options --with-branding=browser/branding/${PN}
 ac_add_options --with-distribution-id=io.gitlab.${PN}
 ac_add_options --with-unsigned-addon-scopes=app,system
 ac_add_options --allow-addon-sideload
-export MOZ_REQUIRE_SIGNING=0
 
 # Features
 ac_add_options --disable-crashreporter
