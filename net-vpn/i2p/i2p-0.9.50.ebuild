@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -19,15 +19,8 @@ RESTRICT="!test? ( test )"
 
 # dev-java/ant-core is automatically added due to java-ant-2.eclass
 CP_DEPEND="
-	dev-java/bcprov:1.50
-	dev-java/jrobin:0
-	dev-java/slf4j-api:0
-	dev-java/tomcat-jstl-impl:0
-	dev-java/tomcat-jstl-spec:0
 	dev-java/java-service-wrapper:0
-	dev-java/commons-logging:0
-	dev-java/slf4j-simple:0
-	java-virtuals/servlet-api:3.1
+	dev-java/tomcat-servlet-api:4.0
 "
 
 DEPEND="${CP_DEPEND}
@@ -39,6 +32,7 @@ DEPEND="${CP_DEPEND}
 		dev-java/hamcrest-core:1.3
 		dev-java/hamcrest-library:1.3
 		dev-java/junit:4
+		dev-java/mockito:0
 	)
 "
 
@@ -53,7 +47,6 @@ EANT_BUILD_TARGET="pkg"
 # no scala as depending on antlib.xml not installed by dev-lang/scala
 EANT_TEST_TARGET="junit.test"
 JAVA_ANT_ENCODING="UTF-8"
-
 
 src_prepare() {
 	if use test; then
@@ -78,20 +71,20 @@ src_prepare() {
 
 	# avoid auto starting browser
 	sed -i "s|clientApp.4.startOnLoad=true|clientApp.4.startOnLoad=false|" \
-		"installer/resources/clients.config" || die
+		installer/resources/clients.config || die
 
 	# generate wrapper classpath, keeping the default to be replaced later
 	i2p_cp="" # global forced by java-pkg_gen-cp
 	java-pkg_gen-cp i2p_cp
 	local lib i=2
-	local cp="wrapper.java.classpath.1=${EPREFIX}/usr/share/i2p/lib/*\n"
+	local classpath="wrapper.java.classpath.1=${EPREFIX}/usr/share/i2p/lib/*\n"
 	for lib in ${i2p_cp//,/ }
 	do
-		cp+="wrapper.java.classpath.$((i++))=$(java-pkg_getjars ${lib})\n"
+		classpath+="wrapper.java.classpath.$((i++))=$(java-pkg_getjars ${lib})\n"
 	done
 
-	# add generated cp, hardcode system VM, setting system's conf
-	sed -e "s|\(wrapper\.java\.classpath\.1\)=.*|${cp}|" \
+	# add generated classpath, hardcode system VM, setting system's conf
+	sed -e "s|\(wrapper\.java\.classpath\.1\)=.*|${classpath}|" \
 		-e "s|\(wrapper\.java\.command\)=.*|\1=/etc/java-config-2/current-system-vm/bin/java|" \
 		-e "s|\(wrapper\.java\.library\.path\.1\)=.*|\1=/usr/$(get_libdir)/java-service-wrapper|" \
 		-e "s|\(wrapper\.java\.library\.path\)\.2=.*|\1.2=${EPREFIX}/usr/share/i2p/lib\n\1.3=/usr/$(get_libdir)|" \
@@ -121,9 +114,9 @@ src_test() {
 		die "unable to save jars before tests"
 
 	# generate test classpath
-	local cp
-	cp="$(java-pkg_getjars --build-only junit-4,hamcrest-core-1.3,hamcrest-library-1.3)"
-	EANT_TEST_EXTRA_ARGS="-Djavac.classpath=${cp}" java-pkg-2_src_test
+	local classpath
+	classpath="$(java-pkg_getjars --build-only junit-4,hamcrest-core-1.3,hamcrest-library-1.3,mockito)"
+	EANT_TEST_EXTRA_ARGS="-Djavac.classpath=${classpath}" java-pkg-2_src_test
 
 	# redo work undone by testing
 	mv "${T}/"{i2p,router}.jar "${S}/pkg-temp/lib/" ||
@@ -135,7 +128,7 @@ src_install() {
 	cd "${S}/pkg-temp" || die
 
 	# we remove system installed jar and install the others
-	rm lib/{jrobin,wrapper,jbigi,commons-logging,javax.servlet}.jar || \
+	rm lib/{javax.servlet,wrapper}.jar || \
 		die "unable to remove locally built jar already found in system"
 	java-pkg_dojar lib/*.jar
 
@@ -163,49 +156,4 @@ src_install() {
 	# setup user
 	keepdir /var/lib/i2p
 	fowners i2p:i2p /var/lib/i2p
-}
-
-pkg_postinst() {
-	local old_i2pdir="${EPREFIX}/var/lib/i2p/.i2p" new_i2pdir="${EPREFIX}/var/lib/i2p"
-
-	[ -e "${old_i2pdir}" ] || return
-
-	elog "User is now delegated to acct-user, ${new_i2pdir} is split"
-	elog "into subdirs. It will now try to split ${old_i2pdir} accordingly."
-
-	migrate() {
-		local dest="${1}"
-		shift
-
-		local ret=true
-		for src
-		do
-			[ -e "${src}" ] || continue
-			mv "${src}" "${dest}" || ret=false
-		done
-
-		$ret
-	}
-
-	ebegin "Migrating"
-	local ret=0
-	chown -R i2p:i2p "${EPREFIX}/var/lib/i2p" || ret=1
-	migrate "${new_i2pdir}/app" "${old_i2pdir}/i2psnark" || ret=1
-	migrate "${new_i2pdir}/config" \
-		"${old_i2pdir}/"{docs,eepsite,hosts.txt,prngseed.rnd,*.config*} ||
-		ret=1
-	migrate "${new_i2pdir}/router" \
-		"${old_i2pdir}/"{addressbook,eventlog.txt,hostsdb.blockfile,keyBackup,netDb,peerProfiles,router.*,rrd} ||
-		ret=1
-	migrate "${EPREFIX}/var/log/i2p" "${old_i2pdir}/"{logs/*,wrapper.log*} ||
-		ret=1
-	rm -fr "${old_i2pdir}/"{hostsdb.blockfile.*.corrupt,logs}
-	rmdir "${old_i2pdir}" || ret=1
-
-	if ! eend $ret
-	then
-		ewarn "There was some file remaining in ${old_i2pdir}."
-		ewarn "Please check it there is something of value there."
-		ewarn "remove it when migration is done."
-	fi
 }
