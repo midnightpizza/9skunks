@@ -8,15 +8,15 @@ inherit cmake python-single-r1
 DESCRIPTION="A code-completion & code-comprehension server."
 HOMEPAGE="https://github.com/ycm-core/ycmd"
 CORE_VERSION=45
-MY_SHA="268f2d3927c9a56ef464b974ff53795566669e9f"
+MY_SHA="c1650f2fd54135f83f1daf37728d4b4ff6bc5d67"
 SRC_URI="https://github.com/ycm-core/ycmd/archive/${MY_SHA}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
-DEPEND="dev-cpp/abseil-cpp"
 RDEPEND="
+	${DEPEND}
 	$(python_gen_cond_dep 'dev-python/bottle[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/jedi[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/regex[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
@@ -27,22 +27,23 @@ RDEPEND="
 		sys-devel/clang:12[static-analyzer] )
 	|| ( sys-libs/compiler-rt:11.1.0
 		sys-libs/compiler-rt:10.0.1
-		sys-libs/compiler-rt:12.0.0 )"
+		sys-libs/compiler-rt:12.0.0 )
+		dev-cpp/abseil-cpp"
 
-S="${WORKDIR}/${PN}-${MY_SHA}/cpp"
+#S="${WORKDIR}/${PN}-${MY_SHA}/cpp"
+S="${WORKDIR}/${PN}-master/cpp"
 
 src_prepare() {
 	rm -fR ../ycmd/tests ../third_party
-	eapply --directory="${WORKDIR}/${PN}-${MY_SHA}" -p0 "${FILESDIR}"
+	#eapply --directory="${WORKDIR}/${PN}-${MY_SHA}" -p0 "${FILESDIR}"
+	eapply --directory="${WORKDIR}/${PN}-master" -p0 "${FILESDIR}"
 	sed -e "s/@CORE_VERSION@/${CORE_VERSION}/" \
 		-e "s|@LIBCLANG_DIR@|$(llvm-config --libdir)|" \
-		-e "s:CLANG_RESOURCE_DIR =.*:CLANG_RESOURCE_DIR = '$(find "${EPREFIX}/usr/lib/clang" -mindepth 1 -maxdepth 1 -type d | head -n 1)':" \
+		-e "s:CLANG_RESOURCE_DIR =.*:CLANG_RESOURCE_DIR = '$(find "${EPREFI}/usr/lib/clang" -mindepth 1 -maxdepth 1 -type d | head -n 1)':" \
 		-i ../ycmd/utils.py || die
 	sed -e "s/@EPREFIX@/${EPREFIX}/g" -i \
 		../ycmd/completers/cpp/clangd_completer.py || die
-	sed -r \
-		-e "s|Python3 [0-9\\.]+ REQUIRED COMPONENTS|Python3 3.$(ver_cut 2 "${EPYTHON:6}") EXACT REQUIRED COMPONENTS|" \
-		-i CMakeLists.txt
+	sed -r -e "s|Python3 [0-9\\.]+ REQUIRED COMPONENTS|Python3 3.${PYTHON_MINOR_VERSION} EXACT REQUIRED COMPONENTS|" -i CMakeLists.txt
 	cmake_src_prepare
 }
 
