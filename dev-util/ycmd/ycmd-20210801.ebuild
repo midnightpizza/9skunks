@@ -30,13 +30,13 @@ RDEPEND="
 		sys-libs/compiler-rt:12.0.0 )
 		dev-cpp/abseil-cpp"
 
-#S="${WORKDIR}/${PN}-${MY_SHA}/cpp"
-S="${WORKDIR}/${PN}-master/cpp"
+S="${WORKDIR}/${PN}-${MY_SHA}/cpp"
+#S="${WORKDIR}/${PN}-master/cpp"
 
 src_prepare() {
 	rm -fR ../ycmd/tests ../third_party
-	#eapply --directory="${WORKDIR}/${PN}-${MY_SHA}" -p0 "${FILESDIR}"
-	eapply --directory="${WORKDIR}/${PN}-master" -p0 "${FILESDIR}"
+	eapply --directory="${WORKDIR}/${PN}-${MY_SHA}" -p0 "${FILESDIR}"
+	#eapply --directory="${WORKDIR}/${PN}-master" -p0 "${FILESDIR}"
 	sed -e "s/@CORE_VERSION@/${CORE_VERSION}/" \
 		-e "s|@LIBCLANG_DIR@|$(llvm-config --libdir)|" \
 		-e "s:CLANG_RESOURCE_DIR =.*:CLANG_RESOURCE_DIR = '$(find "${EPREFI}/usr/lib/clang" -mindepth 1 -maxdepth 1 -type d | head -n 1)':" \
