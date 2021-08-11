@@ -28,7 +28,6 @@ DEPEND="
 RDEPEND="${DEPEND}"
 
 src_prepare() {
-	eapply_user
 	epatch \
 		"${FILESDIR}"/epic-defaultserver.patch \
 		"${FILESDIR}"/make-recursion.patch 

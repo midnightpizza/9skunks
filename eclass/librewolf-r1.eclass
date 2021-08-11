@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Foundation
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: librewolf-r0.eclass
@@ -33,6 +33,7 @@ ac_add_options --with-branding=browser/branding/${PN}
 ac_add_options --with-distribution-id=io.gitlab.${PN}
 ac_add_options --with-unsigned-addon-scopes=app,system
 ac_add_options --allow-addon-sideload
+export MOZ_REQUIRE_SIGNING=
 
 # Features
 ac_add_options --disable-crashreporter
@@ -115,12 +116,12 @@ librewolf-r1_src_unpack() {
 	# after 89 patches were moved to 'common'
 	patch_list=(
 		"remove_addons.patch"
-    	"megabar.patch"
-    	"context-menu.patch"
-    	"mozilla-vpn-ad.patch"
+		"megabar.patch"
+		"context-menu.patch"
+		"mozilla-vpn-ad.patch"
 	)
 
-	if ver_test -lt "89.0"; then
+	if ver_test -lt "91.0"; then
 		git-r3_fetch "https://gitlab.com/librewolf-community/browser/linux.git" \
 			"v${LIBREWOLF_PV}"
 		git-r3_checkout "https://gitlab.com/librewolf-community/browser/linux.git" \
