@@ -12,10 +12,10 @@ MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton_6.3"
-	EGIT_OVERRIDE_COMMIT_WINE="3083b57f002a84b858ca6a093e90527665f61d94"
+	EGIT_BRANCH="experimental_6.3"
+	EGIT_OVERRIDE_COMMIT_WINE="d8bb750b66bce5735d6f75b62340c4f443266d2c"
 	inherit git-r3
-	KEYWORDS=""
+	KEYWORDS="-* ~amd64 ~x86"
 
 
 S="${WORKDIR}/${MY_P}"
