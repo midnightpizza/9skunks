@@ -4,8 +4,8 @@
 EAPI="7"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="15"
-MANJARO_COMMIT="9eff2128430ce641ae1bc1555c018d9c81d3ef53"
+K_GENPATCHES_VER="13"
+MANJARO_COMMIT="a7b53e0da30afc13c932ebca769d68490a195828"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -54,6 +54,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0015-arm64-dts-meson-add-initial-Beelink-GT1-Ultimate-dev-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0016-add-ugoos-device.patch
 	-> 0016-add-ugoos-device-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0017-drm-meson-fix-green-pink-color-distortion-set-from-u.patch
+	-> 0017-drm-meson-fix-green-pink-color-distortion-set-from-u-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0018-drm-bridge-dw-hdmi-disable-loading-of-DW-HDMI-CEC-sub-driver.patch
 	-> 0018-drm-bridge-dw-hdmi-disable-loading-of-DW-HDMI-CEC-sub-driver-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0019-drm-panfrost-Handle-failure-in-panfrost_job_hw_submit.patch
