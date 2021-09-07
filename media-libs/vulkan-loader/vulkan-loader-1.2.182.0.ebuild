@@ -8,7 +8,7 @@ CMAKE_ECLASS="cmake"
 inherit flag-o-matic cmake-multilib toolchain-funcs
 
 SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk-${PV}.tar.gz -> ${P}.tar.gz"
-KEYWORDS="~amd64 ~ppc64"
+KEYWORDS="amd64 arm arm64 ppc ppc64 ~riscv x86"
 S="${WORKDIR}"/${MY_PN}-sdk-${PV}
 
 DESCRIPTION="Vulkan Installable Client Driver (ICD) Loader"

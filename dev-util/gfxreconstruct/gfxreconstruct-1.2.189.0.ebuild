@@ -4,11 +4,11 @@
 EAPI=7
 
 CMAKE_ECLASS="cmake"
-PYTHON_COMPAT=( python3_{7..9} )
+PYTHON_COMPAT=( python3_{8,9} )
 inherit cmake-multilib python-single-r1
 
 SRC_URI="https://github.com/LunarG/${PN}/archive/sdk-${PV}/${PN}-sdk-$PV}.tar.gz"
-KEYWORDS="amd64"
+KEYWORDS="~amd64"
 S="${WORKDIR}"/${PN}-sdk-${PV}
 
 DESCRIPTION="Graphics API Capture and Replay Tools"
@@ -19,7 +19,7 @@ SLOT="0"
 IUSE="wayland +X"
 
 RDEPEND="${PYTHON_DEPS}
-	~media-libs/vulkan-loader-1.2.176.1:=[${MULTILIB_USEDEP},wayland?,X?]
+	>=media-libs/vulkan-loader-${PV}:=[${MULTILIB_USEDEP},wayland?,X?]
 	wayland? ( dev-libs/wayland:=[${MULTILIB_USEDEP}] )
 	X? (
 		x11-libs/libX11:=[${MULTILIB_USEDEP}]
@@ -28,10 +28,8 @@ RDEPEND="${PYTHON_DEPS}
 "
 DEPEND="${RDEPEND}
 	app-arch/lz4:=[${MULTILIB_USEDEP}]
-	~dev-util/vulkan-headers-1.2.176.1
+	>=dev-util/vulkan-headers-${PV}
 "
-
-PATCHES=( "${FILESDIR}"/${P}-wsi-options.patch )
 
 pkg_setup() {
 	python-single-r1_pkg_setup
@@ -43,7 +41,7 @@ multilib_src_configure() {
 		-DBUILD_WSI_WAYLAND_SUPPORT=$(usex wayland)
 		-DBUILD_WSI_XCB_SUPPORT=$(usex X)
 		-DBUILD_WSI_XLIB_SUPPORT=$(usex X)
-		-DVULKAN_HEADER="${EPREFIX}/usr/include/vulkan/vulkan_core.h"
+		-DVULKAN_HEADER="${ESYSROOT}/usr/include/vulkan/vulkan_core.h"
 	)
 
 	cmake_src_configure

@@ -5,12 +5,11 @@ EAPI=7
 
 MY_PN=Vulkan-Loader
 CMAKE_ECLASS="cmake"
-PYTHON_COMPAT=( python3_{7,8,9} )
-inherit flag-o-matic cmake-multilib python-any-r1 toolchain-funcs
+inherit flag-o-matic cmake-multilib toolchain-funcs
 
-SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk.${PV}-TAG.tar.gz -> ${P}.tar.gz"
-KEYWORDS="amd64 ~ppc64"
-S="${WORKDIR}"/${MY_PN}-sdk.${PV}-TAG
+SRC_URI="https://github.com/KhronosGroup/${MY_PN}/archive/sdk-${PV}.tar.gz -> ${P}.tar.gz"
+KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~x86"
+S="${WORKDIR}"/${MY_PN}-sdk-${PV}
 
 DESCRIPTION="Vulkan Installable Client Driver (ICD) Loader"
 HOMEPAGE="https://github.com/KhronosGroup/Vulkan-Loader"
@@ -28,6 +27,10 @@ DEPEND="${PYTHON_DEPS}
 	)
 "
 PDEPEND="layers? ( media-libs/vulkan-layers:=[${MULTILIB_USEDEP}] )"
+
+src_prepare() {
+	cmake_src_prepare
+}
 
 multilib_src_configure() {
 	local mycmakeargs=(
