@@ -8,7 +8,7 @@ inherit eutils multilib toolchain-funcs
 MY_P="${P/_p/-}"
 DESCRIPTION="TOMOYO Linux tools"
 HOMEPAGE="http://tomoyo.sourceforge.jp/"
-SRC_URI="https://jaist.dl.osdn.jp/tomoyo/70710/tomoyo-tools-2.6.0-20190305.tar.gz"
+SRC_URI="https://jaist.dl.osdn.jp/tomoyo/70710/tomoyo-tools-2.6.1-20210910.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
