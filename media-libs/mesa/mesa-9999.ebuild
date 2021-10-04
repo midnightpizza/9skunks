@@ -3,7 +3,7 @@
 
 EAPI=7
 
-PYTHON_COMPAT=( python3_{7,8,9} )
+PYTHON_COMPAT=( python3_{7..10} )
 
 inherit llvm meson multilib-minimal pax-utils python-any-r1 linux-info
 
@@ -148,12 +148,16 @@ RDEPEND="${RDEPEND}
 # 1. List all the working slots (with min versions) in ||, newest first.
 # 2. Update the := to specify *max* version, e.g. < 10.
 # 3. Specify LLVM_MAX_SLOT, e.g. 9.
-LLVM_MAX_SLOT="12"
+LLVM_MAX_SLOT="13"
 LLVM_DEPSTR="
 	|| (
+	 	sys-devel/llvm:13[${MULTILIB_USEDEP}]
 		sys-devel/llvm:12[${MULTILIB_USEDEP}]
 		sys-devel/llvm:11[${MULTILIB_USEDEP}]
 		sys-devel/llvm:10[${MULTILIB_USEDEP}]
+		
+
+
 	)
 	<sys-devel/llvm-$((LLVM_MAX_SLOT + 1)):=[${MULTILIB_USEDEP}]
 "
@@ -514,6 +518,11 @@ multilib_src_configure() {
 		echo "${drivers//$'\n'/,}"
 	}
 
+	local vulkan_layers
+	use vulkan && vulkan_layers+="device-select"
+	use vulkan-overlay && vulkan_layers+=",overlay"
+	emesonargs+=(-Dvulkan-layers=${vulkan_layers#,})
+
 	emesonargs+=(
 		$(meson_use test build-tests)
 		-Dglx=$(usex X dri disabled)
@@ -531,8 +540,6 @@ multilib_src_configure() {
 		-Ddri-drivers=$(driver_list "${DRI_DRIVERS[*]}")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
-		$(meson_use vulkan vulkan-device-select-layer)
-		$(meson_use vulkan-overlay vulkan-overlay-layer)
 		--buildtype $(usex debug debug plain)
 		-Db_ndebug=$(usex debug false true)
 	)
