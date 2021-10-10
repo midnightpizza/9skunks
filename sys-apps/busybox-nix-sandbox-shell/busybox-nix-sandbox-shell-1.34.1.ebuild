@@ -9,7 +9,7 @@ DESCRIPTION="static busybox for sys-apps/nix sandbox needs"
 HOMEPAGE="https://www.busybox.net/"
 MY_P=busybox-${PV/_/-}
 SRC_URI="https://www.busybox.net/downloads/${MY_P}.tar.bz2"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 
 LICENSE="GPL-2"
 SLOT="0"
