@@ -1,10 +1,10 @@
 # Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI="7"
+EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="1"
+K_GENPATCHES_VER="2"
 MANJARO_COMMIT="ffcf7c54efc06ee16c0b88b3c99b56fda938c1a9"
 RESTRICT="MIRROR"
 
