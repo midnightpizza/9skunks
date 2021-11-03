@@ -4,8 +4,8 @@
 EAPI="7"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="10"
-MANJARO_COMMIT="a3c9fba03422b6e5bb2729e428db51b94ef696df"
+K_GENPATCHES_VER="1"
+MANJARO_COMMIT="ffcf7c54efc06ee16c0b88b3c99b56fda938c1a9"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -17,6 +17,7 @@ HOMEPAGE="https://dev.gentoo.org/~mpagano/genpatches"
 IUSE="experimental"
 
 DESCRIPTION="Full sources including the Gentoo patchset for the ${KV_MAJOR}.${KV_MINOR} kernel tree"
+
 SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/config
 		-> kernel-aarch64-manjaro.config-${PV}
@@ -26,18 +27,14 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices.patch
 	-> 0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0003-fix-ap6256-wifi-on-amlogic.patch
-	-> 0003-fix-ap6256-wifi-on-amlogic-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0003-ASoC-rockchip-add-support-for-i2s-tdm-controller.patch
+	-> 0003-ASoC-rockchip-add-support-for-i2s-tdm-controller-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0004-arm64-dts-allwinner-add-ohci-ehci-to-h5-nanopi.patch
 	-> 0004-arm64-dts-allwinner-add-ohci-ehci-to-h5-nanopi-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0004-Patches-to-update-for-rockchip-spdif.patch
-	-> 0004-Patches-to-update-for-rockchip-spdif-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0005-drm-bridge-analogix_dp-Add-enable_psr-param.patch
 	-> 0005-drm-bridge-analogix_dp-Add-enable_psr-param-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0006-gpu-drm-add-new-display-resolution-2560x1440.patch
 	-> 0006-gpu-drm-add-new-display-resolution-2560x1440-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0005-gpio-rockchip-driver.patch
-	-> 0005-gpio-rockchip-driver-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0007-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
 	-> 0007-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0008-arm64-dts-rockchip-Add-Firefly-Station-p1-support.patch
@@ -58,8 +55,10 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0019-arm64-dts-meson-add-initial-Beelink-GT1-Ultimate-dev-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0020-add-ugoos-device.patch
 	-> 0020-add-ugoos-device-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0021-drm-panfrost-Handle-failure-in-panfrost_job_hw_submit.patch
-	-> 0021-drm-panfrost-Handle-failure-in-panfrost_job_hw_submit-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0021-drm-panfrost-scheduler-fix.patch
+	-> 0021-drm-panfrost-scheduler-fix-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0023-drm-rockchip-support-gamma-control-on-RK3399.patch
+	-> 0023-drm-rockchip-support-gamma-control-on-RK3399-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0022-arm64-dts-rockchip-Add-pcie-bus-scan-delay-to-rockpr.patch
 	-> 0022-arm64-dts-rockchip-Add-pcie-bus-scan-delay-to-rockpr-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0014-phy-rockchip-typec-Set-extcon-capabilities.patch
@@ -85,9 +84,7 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0007-enable-jack-detection-pinetab.patch
 	-> 0007-enable-jack-detection-pinetab-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0008-enable-hdmi-output-pinetab.patch
-	-> 0008-enable-hdmi-output-pinetab-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0006-PCI-rockchip-Add-Rockchip-RK356X-host-controller-driver.patch
-	->	0006-PCI-rockchip-Add-Rockchip-RK356X-host-controller-driver-${PV}.patch"
+	-> 0008-enable-hdmi-output-pinetab-${PV}.patch"
 
 
 src_prepare() {

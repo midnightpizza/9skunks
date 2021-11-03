@@ -4,8 +4,8 @@
 EAPI="7"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="9"
-MANJARO_COMMIT="4e4fa1c29c9001e837348cd7962c52f214cdc442"
+K_GENPATCHES_VER="16"
+MANJARO_COMMIT="41207e9be51c49a793e5012c811966a7eca24fd6"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -26,8 +26,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices.patch
 	-> 0003-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0003-fix-ap6256-wifi-on-amlogic.patch
-	-> 0003-fix-ap6256-wifi-on-amlogic-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0004-arm64-dts-allwinner-add-ohci-ehci-to-h5-nanopi.patch
 	-> 0004-arm64-dts-allwinner-add-ohci-ehci-to-h5-nanopi-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0004-Patches-to-update-for-rockchip-spdif.patch
