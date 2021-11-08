@@ -12,7 +12,7 @@ inherit kernel-2
 detect_version
 detect_arch
 
-KEYWORDS=""
+KEYWORDS="~arm64"
 HOMEPAGE="https://dev.gentoo.org/~mpagano/genpatches"
 IUSE="experimental"
 
