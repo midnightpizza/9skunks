@@ -7,7 +7,7 @@ FIREFOX_PATCHSET="firefox-78esr-patches-19.tar.xz"
 
 LLVM_MAX_SLOT=13
 
-PYTHON_COMPAT=( python3_{7..9} )
+PYTHON_COMPAT=( python3_{7..10} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -93,13 +93,6 @@ BDEPEND="${PYTHON_DEPS}
 			sys-devel/llvm:10
 			clang? (
 				=sys-devel/lld-10*
-			)
-		)
-		(
-			sys-devel/clang:9
-			sys-devel/llvm:9
-			clang? (
-				=sys-devel/lld-9*
 			)
 		)
 	)
@@ -251,7 +244,7 @@ mozconfig_add_options_ac() {
 	shift
 
 	local option
-	for option in "${@}" ; do
+	for option in ${@} ; do
 		echo "ac_add_options ${option} # ${reason}" >>${MOZCONFIG}
 	done
 }
@@ -267,7 +260,7 @@ mozconfig_add_options_mk() {
 	shift
 
 	local option
-	for option in "${@}" ; do
+	for option in ${@} ; do
 		echo "mk_add_options ${option} # ${reason}" >>${MOZCONFIG}
 	done
 }
@@ -855,7 +848,7 @@ pkg_postinst() {
 		elog
 	fi
 
-	if [[ -z ${REPLACING_VERSIONS} ]]; then
+	if [[ -z "${REPLACING_VERSIONS}" ]] ; then
 		ewarn "This patched firefox build is _NOT_ recommended by Tor upstream but uses"
 		ewarn "the exact same sources. Use this only if you know what you are doing!"
 		elog "Torbrowser uses port 9150 to connect to Tor. You can change the port"
