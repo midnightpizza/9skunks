@@ -574,7 +574,6 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-webrtc \
 		--disable-parental-controls \
-		--disable-eme \
 		--enable-proxy-bypass-protection \
 		MOZ_TELEMETRY_REPORTING= \
 		--with-tor-browser-version=${TOR_PV}  \
@@ -582,7 +581,8 @@ src_configure() {
 		--enable-bundled-fonts \
 		--with-branding=browser/branding/official \
 		--disable-tor-browser-update \
-		--enable-tor-launcher
+		--enable-tor-launcher 
+
 
 	# Avoid auto-magic on linker
 	if use clang ; then
