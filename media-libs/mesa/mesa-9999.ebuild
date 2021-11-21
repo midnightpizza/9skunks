@@ -286,7 +286,8 @@ pkg_pretend() {
 	if use vaapi; then
 		if ! use video_cards_r600 &&
 		   ! use video_cards_radeonsi &&
-		   ! use video_cards_nouveau; then
+		   ! use video_cards_nouveau &&
+		   ! use video_cards_panfrost; then
 			ewarn "Ignoring USE=vaapi      since VIDEO_CARDS does not contain r600, radeonsi, or nouveau"
 		fi
 	fi
@@ -295,7 +296,8 @@ pkg_pretend() {
 		if ! use video_cards_r300 &&
 		   ! use video_cards_r600 &&
 		   ! use video_cards_radeonsi &&
-		   ! use video_cards_nouveau; then
+		   ! use video_cards_nouveau &&
+		   ! use video_cards_panfrost; then
 			ewarn "Ignoring USE=vdpau      since VIDEO_CARDS does not contain r300, r600, radeonsi, or nouveau"
 		fi
 	fi
@@ -416,7 +418,8 @@ multilib_src_configure() {
 
 		if use video_cards_r600 ||
 		   use video_cards_radeonsi ||
-		   use video_cards_nouveau; then
+		   use video_cards_nouveau ||
+		   use video_cards_panfrost; then
 			emesonargs+=($(meson_feature vaapi gallium-va))
 			use vaapi && emesonargs+=( -Dva-libs-path="${EPREFIX}"/usr/$(get_libdir)/va/drivers )
 		else
@@ -499,6 +502,7 @@ multilib_src_configure() {
 		vulkan_enable video_cards_iris intel
 		vulkan_enable video_cards_radeonsi amd
 		vulkan_enable video_cards_v3d broadcom
+		vulkan_enable video_cards_panfrost panfrost
 	fi
 
 	# x86 hardened pax_kernel needs glx-rts, bug 240956
