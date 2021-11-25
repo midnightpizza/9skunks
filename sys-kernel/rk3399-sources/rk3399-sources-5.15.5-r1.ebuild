@@ -63,6 +63,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0022-arm64-dts-rockchip-Add-pcie-bus-scan-delay-to-rockpr-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0014-phy-rockchip-typec-Set-extcon-capabilities.patch
 	-> 0014-phy-rockchip-typec-Set-extcon-capabilities-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro.patch
+	-> 0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0015-usb-typec-altmodes-displayport-Add-hacky-generic-altmode.patch
 	-> 0015-usb-typec-altmodes-displayport-Add-hacky-generic-altmode-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0016-arm64-dts-rockchip-add-typec-extcon-hack.patch
