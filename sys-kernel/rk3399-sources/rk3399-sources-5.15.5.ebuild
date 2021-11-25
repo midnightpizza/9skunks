@@ -83,6 +83,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0006-pinetab-accelerometer-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0007-enable-jack-detection-pinetab.patch
 	-> 0007-enable-jack-detection-pinetab-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro.patch
+	-> 0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0008-enable-hdmi-output-pinetab.patch
 	-> 0008-enable-hdmi-output-pinetab-${PV}.patch"
 
