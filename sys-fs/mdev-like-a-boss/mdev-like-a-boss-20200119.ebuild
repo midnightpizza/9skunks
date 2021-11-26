@@ -14,7 +14,7 @@ IUSE=""
 
 DEPEND=""
 RDEPEND="${DEPEND}
-	>=sys-fs/mdev-bb-1.34.1"
+	sys-apps/busybox[mdev(+)]"
 
 src_install() {
 	mkdir -p "${D}/etc" || die
