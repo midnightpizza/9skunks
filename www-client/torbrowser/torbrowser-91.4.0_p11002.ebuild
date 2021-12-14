@@ -3,7 +3,7 @@
 
 EAPI="7"
 
-FIREFOX_PATCHSET="firefox-91esr-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-91esr-patches-03.tar.xz"
 
 LLVM_MAX_SLOT=13
 
@@ -20,8 +20,8 @@ MOZ_PV="${PV/_p*}esr"
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-11.0#n2
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/https-everywhere/config?h=maint-11.0#n2
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-11.0#n81
-TOR_PV="11.0.1"
-TOR_TAG="11.0-1-build4"
+TOR_PV="11.0.2"
+TOR_TAG="11.0-1-build1"
 TORLAUNCHER_VERSION="0.2.32"
 HTTPSEVERYWHERE_VERSION="2021.7.13"
 NOSCRIPT_VERSION="11.2.11"
@@ -54,10 +54,10 @@ KEYWORDS="~amd64 ~x86"
 
 SLOT="0"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+clang dbus sndio wayland
-	hardened pulseaudio
-	+system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent
-	+system-libvpx +system-webp"
+IUSE="+clang dbus hardened"
+IUSE+=" pulseaudio"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
+IUSE+=" wayland"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
@@ -88,13 +88,6 @@ BDEPEND="${PYTHON_DEPS}
 				=sys-devel/lld-11*
 			)
 		)
-		(
-			sys-devel/clang:10
-			sys-devel/llvm:10
-			clang? (
-				=sys-devel/lld-10*
-			)
-		)
 	)
 	amd64? ( >=dev-lang/nasm-2.15.05 )
 	x86? ( >=dev-lang/nasm-2.15.05 )"
@@ -108,8 +101,7 @@ CDEPEND="
 	>=x11-libs/gtk+-3.4.0:3[X]
 	x11-libs/gdk-pixbuf
 	>=x11-libs/pango-1.22.0
-	>=media-libs/libpng-1.6.35:0=[apng]
-	>=media-libs/mesa-21.1:*
+	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
 	>=media-libs/freetype-2.10.4
 	kernel_linux? ( !pulseaudio? ( media-libs/alsa-lib ) )
@@ -143,6 +135,7 @@ CDEPEND="
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
+	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )"
 
 RDEPEND="${CDEPEND}
@@ -297,7 +290,7 @@ pkg_pretend() {
 
 pkg_setup() {
 	# Ensure we have enough disk space to compile
-	CHECKREQS_DISK_BUILD="5G"
+	CHECKREQS_DISK_BUILD="6400M"
 
 	check-reqs_pkg_setup
 
@@ -505,7 +498,6 @@ src_configure() {
 		--with-libclang-path="$(llvm-config --libdir)" \
 		--with-system-nspr \
 		--with-system-nss \
-		--with-system-png \
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
 		--with-unsigned-addon-scopes=app,system \
@@ -523,9 +515,12 @@ src_configure() {
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent system-libevent "${SYSROOT}${EPREFIX}/usr"
 	mozconfig_use_with system-libvpx
+	mozconfig_use_with system-png
 	mozconfig_use_with system-webp
 
 	mozconfig_use_enable dbus
+
+	mozconfig_add_options_ac '' --disable-eme
 
 	mozconfig_add_options_ac '' --disable-geckodriver
 
@@ -541,11 +536,9 @@ src_configure() {
 	if use kernel_linux && ! use pulseaudio ; then
 		mozconfig_add_options_ac '-pulseaudio' --enable-alsa
 	fi
-	if use sndio ; then
-		mozconfig_add_options_ac '' --enable-sndio
-	else
-		mozconfig_add_options_ac '' --disable-sndio
-	fi
+
+	mozconfig_add_options_ac '' --disable-sndio
+
 	mozconfig_add_options_ac '' --disable-necko-wifi
 
 	if use wayland ; then
@@ -572,6 +565,7 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-webrtc \
 		--disable-parental-controls \
+		--disable-eme \
 		--enable-proxy-bypass-protection \
 		MOZ_TELEMETRY_REPORTING= \
 		--with-tor-browser-version=${TOR_PV}  \
@@ -579,15 +573,12 @@ src_configure() {
 		--enable-bundled-fonts \
 		--with-branding=browser/branding/official \
 		--disable-tor-browser-update \
-		--enable-tor-launcher 
-
+		--enable-tor-launcher
 
 	# Avoid auto-magic on linker
 	if use clang ; then
 		# This is upstream's default
 		mozconfig_add_options_ac "forcing ld=lld due to USE=clang" --enable-linker=lld
-	elif tc-ld-is-gold ; then
-		mozconfig_add_options_ac "linker is set to gold" --enable-linker=gold
 	else
 		mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 	fi
@@ -664,6 +655,7 @@ src_configure() {
 
 	# Use system's Python environment
 	export MACH_USE_SYSTEM_PYTHON=1
+	export PIP_NO_CACHE_DIR=off
 
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
