@@ -3,7 +3,7 @@
 
 EAPI="7"
 
-FIREFOX_PATCHSET="firefox-94-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-95-patches-02.tar.xz"
 
 LLVM_MAX_SLOT=13
 
@@ -65,13 +65,24 @@ KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 
 SLOT="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
-IUSE="+clang cpu_flags_arm_neon dbus debug eme-free geckodriver +gmp-autoupdate
-	hardened hwaccel jack lto +openh264 pgo pulseaudio screencast sndio selinux
-	+system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent
-	+system-libvpx +system-webp wayland wifi"
+
+IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
+IUSE+=" jack lto +openh264 pgo pulseaudio sndio selinux"
+IUSE+=" system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
+IUSE+=" wayland wifi"
+
+# Firefox-only IUSE
+IUSE+=" geckodriver"
+IUSE+=" +gmp-autoupdate"
+IUSE+=" screencast"
 
 REQUIRED_USE="debug? ( !system-av1 )
-	screencast? ( wayland )"
+	pgo? ( lto )
+	wayland? ( dbus )
+	wifi? ( dbus )"
+
+# Firefox-only REQUIRED_USE flags
+REQUIRED_USE+=" screencast? ( wayland )"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
@@ -90,7 +101,7 @@ BDEPEND="${PYTHON_DEPS}
 	x86? ( >=dev-lang/nasm-2.13 )"
 
 CDEPEND="
-	>=dev-libs/nss-3.71
+	>=dev-libs/nss-3.72
 	>=dev-libs/nspr-4.32
 	dev-libs/atk
 	dev-libs/expat
@@ -98,7 +109,6 @@ CDEPEND="
 	>=x11-libs/gtk+-3.4.0:3[X]
 	x11-libs/gdk-pixbuf
 	>=x11-libs/pango-1.22.0
-	>=media-libs/libpng-1.6.35:0=[apng]
 	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
 	>=media-libs/freetype-2.4.10
@@ -123,7 +133,7 @@ CDEPEND="
 	)
 	screencast? ( media-video/pipewire:0/0.3 )
 	system-av1? (
-		>=media-libs/dav1d-0.8.1:=
+		>=media-libs/dav1d-0.9.3:=
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
@@ -134,6 +144,7 @@ CDEPEND="
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
+	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	wifi? (
 		kernel_linux? (
@@ -180,19 +191,19 @@ fi
 
 llvm_check_deps() {
 	if ! has_version -b "sys-devel/clang:${LLVM_SLOT}" ; then
-		ewarn "sys-devel/clang:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+		einfo "sys-devel/clang:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 		return 1
 	fi
 
 	if use clang ; then
 		if ! has_version -b "=sys-devel/lld-${LLVM_SLOT}*" ; then
-			ewarn "=sys-devel/lld-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			einfo "=sys-devel/lld-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
 
 		if use pgo ; then
 			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*" ; then
-				ewarn "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 				return 1
 			fi
 		fi
@@ -202,14 +213,49 @@ llvm_check_deps() {
 }
 
 MOZ_LANGS=(
-	ach af an ar ast az be bg bn br bs ca-valencia ca cak cs cy
-	da de dsb el en-CA en-GB en-US eo es-AR es-CL es-ES es-MX et eu
-	fa ff fi fr fy-NL ga-IE gd gl gn gu-IN he hi-IN hr hsb hu hy-AM
-	ia id is it ja ka kab kk km kn ko lij lt lv mk mr ms my
-	nb-NO ne-NP nl nn-NO oc pa-IN pl pt-BR pt-PT rm ro ru
-	si sk sl son sq sr sv-SE szl ta te th tl tr trs uk ur uz vi
-	xh zh-CN zh-TW
+	af ar ast be bg br ca cak cs cy da de dsb
+	el en-CA en-GB en-US es-AR es-ES et eu
+	fi fr fy-NL ga-IE gd gl he hr hsb hu
+	id is it ja ka kab kk ko lt lv ms nb-NO nl nn-NO
+	pa-IN pl pt-BR pt-PT rm ro ru
+	sk sl sq sr sv-SE th tr uk uz vi zh-CN zh-TW
 )
+
+# Firefox-only LANGS
+MOZ_LANGS+=( ach )
+MOZ_LANGS+=( an )
+MOZ_LANGS+=( az )
+MOZ_LANGS+=( bn )
+MOZ_LANGS+=( bs )
+MOZ_LANGS+=( ca-valencia )
+MOZ_LANGS+=( eo )
+MOZ_LANGS+=( es-CL )
+MOZ_LANGS+=( es-MX )
+MOZ_LANGS+=( fa )
+MOZ_LANGS+=( ff )
+MOZ_LANGS+=( gn )
+MOZ_LANGS+=( gu-IN )
+MOZ_LANGS+=( hi-IN )
+MOZ_LANGS+=( hy-AM )
+MOZ_LANGS+=( ia )
+MOZ_LANGS+=( km )
+MOZ_LANGS+=( kn )
+MOZ_LANGS+=( lij )
+MOZ_LANGS+=( mk )
+MOZ_LANGS+=( mr )
+MOZ_LANGS+=( my )
+MOZ_LANGS+=( ne-NP )
+MOZ_LANGS+=( oc )
+MOZ_LANGS+=( sco )
+MOZ_LANGS+=( si )
+MOZ_LANGS+=( son )
+MOZ_LANGS+=( szl )
+MOZ_LANGS+=( ta )
+MOZ_LANGS+=( te )
+MOZ_LANGS+=( tl )
+MOZ_LANGS+=( trs )
+MOZ_LANGS+=( ur )
+MOZ_LANGS+=( xh )
 
 mozilla_set_globals() {
 	# https://bugs.gentoo.org/587334
@@ -637,11 +683,11 @@ src_configure() {
 		--prefix="${EPREFIX}/usr" \
 		--target="${CHOST}" \
 		--without-ccache \
+		--without-wasm-sandboxed-libraries \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
 		--with-system-nspr \
 		--with-system-nss \
-		--with-system-png \
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
 		--with-unsigned-addon-scopes=app,system \
@@ -700,6 +746,7 @@ src_configure() {
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent system-libevent "${SYSROOT}${EPREFIX}/usr"
 	mozconfig_use_with system-libvpx
+	mozconfig_use_with system-png
 	mozconfig_use_with system-webp
 
 	mozconfig_use_enable dbus
@@ -740,6 +787,7 @@ src_configure() {
 		else
 			# ThinLTO is currently broken, see bmo#1644409
 			mozconfig_add_options_ac '+lto' --enable-lto=full
+			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 
 		if use pgo ; then
@@ -875,6 +923,7 @@ src_configure() {
 
 	# Use system's Python environment
 	export MACH_USE_SYSTEM_PYTHON=1
+	export PIP_NO_CACHE_DIR=off
 
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
@@ -1155,10 +1204,10 @@ pkg_postinst() {
 
 	if [[ -n "${show_shortcut_information}" ]] ; then
 		elog
-		elog "Since firefox-91.0 we no longer install multiple shortcuts for"
+		elog "Since ${PN}-91.0 we no longer install multiple shortcuts for"
 		elog "each supported display protocol.  Instead we will only install"
-		elog "one generic Mozilla Firefox shortcut."
-		elog "If you still want to be able to select between running Mozilla Firefox"
+		elog "one generic Mozilla ${PN^} shortcut."
+		elog "If you still want to be able to select between running ${PN^}"
 		elog "on X11 or Wayland, you have to re-create these shortcuts on your own."
 	fi
 }
