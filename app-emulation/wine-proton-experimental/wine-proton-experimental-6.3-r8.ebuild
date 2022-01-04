@@ -34,7 +34,7 @@ SRC_URI="${SRC_URI}
 
 LICENSE="LGPL-2.1"
 SLOT="${PV}"
-IUSE="+abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos elibc_glibc +fontconfig +gecko gphoto2 gssapi gstreamer kerberos kernel_FreeBSD ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama"
+IUSE="abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos elibc_glibc +fontconfig +gecko gphoto2 gssapi gstreamer kerberos kernel_FreeBSD ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama"
 REQUIRED_USE="|| ( abi_x86_32 abi_x86_64 )
 	X? ( truetype )
 	elibc_glibc? ( threads )
@@ -318,6 +318,9 @@ src_prepare() {
 
 	default
 	eapply_bin
+    echo $PWD
+    ${WORKDIR}/wine-6.3/tools/make_requests
+    autoreconf -f
 	eautoreconf
 
 	# Modification of the server protocol requires regenerating the server requests
@@ -367,6 +370,10 @@ src_prepare() {
 src_configure() {
 	wine_compiler_check || die
 
+	echo $PWD 
+    ${WORKDIR}/wine-6.3/tools/make_requests
+    autoreconf -f
+
 	export LDCONFIG=/bin/true
 	use custom-cflags || strip-flags
 	if use mingw; then
@@ -377,6 +384,8 @@ src_configure() {
 }
 
 multilib_src_configure() {
+    ${WORKDIR}/wine-6.3/tools/make_requests
+    autoreconf -f
 	local myconf=(
 		--prefix="${MY_PREFIX}"
 		--datarootdir="${MY_DATAROOTDIR}"
@@ -447,6 +456,8 @@ multilib_src_configure() {
 
 	ECONF_SOURCE=${S} \
 	econf "${myconf[@]}"
+	${WORKDIR}/wine-6.3/tools/make_requests
+    autoreconf -f
 	emake depend
 }
 
