@@ -8,7 +8,7 @@ MULTILIB_COMPAT=( abi_x86_{32,64} )
 inherit meson multilib-minimal flag-o-matic
 
 DESCRIPTION="A Vulkan-based translation layer for Direct3D 10/11"
-HOMEPAGE="https://github.com/doitsujin/vkd3d"
+HOMEPAGE="https://github.com/HansKristian-Work/vkd3d-proton"
 
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="https://github.com/HansKristian-Work/vkd3d-proton.git"
