@@ -57,8 +57,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0008-typec-displayport-some-devices-have-pin-assignments-reversed-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0009-Add-megis-extcon-changes-to-fusb302.patch
 	->  0009-Add-megis-extcon-changes-to-fusb302-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0010-ASoC-rockchip-i2s_tdm-Dup-static-DAI-template.patch
-	-> 0010-ASoC-rockchip-i2s_tdm-Dup-static-DAI-template-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0010-usb-typec-Add-megis-typex-to-extcon-bridge-driver.patch
 	-> 0010-usb-typec-Add-megis-typex-to-extcon-bridge-driver.patch-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0014-arm64-dts-rockchip-add-typec-extcon-hack.patch
