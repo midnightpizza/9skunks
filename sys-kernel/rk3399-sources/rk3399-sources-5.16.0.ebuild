@@ -75,12 +75,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0020-drm-rockchip-support-gamma-control-on-RK3399-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0021-media-rockchip-rga-do-proper-error-checking-in-probe.patch
 	-> 0021-media-rockchip-rga-do-proper-error-checking-in-probe-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0022-arm-dts-rockchip-firefly-station-m2.patch
-	-> 0022-arm-dts-rockchip-firefly-station-m2-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0023-add-dts-rk3568-station-p2.patch
-	-> 0023-add-dts-rk3568-station-p2-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0024-add-dts-rk3568-radxa-rock3a.patch
-	-> 0024-add-dts-rk3568-radxa-rock3a-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0007-enable-jack-detection-pinetab.patch
 	-> 0007-enable-jack-detection-pinetab-${PV}.patch"
 
