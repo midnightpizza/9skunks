@@ -22,7 +22,7 @@ RDEPEND="
 	dev-libs/boost:=
 	dev-libs/glib:2
 	dev-libs/libsigc++:2
-	media-libs/mesa[egl]
+	media-libs/mesa
 	sys-apps/pciutils
 	x11-libs/gtk+:3
 	x11-libs/libdrm
