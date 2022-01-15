@@ -3,7 +3,7 @@
 
 EAPI="7"
 
-FIREFOX_PATCHSET="firefox-95-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-96-patches-01.tar.xz"
 
 LLVM_MAX_SLOT=13
 
@@ -90,7 +90,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.19.0
 	>=net-libs/nodejs-10.23.1
 	virtual/pkgconfig
-	>=virtual/rust-1.51.0
+	virtual/rust
 	sys-devel/clang
 	sys-devel/llvm
 	clang? (
@@ -131,7 +131,7 @@ CDEPEND="
 		sys-apps/dbus
 		dev-libs/dbus-glib
 	)
-	screencast? ( media-video/pipewire:0/0.3 )
+	screencast? ( media-video/pipewire:= )
 	system-av1? (
 		>=media-libs/dav1d-0.9.3:=
 		>=media-libs/libaom-1.0.0:=
@@ -658,6 +658,9 @@ src_configure() {
 
 	# python/mach/mach/mixin/process.py fails to detect SHELL
 	export SHELL="${EPREFIX}/bin/bash"
+
+	# Set state path
+	export MOZBUILD_STATE_PATH="${BUILD_DIR}"
 
 	# Set MOZCONFIG
 	export MOZCONFIG="${S}/.mozconfig"

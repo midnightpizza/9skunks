@@ -49,10 +49,6 @@ END
   # Remove some pre-installed addons that might be questionable
   eapply "${WORKDIR}/patches/remove_addons.patch"
 
-  # Disable (some) megabar functionality
-  # Adapted from https://github.com/WesleyBranton/userChrome.css-Customizations
-  eapply "${WORKDIR}/patches/megabar.patch"
-
   # Disabling Pocket
   sed -i "s/'pocket'/#'pocket'/g" "${S}"/browser/components/moz.build
 
@@ -60,6 +56,12 @@ END
 
   # Remove mozilla vpn ads
   eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
+
+  # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)   
+  eapply "${WORKDIR}/patches/mozilla_dirs.patch"
+
+  eapply "${WORKDIR}/patches/allow-ubo-private-mode.patch"
+
 
   # this one only to remove an annoying error message:
   sed -i 's#SaveToPocket.init();#// SaveToPocket.init();#g' "${S}"/browser/components/BrowserGlue.jsm
@@ -116,9 +118,11 @@ librewolf-r1_src_unpack() {
 	# after 89 patches were moved to 'common'
 	patch_list=(
 		"remove_addons.patch"
-		"megabar.patch"
 		"context-menu.patch"
 		"mozilla-vpn-ad.patch"
+		"megabar.patch"
+		"mozilla_dirs.patch"
+		"allow-ubo-private-mode.patch"
 	)
 
 	if ver_test -lt "91.0"; then
