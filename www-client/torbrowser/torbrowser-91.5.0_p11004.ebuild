@@ -24,7 +24,7 @@ TOR_PV="11.0.4"
 TOR_TAG="11.0-1-build1"
 TORLAUNCHER_VERSION="0.2.32"
 HTTPSEVERYWHERE_VERSION="2021.7.13"
-NOSCRIPT_VERSION="11.2.11"
+NOSCRIPT_VERSION="11.2.14"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils llvm \
 	multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
