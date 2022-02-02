@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
@@ -34,7 +34,7 @@ SRC_URI="${SRC_URI}
 
 LICENSE="LGPL-2.1"
 SLOT="${PV}"
-IUSE="abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos elibc_glibc +fontconfig +gecko gphoto2 gssapi gstreamer kerberos kernel_FreeBSD ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama"
+IUSE="abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos +faudio +fontconfig +gecko gphoto2 gsm gssapi gstreamer +jpeg kerberos +lcms ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap +png prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama +xml"
 REQUIRED_USE="|| ( abi_x86_32 abi_x86_64 )
 	X? ( truetype )
 	elibc_glibc? ( threads )
@@ -58,18 +58,20 @@ COMMON_DEPEND="
 	alsa? ( media-libs/alsa-lib[${MULTILIB_USEDEP}] )
 	capi? ( net-libs/libcapi[${MULTILIB_USEDEP}] )
 	cups? ( net-print/cups:=[${MULTILIB_USEDEP}] )
+	faudio? ( app-emulation/faudio:=[${MULTILIB_USEDEP}] )
 	fontconfig? ( media-libs/fontconfig:=[${MULTILIB_USEDEP}] )
-	gphoto2? (
-		media-libs/libgphoto2:=[${MULTILIB_USEDEP}]
-		virtual/jpeg:0=[${MULTILIB_USEDEP}]
-	)
+	gphoto2? ( media-libs/libgphoto2:=[${MULTILIB_USEDEP}] )
+	gsm? ( media-sound/gsm:=[${MULTILIB_USEDEP}] )
 	gssapi? ( virtual/krb5[${MULTILIB_USEDEP}] )
 	gstreamer? (
 		media-libs/gstreamer:1.0[${MULTILIB_USEDEP}]
 		media-plugins/gst-plugins-meta:1.0[${MULTILIB_USEDEP}]
 	)
+	jpeg? ( virtual/jpeg:0=[${MULTILIB_USEDEP}] )
 	kerberos? ( virtual/krb5[${MULTILIB_USEDEP}] )
+	lcms? ( media-libs/lcms:2=[${MULTILIB_USEDEP}] )
 	ldap? ( net-nds/openldap:=[${MULTILIB_USEDEP}] )
+	mp3? ( >=media-sound/mpg123-1.5.0[${MULTILIB_USEDEP}] )
 	netapi? ( net-fs/samba[netapi(+),${MULTILIB_USEDEP}] )
 	nls? ( sys-devel/gettext[${MULTILIB_USEDEP}] )
 	odbc? ( dev-db/unixODBC:=[${MULTILIB_USEDEP}] )
@@ -93,7 +95,11 @@ COMMON_DEPEND="
 	vkd3d? ( >=app-emulation/vkd3d-1.2[${MULTILIB_USEDEP}] )
 	vulkan? ( media-libs/vulkan-loader[${MULTILIB_USEDEP}] )
 	xcomposite? ( x11-libs/libXcomposite[${MULTILIB_USEDEP}] )
-	xinerama? ( x11-libs/libXinerama[${MULTILIB_USEDEP}] )"
+	xinerama? ( x11-libs/libXinerama[${MULTILIB_USEDEP}] )
+	xml? (
+		dev-libs/libxml2[${MULTILIB_USEDEP}]
+		dev-libs/libxslt[${MULTILIB_USEDEP}]
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	app-emulation/wine-desktop-common
@@ -101,7 +107,7 @@ RDEPEND="${COMMON_DEPEND}
 	!app-emulation/wine:0
 	dos? ( >=games-emulation/dosbox-0.74_p20160629 )
 	gecko? ( app-emulation/wine-gecko:2.47.2[abi_x86_32?,abi_x86_64?] )
-	mono? ( app-emulation/wine-mono:7.0.0 )
+	mono? ( app-emulation/wine-mono:5.1.1 )
 	perl? (
 		dev-lang/perl
 		dev-perl/XML-Simple
@@ -399,20 +405,25 @@ multilib_src_configure() {
 		--sysconfdir="${EPREFIX}/etc/wine"
 		$(use_with alsa)
 		$(use_with capi)
+		$(use_with lcms cms)
 		$(use_with cups)
 		$(use_with udisks dbus)
+		$(use_with faudio)
 		$(use_with fontconfig)
 		$(use_with ssl gnutls)
 		$(use_enable gecko mshtml)
 		$(use_with gphoto2 gphoto)
+		$(use_with gsm)
 		$(use_with gssapi)
 		$(use_with gstreamer)
 		--without-hal
+		$(use_with jpeg)
 		$(use_with kerberos krb5)
 		$(use_with ldap)
 		# TODO: Will bug 685172 still need special handling?
 		$(use_with mingw)
 		$(use_enable mono mscoree)
+		$(use_with mp3 mpg123)
 		$(use_with netapi)
 		$(use_with nls gettext)
 		$(use_with openal)
@@ -421,6 +432,7 @@ multilib_src_configure() {
 		$(use_with osmesa)
 		$(use_with oss)
 		$(use_with pcap)
+		$(use_with png)
 		$(use_with pulseaudio pulse)
 		$(use_with threads pthread)
 		$(use_with scanner sane)
@@ -437,6 +449,8 @@ multilib_src_configure() {
 		$(use_with X xfixes)
 		$(use_with xcomposite)
 		$(use_with xinerama)
+		$(use_with xml)
+		$(use_with xml xslt)
 	)
 
 	local PKG_CONFIG
@@ -454,10 +468,10 @@ multilib_src_configure() {
 		# CC/LD hackery. We're using separate tools instead.
 	fi
 
+	${WORKDIR}/wine-6.3/tools/make_requests
+	autoreconf -f
 	ECONF_SOURCE=${S} \
 	econf "${myconf[@]}"
-	${WORKDIR}/wine-6.3/tools/make_requests
-    autoreconf -f
 	emake depend
 }
 
@@ -489,6 +503,24 @@ multilib_src_install_all() {
 	if ! use perl ; then # winedump calls function_grep.pl, and winemaker is a perl script
 		rm "${D%/}${MY_PREFIX}"/bin/{wine{dump,maker},function_grep.pl} \
 			"${D%/}${MY_MANDIR}"/man1/wine{dump,maker}.1 || die
+	fi
+
+	# Remove wineconsole if neither backend is installed #551124
+	if ! use X; then
+		rm "${D%/}${MY_PREFIX}"/bin/wineconsole* || die
+		rm "${D%/}${MY_MANDIR}"/man1/wineconsole* || die
+
+		if ! use mingw; then
+			rm_wineconsole() {
+				rm "${D%/}/usr/$(get_libdir)/wine-${WINE_VARIANT}"/wine/{,fakedlls/}wineconsole.exe* || die
+			}
+		else
+			rm_wineconsole() {
+				rm "${D%/}/usr/$(get_libdir)/wine-${WINE_VARIANT}"/wine/wineconsole.exe* || die
+			}
+		fi
+
+		multilib_foreach_abi rm_wineconsole
 	fi
 
 	use abi_x86_32 && pax-mark psmr "${D%/}${MY_PREFIX}"/bin/wine{,-preloader} #255055
