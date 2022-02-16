@@ -12,18 +12,18 @@ MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton_6.3"
-	EGIT_OVERRIDE_BRANCH_VALVESOFTWARE_WINE="proton_6.3"
-	EGIT_OVERRIDE_COMMIT_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
-	EGIT_OVERRIDE_COMMIT_VALVESOFTWARE_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
+	EGIT_BRANCH="proton_7.0"
+	EGIT_OVERRIDE_BRANCH_VALVESOFTWARE_WINE="proton_7.0"
+#	EGIT_OVERRIDE_COMMIT_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
+#	EGIT_OVERRIDE_COMMIT_VALVESOFTWARE_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
 	inherit git-r3
 	SRC_URI=""
-	KEYWORDS="~amd64"
+	KEYWORDS=""
 
 
 S="${WORKDIR}/${MY_P}"
 
-GWP_V="20200523"
+GWP_V="20211122"
 PATCHDIR="${WORKDIR}/gentoo-wine-patches"
 
 DESCRIPTION="Free implementation of Windows(tm) on Unix, with valve trash"
@@ -34,7 +34,7 @@ SRC_URI="${SRC_URI}
 
 LICENSE="LGPL-2.1"
 SLOT="${PV}"
-IUSE="+abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos +faudio +fontconfig +gecko gphoto2 gsm gssapi gstreamer +jpeg kerberos +lcms ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap +png prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama +xml"
+IUSE="abi_x86_32 +abi_x86_64 +alsa capi cups custom-cflags dos elibc_glibc +fontconfig +gecko gphoto2 gssapi gstreamer kerberos kernel_FreeBSD ldap mingw +mono mp3 netapi nls odbc openal opencl +opengl osmesa oss +perl pcap prelink pulseaudio +realtime +run-exes samba scanner sdl selinux +ssl test +threads +truetype udev +udisks +unwind usb v4l vkd3d vulkan +X +xcomposite xinerama"
 REQUIRED_USE="|| ( abi_x86_32 abi_x86_64 )
 	X? ( truetype )
 	elibc_glibc? ( threads )
@@ -58,32 +58,28 @@ COMMON_DEPEND="
 	alsa? ( media-libs/alsa-lib[${MULTILIB_USEDEP}] )
 	capi? ( net-libs/libcapi[${MULTILIB_USEDEP}] )
 	cups? ( net-print/cups:=[${MULTILIB_USEDEP}] )
-	faudio? ( app-emulation/faudio:=[${MULTILIB_USEDEP}] )
 	fontconfig? ( media-libs/fontconfig:=[${MULTILIB_USEDEP}] )
-	gphoto2? ( media-libs/libgphoto2:=[${MULTILIB_USEDEP}] )
-	gsm? ( media-sound/gsm:=[${MULTILIB_USEDEP}] )
+	gphoto2? (
+		media-libs/libgphoto2:=[${MULTILIB_USEDEP}]
+		virtual/jpeg:0=[${MULTILIB_USEDEP}]
+	)
 	gssapi? ( virtual/krb5[${MULTILIB_USEDEP}] )
 	gstreamer? (
 		media-libs/gstreamer:1.0[${MULTILIB_USEDEP}]
 		media-plugins/gst-plugins-meta:1.0[${MULTILIB_USEDEP}]
 	)
-	jpeg? ( virtual/jpeg:0=[${MULTILIB_USEDEP}] )
 	kerberos? ( virtual/krb5[${MULTILIB_USEDEP}] )
-	lcms? ( media-libs/lcms:2=[${MULTILIB_USEDEP}] )
 	ldap? ( net-nds/openldap:=[${MULTILIB_USEDEP}] )
-	mp3? ( >=media-sound/mpg123-1.5.0[${MULTILIB_USEDEP}] )
 	netapi? ( net-fs/samba[netapi(+),${MULTILIB_USEDEP}] )
 	nls? ( sys-devel/gettext[${MULTILIB_USEDEP}] )
 	odbc? ( dev-db/unixODBC:=[${MULTILIB_USEDEP}] )
 	openal? ( media-libs/openal:=[${MULTILIB_USEDEP}] )
 	opencl? ( virtual/opencl[${MULTILIB_USEDEP}] )
 	opengl? (
-		virtual/glu[${MULTILIB_USEDEP}]
 		virtual/opengl[${MULTILIB_USEDEP}]
 	)
 	osmesa? ( >=media-libs/mesa-13[osmesa,${MULTILIB_USEDEP}] )
 	pcap? ( net-libs/libpcap[${MULTILIB_USEDEP}] )
-	png? ( media-libs/libpng:0=[${MULTILIB_USEDEP}] )
 	pulseaudio? ( media-sound/pulseaudio[${MULTILIB_USEDEP}] )
 	scanner? ( media-gfx/sane-backends:=[${MULTILIB_USEDEP}] )
 	sdl? ( media-libs/libsdl2:=[haptic,joystick,${MULTILIB_USEDEP}] )
@@ -97,11 +93,7 @@ COMMON_DEPEND="
 	vkd3d? ( >=app-emulation/vkd3d-1.2[${MULTILIB_USEDEP}] )
 	vulkan? ( media-libs/vulkan-loader[${MULTILIB_USEDEP}] )
 	xcomposite? ( x11-libs/libXcomposite[${MULTILIB_USEDEP}] )
-	xinerama? ( x11-libs/libXinerama[${MULTILIB_USEDEP}] )
-	xml? (
-		dev-libs/libxml2[${MULTILIB_USEDEP}]
-		dev-libs/libxslt[${MULTILIB_USEDEP}]
-	)"
+	xinerama? ( x11-libs/libXinerama[${MULTILIB_USEDEP}] )"
 
 RDEPEND="${COMMON_DEPEND}
 	app-emulation/wine-desktop-common
@@ -109,7 +101,7 @@ RDEPEND="${COMMON_DEPEND}
 	!app-emulation/wine:0
 	dos? ( >=games-emulation/dosbox-0.74_p20160629 )
 	gecko? ( app-emulation/wine-gecko:2.47.2[abi_x86_32?,abi_x86_64?] )
-	mono? ( app-emulation/wine-mono:5.1.1 )
+	mono? ( app-emulation/wine-mono:7.0.0 )
 	perl? (
 		dev-lang/perl
 		dev-perl/XML-Simple
@@ -139,9 +131,10 @@ usr/share/applications/wine-uninstaller.desktop
 usr/share/applications/wine-winecfg.desktop"
 
 PATCHES=(
-	"${PATCHDIR}/patches/${MY_PN}-5.0-winegcc.patch" #260726
+	"${PATCHDIR}/patches/${MY_PN}-6.22-winegcc.patch" #260726
 	"${PATCHDIR}/patches/${MY_PN}-4.7-multilib-portage.patch" #395615
-	"${PATCHDIR}/patches/${MY_PN}-2.0-multislot-apploader.patch" #310611
+	"${PATCHDIR}/patches/${MY_PN}-2.0-multislot-apploader.patch" #31061
+	"${FILESDIR}/65-proton-fake_current_res_patches.patch"
 )
 PATCHES_BIN=()
 
@@ -327,7 +320,7 @@ src_prepare() {
 	default
 	eapply_bin
     echo $PWD
-    ${WORKDIR}/wine-6.3/tools/make_requests
+    ${WORKDIR}/wine-7.0/tools/make_requests
     autoreconf -f
 	eautoreconf
 
@@ -379,7 +372,7 @@ src_configure() {
 	wine_compiler_check || die
 
 	echo $PWD 
-    ${WORKDIR}/wine-6.3/tools/make_requests
+    ${WORKDIR}/wine-7.0/tools/make_requests
     autoreconf -f
 
 	export LDCONFIG=/bin/true
@@ -392,7 +385,7 @@ src_configure() {
 }
 
 multilib_src_configure() {
-    ${WORKDIR}/wine-6.3/tools/make_requests
+    ${WORKDIR}/wine-7.0/tools/make_requests
     autoreconf -f
 	local myconf=(
 		--prefix="${MY_PREFIX}"
@@ -407,25 +400,20 @@ multilib_src_configure() {
 		--sysconfdir="${EPREFIX}/etc/wine"
 		$(use_with alsa)
 		$(use_with capi)
-		$(use_with lcms cms)
 		$(use_with cups)
 		$(use_with udisks dbus)
-		$(use_with faudio)
 		$(use_with fontconfig)
 		$(use_with ssl gnutls)
 		$(use_enable gecko mshtml)
 		$(use_with gphoto2 gphoto)
-		$(use_with gsm)
 		$(use_with gssapi)
 		$(use_with gstreamer)
 		--without-hal
-		$(use_with jpeg)
 		$(use_with kerberos krb5)
 		$(use_with ldap)
 		# TODO: Will bug 685172 still need special handling?
 		$(use_with mingw)
 		$(use_enable mono mscoree)
-		$(use_with mp3 mpg123)
 		$(use_with netapi)
 		$(use_with nls gettext)
 		$(use_with openal)
@@ -434,7 +422,6 @@ multilib_src_configure() {
 		$(use_with osmesa)
 		$(use_with oss)
 		$(use_with pcap)
-		$(use_with png)
 		$(use_with pulseaudio pulse)
 		$(use_with threads pthread)
 		$(use_with scanner sane)
@@ -451,8 +438,6 @@ multilib_src_configure() {
 		$(use_with X xfixes)
 		$(use_with xcomposite)
 		$(use_with xinerama)
-		$(use_with xml)
-		$(use_with xml xslt)
 	)
 
 	local PKG_CONFIG
@@ -470,7 +455,7 @@ multilib_src_configure() {
 		# CC/LD hackery. We're using separate tools instead.
 	fi
 
-    ${WORKDIR}/wine-6.3/tools/make_requests
+    ${WORKDIR}/wine-7.0/tools/make_requests
     autoreconf -f
 	ECONF_SOURCE=${S} \
 	econf "${myconf[@]}"
