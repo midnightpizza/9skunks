@@ -41,8 +41,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1014-drm-rockchip-support-gamma-control-on-RK3399-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1015-media-rockchip-rga-do-proper-error-checking-in-probe.patch
 	-> 1015-media-rockchip-rga-do-proper-error-checking-in-probe-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1016-arm-dts-rockchip-firefly-station-m2.patch
-	-> 1016-arm-dts-rockchip-firefly-station-m2-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1019-arm64-dts-rockchip-switch-to-hs200-on-rockpi4.patch
 	-> 1019-arm64-dts-rockchip-switch-to-hs200-on-rockpi4-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1022-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
