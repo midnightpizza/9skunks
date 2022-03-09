@@ -43,10 +43,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1015-media-rockchip-rga-do-proper-error-checking-in-probe-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1016-arm-dts-rockchip-firefly-station-m2.patch
 	-> 1016-arm-dts-rockchip-firefly-station-m2-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1017-add-dts-rk3568-station-p2.patch
-	-> 1017-add-dts-rk3568-station-p2-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1018-add-dts-rk3568-radxa-rock3a.patch
-	-> 1018-add-dts-rk3568-radxa-rock3a-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1019-arm64-dts-rockchip-switch-to-hs200-on-rockpi4.patch
 	-> 1019-arm64-dts-rockchip-switch-to-hs200-on-rockpi4-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1022-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
