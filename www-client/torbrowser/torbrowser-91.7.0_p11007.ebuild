@@ -3,11 +3,11 @@
 
 EAPI="7"
 
-FIREFOX_PATCHSET="firefox-91esr-patches-03.tar.xz"
+FIREFOX_PATCHSET="firefox-91esr-patches-05j.tar.xz"
 
 LLVM_MAX_SLOT=13
 
-PYTHON_COMPAT=( python3_{7..10} )
+PYTHON_COMPAT=( python3_{8..10} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -20,11 +20,11 @@ MOZ_PV="${PV/_p*}esr"
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-11.0#n2
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/https-everywhere/config?h=maint-11.0#n2
 # and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-11.0#n81
-TOR_PV="11.0.3"
-TOR_TAG="11.0-1-build1"
-TORLAUNCHER_VERSION="0.2.32"
+TOR_PV="11.0.7"
+TOR_TAG="11.0-1-build2"
+TORLAUNCHER_VERSION="0.2.33"
 HTTPSEVERYWHERE_VERSION="2021.7.13"
-NOSCRIPT_VERSION="11.2.11"
+NOSCRIPT_VERSION="11.3.7"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils llvm \
 	multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
@@ -92,7 +92,7 @@ BDEPEND="${PYTHON_DEPS}
 	amd64? ( >=dev-lang/nasm-2.15.05 )
 	x86? ( >=dev-lang/nasm-2.15.05 )"
 
-CDEPEND="
+COMMON_DEPEND="
 	>=dev-libs/nss-3.70
 	>=dev-libs/nspr-4.32
 	dev-libs/atk
@@ -369,7 +369,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	rm -v "${WORKDIR}/firefox-patches/0045-bmo-1715254-Deny-clone3-to-force-glibc-fallback.patch"
 	eapply "${WORKDIR}/firefox-patches"
 
 	# Revert "Change the default Firefox profile directory to be TBB-relative"
@@ -378,6 +377,9 @@ src_prepare() {
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
+
+	# Make cargo respect MAKEOPTS
+	export CARGO_BUILD_JOBS="$(makeopts_jobs)"
 
 	# Make LTO respect MAKEOPTS
 	sed -i \
