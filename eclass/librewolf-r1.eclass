@@ -55,7 +55,7 @@ END
   eapply "${WORKDIR}/patches/context-menu.patch"
 
   # Remove mozilla vpn ads
-  # eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
+  #eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
 
   # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)   
   eapply "${WORKDIR}/patches/mozilla_dirs.patch"
