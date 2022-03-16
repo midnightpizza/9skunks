@@ -115,11 +115,11 @@ librewolf-r1_src_unpack() {
 
 	# Grab patches
 	# pre-89 patches can be grabed from the 'linux' librewolf repository
-	# after 89 patches were moved to 'common'
+	# after 89 patches were moved to 'common' 
+        #"mozilla-vpn-ad.patch"
 	patch_list=(
 		"remove_addons.patch"
 		"context-menu.patch"
-		"mozilla-vpn-ad.patch"
 		"megabar.patch"
 		"mozilla_dirs.patch"
 		"allow-ubo-private-mode.patch"
