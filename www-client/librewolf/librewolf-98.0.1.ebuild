@@ -160,7 +160,7 @@ COMMON_DEPEND="
 	selinux? ( sec-policy/selinux-mozilla )
 	sndio? ( media-sound/sndio )"
 
-RDEPEND="${CDEPEND}
+RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
 	openh264? ( media-libs/openh264:*[plugin] )
 	pulseaudio? (
@@ -556,6 +556,11 @@ src_unpack() {
 src_prepare() {
 	use lto && rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch
 	eapply "${WORKDIR}/firefox-patches"
+	if use pgo; then
+		einfo "Reverting 'remove-internal-plugin-certs.patch' for PGO"
+		einfo "See: https://gitlab.com/librewolf-community/browser/gentoo/-/issues/39"
+		eapply "${FILESDIR}/revert-remove-internal-plugin-certs.patch"
+	fi
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -938,6 +943,7 @@ src_configure() {
 	# Use system's Python environment
 	export MACH_USE_SYSTEM_PYTHON=1
 	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_MACH_SITE=1
+	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_BUILD_SITE=1
 	export PIP_NO_CACHE_DIR=off
 
 	# Disable notification when build system has finished
@@ -1011,6 +1017,12 @@ src_install() {
 
 	DESTDIR="${D}" ./mach install || die
 
+	## LibreWolf
+	# For some reason 'local-settings.js' doesn't get properly packaged.
+	# Install it manually
+	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	# doins "${S}/lw/local-settings.js"
+
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
 	dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
@@ -1020,16 +1032,17 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
+	## Disabled for LibreWolf
 	# Install policy (currently only used to disable application updates)
-	insinto "${MOZILLA_FIVE_HOME}/distribution"
-	newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
+	# insinto "${MOZILLA_FIVE_HOME}/distribution"
+	# newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
 
 	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
 	insinto "${PREFS_DIR}"
-	newins "${FILESDIR}"/gentoo-default-prefs.js all-gentoo.js
+	newins "${FILESDIR}"/gentoo-default-prefs.js gentoo-prefs.js
 
-	local GENTOO_PREFS="${ED}${PREFS_DIR}/all-gentoo.js"
+	local GENTOO_PREFS="${ED}${PREFS_DIR}/gentoo-prefs.js"
 
 	# Set dictionary path to use system hunspell
 	cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set spellchecker.dictionary_path pref"
