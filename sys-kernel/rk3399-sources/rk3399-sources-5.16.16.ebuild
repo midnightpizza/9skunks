@@ -25,8 +25,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1005-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1004-gpu-drm-add-new-display-resolution-2560x1440.patch
 	-> 1004-gpu-drm-add-new-display-resolution-2560x1440-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1005-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
-	-> 1005-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1006-arm64-dts-rockchip-Add-Firefly-Station-p1-support.patch
 	-> 1006-arm64-dts-rockchip-Add-Firefly-Station-p1-support-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-drm-rockchip-add-support-for-modeline-32MHz-e.patch
