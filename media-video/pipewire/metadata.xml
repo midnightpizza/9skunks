@@ -2,20 +2,20 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="project">
-		<email>gnome@gentoo.org</email>
+		<email></email>
 		<name>Gentoo GNOME Desktop</name>
 	</maintainer>
 	<maintainer type="person">
-		<email>sam@gentoo.org</email>
-		<name>Sam James</name>
+		<email></email>
+		<name></name>
 	</maintainer>
 	<maintainer type="person">
-		<email>asturm@gentoo.org</email>
-		<name>Andreas Sturmlechner</name>
+		<email></email>
+		<name></name>
 	</maintainer>
 	<maintainer type="person">
-		<email>whissi@gentoo.org</email>
-		<name>Thomas Deutschmann</name>
+		<email></email>
+		<name></name>
 	</maintainer>
 	<upstream>
 		<bugs-to>https://gitlab.freedesktop.org/pipewire/pipewire/-/issues</bugs-to>
