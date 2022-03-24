@@ -3,9 +3,9 @@
 
 EAPI="7"
 
-FIREFOX_PATCHSET="firefox-98-patches-03j.tar.xz"
+FIREFOX_PATCHSET="firefox-98-patches-04j.tar.xz"
 
-LLVM_MAX_SLOT=13
+LLVM_MAX_SLOT=14
 
 PYTHON_COMPAT=( python3_{8..10} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -68,7 +68,7 @@ LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
 IUSE+=" jack libproxy lto +openh264 pgo pulseaudio sndio selinux"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
+IUSE+=" system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
@@ -105,10 +105,7 @@ COMMON_DEPEND="
 	>=dev-libs/nspr-4.32
 	dev-libs/atk
 	dev-libs/expat
-	>=x11-libs/cairo-1.10[X]
-	>=x11-libs/gtk+-3.4.0:3[X]
-	x11-libs/gdk-pixbuf
-	>=x11-libs/pango-1.22.0
+	media-libs/alsa-lib
 	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
 	>=media-libs/freetype-2.9
@@ -119,6 +116,9 @@ COMMON_DEPEND="
 	>=sys-libs/zlib-1.2.3
 	>=dev-libs/libffi-3.0.10:=
 	media-video/ffmpeg
+	>=x11-libs/cairo-1.10[X]
+	>=x11-libs/gtk+-3.4.0:3[X]
+	x11-libs/gdk-pixbuf
 	x11-libs/libX11
 	x11-libs/libXcomposite
 	x11-libs/libXdamage
@@ -128,6 +128,7 @@ COMMON_DEPEND="
 	x11-libs/libXrender
 	x11-libs/libXtst
 	x11-libs/libxcb
+	>=x11-libs/pango-1.22.0
 	dbus? (
 		sys-apps/dbus
 		dev-libs/dbus-glib
@@ -159,7 +160,7 @@ COMMON_DEPEND="
 	selinux? ( sec-policy/selinux-mozilla )
 	sndio? ( media-sound/sndio )"
 
-RDEPEND="${CDEPEND}
+RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
 	openh264? ( media-libs/openh264:*[plugin] )
 	pulseaudio? (
@@ -435,19 +436,9 @@ pkg_setup() {
 			[[ -n ${version_lld} ]] && version_lld=$(ver_cut 1 "${version_lld}")
 			[[ -z ${version_lld} ]] && die "Failed to read ld.lld version!"
 
-			# temp fix for https://bugs.gentoo.org/768543
-			# we can assume that rust 1.{49,50}.0 always uses llvm 11
-			local version_rust=$(rustc -Vv 2>/dev/null | grep -F -- 'release:' | awk '{ print $2 }')
-			[[ -n ${version_rust} ]] && version_rust=$(ver_cut 1-2 "${version_rust}")
-			[[ -z ${version_rust} ]] && die "Failed to read version from rustc!"
-
-			if ver_test "${version_rust}" -ge "1.49" && ver_test "${version_rust}" -le "1.50" ; then
-				local version_llvm_rust="11"
-			else
-				local version_llvm_rust=$(rustc -Vv 2>/dev/null | grep -F -- 'LLVM version:' | awk '{ print $3 }')
-				[[ -n ${version_llvm_rust} ]] && version_llvm_rust=$(ver_cut 1 "${version_llvm_rust}")
-				[[ -z ${version_llvm_rust} ]] && die "Failed to read used LLVM version from rustc!"
-			fi
+			local version_llvm_rust=$(rustc -Vv 2>/dev/null | grep -F -- 'LLVM version:' | awk '{ print $3 }')
+			[[ -n ${version_llvm_rust} ]] && version_llvm_rust=$(ver_cut 1 "${version_llvm_rust}")
+			[[ -z ${version_llvm_rust} ]] && die "Failed to read used LLVM version from rustc!"
 
 			if ver_test "${version_lld}" -ne "${version_llvm_rust}" ; then
 				eerror "Rust is using LLVM version ${version_llvm_rust} but ld.lld version belongs to LLVM version ${version_lld}."
@@ -565,6 +556,11 @@ src_unpack() {
 src_prepare() {
 	use lto && rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch
 	eapply "${WORKDIR}/firefox-patches"
+	if use pgo; then
+		einfo "Reverting 'remove-internal-plugin-certs.patch' for PGO"
+		einfo "See: https://gitlab.com/librewolf-community/browser/gentoo/-/issues/39"
+		eapply "${FILESDIR}/revert-remove-internal-plugin-certs.patch"
+	fi
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -627,6 +623,7 @@ src_configure() {
 		einfo "Enforcing the use of clang due to USE=clang ..."
 		have_switched_compiler=yes
 		AR=llvm-ar
+		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -687,7 +684,6 @@ src_configure() {
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
 		--enable-release \
-		--enable-sandbox \
 		--enable-system-ffi \
 		--enable-system-pixman \
 		--host="${CBUILD:-${CHOST}}" \
@@ -713,6 +709,15 @@ src_configure() {
 
 	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
+	fi
+
+	# For future keywording: This is currently (97.0) only supported on:
+	# amd64, arm, arm64 & x86.
+	# Might want to flip the logic around if Firefox is to support more arches.
+	if use ppc64; then
+		mozconfig_add_options_ac '' --disable-sandbox
+	else
+		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
 	if [[ -s "${S}/api-google.key" ]] ; then
@@ -801,12 +806,7 @@ src_configure() {
 		else
 			# ThinLTO is currently broken, see bmo#1644409
 			mozconfig_add_options_ac '+lto' --enable-lto=full
-			if tc-ld-is-gold; then
-				mozconfig_add_options_ac "linker is set to gold" --enable-linker=gold
-				export MOZ_FORCE_GOLD=1
-			else
-				mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
-			fi
+			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 
 		if use pgo ; then
@@ -823,12 +823,7 @@ src_configure() {
 			# This is upstream's default
 			mozconfig_add_options_ac "forcing ld=lld due to USE=clang" --enable-linker=lld
 		else
-			if tc-ld-is-gold; then
-				mozconfig_add_options_ac "linker is set to gold" --enable-linker=gold
-				export MOZ_FORCE_GOLD=1
-			else
-				mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
-			fi
+			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 	fi
 
@@ -923,7 +918,7 @@ src_configure() {
 			if use clang ; then
 				# Nothing to do
 				:;
-			elif tc-ld-is-gold || use lto ; then
+			elif use lto ; then
 				append-ldflags -Wl,--no-keep-memory
 			else
 				append-ldflags -Wl,--no-keep-memory -Wl,--reduce-memory-overheads
@@ -948,6 +943,7 @@ src_configure() {
 	# Use system's Python environment
 	export MACH_USE_SYSTEM_PYTHON=1
 	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_MACH_SITE=1
+	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_BUILD_SITE=1
 	export PIP_NO_CACHE_DIR=off
 
 	# Disable notification when build system has finished
@@ -1021,6 +1017,12 @@ src_install() {
 
 	DESTDIR="${D}" ./mach install || die
 
+	## LibreWolf
+	# For some reason 'local-settings.js' doesn't get properly packaged.
+	# Install it manually
+	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	# doins "${S}/lw/local-settings.js"
+
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
 	dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
@@ -1030,16 +1032,17 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
+	## Disabled for LibreWolf
 	# Install policy (currently only used to disable application updates)
-	insinto "${MOZILLA_FIVE_HOME}/distribution"
-	newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
+	# insinto "${MOZILLA_FIVE_HOME}/distribution"
+	# newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
 
 	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
 	insinto "${PREFS_DIR}"
-	newins "${FILESDIR}"/gentoo-default-prefs.js all-gentoo.js
+	newins "${FILESDIR}"/gentoo-default-prefs.js gentoo-prefs.js
 
-	local GENTOO_PREFS="${ED}${PREFS_DIR}/all-gentoo.js"
+	local GENTOO_PREFS="${ED}${PREFS_DIR}/gentoo-prefs.js"
 
 	# Set dictionary path to use system hunspell
 	cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set spellchecker.dictionary_path pref"
