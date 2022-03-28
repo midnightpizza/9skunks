@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="4"
-MANJARO_COMMIT="06e0e9d8b5bf5f9b6163403ba11cba86284991cc"
+K_GENPATCHES_VER="33"
+MANJARO_COMMIT="80f5ae7a81187163755f94a62bf59f333f42b192"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -83,6 +83,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0006-pinetab-accelerometer-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0007-enable-jack-detection-pinetab.patch
 	-> 0007-enable-jack-detection-pinetab-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro.patch
+	-> 0026-arm64-dts-rockchip-Add-back-cdn_dp-to-Pinebook-Pro-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0008-enable-hdmi-output-pinetab.patch
 	-> 0008-enable-hdmi-output-pinetab-${PV}.patch"
 

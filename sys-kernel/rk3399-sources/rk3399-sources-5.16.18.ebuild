@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="15"
-MANJARO_COMMIT="ad338c8941d322575119d504a98336e7c0931be9"
+K_GENPATCHES_VER="18"
+MANJARO_COMMIT="ccc11fcd371dc9d1a1b7f2b440ca6b61f955d34c"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -21,16 +21,14 @@ DESCRIPTION="Full sources including the Gentoo patchset for the ${KV_MAJOR}.${KV
 SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/config
 		-> kernel-aarch64-manjaro.config-${PV}
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1001-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices.patch
-	-> 1001-arm64-dts-allwinner-add-hdmi-sound-to-pine-devices-${PV}.patch
+	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1005-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
+	-> 1005-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1004-gpu-drm-add-new-display-resolution-2560x1440.patch
 	-> 1004-gpu-drm-add-new-display-resolution-2560x1440-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1005-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
-	-> 1005-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1006-arm64-dts-rockchip-Add-Firefly-Station-p1-support.patch
 	-> 1006-arm64-dts-rockchip-Add-Firefly-Station-p1-support-${PV}.patch
-	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-ayufan-drm-rockchip-add-support-for-modeline-32MHz-e.patch
-	-> 1007-ayufan-drm-rockchip-add-support-for-modeline-32MHz-e-${PV}.patch
+	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-drm-rockchip-add-support-for-modeline-32MHz-e.patch
+	-> 1007-drm-rockchip-add-support-for-modeline-32MHz-e-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1008-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch
 	-> 1008-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1012-drm-panfrost-scheduler-improvements.patch
@@ -65,6 +63,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 2009-btsdio-Do-not-bind-to-non-removable-BCM4345-and-BCM43455-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2010-brcmfmac-USB-probing-provides-no-board-type.patch
 	-> 2010-brcmfmac-USB-probing-provides-no-board-type-${PV}.patch
+	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2011-dts-rockchip-Adapt-and-adopt-Type-C-support-from-Pin.patch
+    -> 2011-dts-rockchip-Adapt-and-adopt-Type-C-support-from-Pin-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/3172-arm64-dts-rk3399-pinebook-pro-Fix-USB-PD-charging.patch
 	-> 3172-arm64-dts-rk3399-pinebook-pro-Fix-USB-PD-charging-${PV}.patch
 	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/3174-arm64-dts-rk3399-pinebook-pro-Improve-Type-C-support.patch
