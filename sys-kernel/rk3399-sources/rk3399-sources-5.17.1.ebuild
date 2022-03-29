@@ -4,7 +4,7 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="2"
+K_GENPATCHES_VER="3"
 MANJARO_COMMIT="aeadedb85ea3f7bb2172d12bf0cd6a3da5be810e"
 RESTRICT="MIRROR"
 
