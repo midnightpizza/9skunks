@@ -12,13 +12,13 @@ MY_PN="${PN%%-*}"
 MY_P="${MY_PN}-${PV}"
 
 	EGIT_REPO_URI="https://github.com/ValveSoftware/wine.git"
-	EGIT_BRANCH="proton_7.0"
-	EGIT_OVERRIDE_BRANCH_VALVESOFTWARE_WINE="proton_7.0"
-#	EGIT_OVERRIDE_COMMIT_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
-#	EGIT_OVERRIDE_COMMIT_VALVESOFTWARE_WINE="f0b3d09ad69ddfc27dbd850bd6b365da6683fa08"
+	EGIT_BRANCH="experimental_7.0"
+	EGIT_OVERRIDE_BRANCH_VALVESOFTWARE_WINE="experimental_7.0"
+	EGIT_OVERRIDE_COMMIT_WINE="6b652139d7696ee3c16529ab7db1002b95d3ec44"
+	EGIT_OVERRIDE_COMMIT_VALVESOFTWARE_WINE="6b652139d7696ee3c16529ab7db1002b95d3ec44"
 	inherit git-r3
 	SRC_URI=""
-	KEYWORDS=""
+	KEYWORDS="~amd64"
 
 
 S="${WORKDIR}/${MY_P}"
@@ -134,7 +134,6 @@ PATCHES=(
 	"${PATCHDIR}/patches/${MY_PN}-6.22-winegcc.patch" #260726
 	"${PATCHDIR}/patches/${MY_PN}-4.7-multilib-portage.patch" #395615
 	"${PATCHDIR}/patches/${MY_PN}-2.0-multislot-apploader.patch" #31061
-	"${FILESDIR}/65-proton-fake_current_res_patches.patch"
 )
 PATCHES_BIN=()
 
