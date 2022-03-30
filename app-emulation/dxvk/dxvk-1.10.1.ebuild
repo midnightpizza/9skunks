@@ -29,8 +29,8 @@ RESTRICT="test"
 
 RDEPEND="
 	|| (
-		>=app-emulation/wine-vanilla:*[${MULTILIB_USEDEP},vulkan]
-		>=app-emulation/wine-staging:*[${MULTILIB_USEDEP},vulkan]
+		>=app-emulation/wine-vanilla-6.0:*[${MULTILIB_USEDEP},vulkan]
+		>=app-emulation/wine-staging-6.0:*[${MULTILIB_USEDEP},vulkan]
 	)"
 DEPEND="${RDEPEND}
 	dev-util/glslang
