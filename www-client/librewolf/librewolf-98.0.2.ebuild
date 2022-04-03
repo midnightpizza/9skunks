@@ -43,19 +43,20 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs \
-	virtualx xdg librewolf-r1
+	virtualx xdg
 
-MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-
-if [[ ${PV} == *_rc* ]] ; then
-	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
-fi
+# MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
+#
+# if [[ ${PV} == *_rc* ]] ; then
+# 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
+# fi
+MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,polynomial-c,whissi}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,polynomial-c,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
+SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="LibreWolf Web Browser"
@@ -65,10 +66,10 @@ KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 
 SLOT="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
+IUSE="+clang cpu_flags_arm_neon dbus debug eme-free +hardened hwaccel"
 
-IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
 IUSE+=" jack libproxy lto +openh264 pgo pulseaudio sndio selinux"
-IUSE+=" system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
@@ -97,8 +98,8 @@ BDEPEND="${PYTHON_DEPS}
 			sys-devel/lld
 			pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
 		)
-	amd64? ( >=dev-lang/nasm-2.13 )
-	x86? ( >=dev-lang/nasm-2.13 )"
+	amd64? ( >=dev-lang/nasm-2.14 )
+	x86? ( >=dev-lang/nasm-2.14 )"
 
 COMMON_DEPEND="
 	>=dev-libs/nss-3.74
@@ -109,7 +110,6 @@ COMMON_DEPEND="
 	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
 	>=media-libs/freetype-2.9
-	kernel_linux? ( !pulseaudio? ( media-libs/alsa-lib ) )
 	virtual/freedesktop-icon-theme
 	>=x11-libs/pixman-0.19.2
 	>=dev-libs/glib-2.42:2
@@ -127,7 +127,7 @@ COMMON_DEPEND="
 	x11-libs/libXrandr
 	x11-libs/libXrender
 	x11-libs/libXtst
-	x11-libs/libxcb
+	x11-libs/libxcb:=
 	>=x11-libs/pango-1.22.0
 	dbus? (
 		sys-apps/dbus
@@ -184,7 +184,7 @@ DEPEND="${COMMON_DEPEND}
 	amd64? ( virtual/opengl )
 	x86? ( virtual/opengl )"
 
-S="${WORKDIR}/firefox-${PV%_*}"
+S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -549,8 +549,6 @@ src_unpack() {
 			unpack ${_src_file}
 		fi
 	done
-
-	librewolf-r1_src_unpack
 }
 
 src_prepare() {
@@ -701,6 +699,20 @@ src_configure() {
 		--with-unsigned-addon-scopes=app,system \
 		--x-includes="${SYSROOT}${EPREFIX}/usr/include" \
 		--x-libraries="${SYSROOT}${EPREFIX}/usr/$(get_libdir)"
+
+	# Librewolf
+	mozconfig_add_options_ac 'LibreWolf Branding' \
+		--with-app-name="librewolf" \
+		--with-app-basename="LibreWolf" \
+		--with-branding=browser/branding/librewolf
+
+	mozconfig_add_options_mk 'Librewolf Disable Telemetry' \
+		MOZ_CRASHREPORTER=0 \
+		MOZ_DATA_REPORTING=0 \
+		MOZ_SERVICES_HEALTHREPORT=0 \
+		MOZ_TELEMETRY_REPORTING=0
+
+	export MOZ_REQUIRE_SIGNING=
 
 	# Set update channel
 	local update_channel=release
@@ -956,8 +968,6 @@ src_configure() {
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
 
-	librewolf-r1_src_configure
-
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
 	einfo "Build CFLAGS:\t\t${CFLAGS:-no value set}"
@@ -1020,8 +1030,8 @@ src_install() {
 	## LibreWolf
 	# For some reason 'local-settings.js' doesn't get properly packaged.
 	# Install it manually
-	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
-	# doins "${S}/lw/local-settings.js"
+	insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
@@ -1141,8 +1151,6 @@ src_install() {
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
 		"${ED}/usr/bin/${PN}" \
 		|| die
-
-	librewolf-r1_src_install
 }
 
 pkg_preinst() {
@@ -1236,8 +1244,16 @@ pkg_postinst() {
 		elog
 		elog "Since ${PN}-91.0 we no longer install multiple shortcuts for"
 		elog "each supported display protocol.  Instead we will only install"
-		elog "one generic Mozilla ${PN^} shortcut."
+		elog "one generic ${PN^} shortcut."
 		elog "If you still want to be able to select between running ${PN^}"
 		elog "on X11 or Wayland, you have to re-create these shortcuts on your own."
+	fi
+
+	# bug 835078
+	if use hwaccel && has_version "x11-drivers/xf86-video-nouveau"; then
+		ewarn "You have nouveau drivers installed in your system and 'hwaccel' "
+		ewarn "enabled for LibreWolf. Nouveau / your GPU might not supported the "
+		ewarn "required EGL, so either disable 'hwaccel' or try the workaround "
+		ewarn "explained in https://bugs.gentoo.org/835078#c5 if LibreWolf crashes."
 	fi
 }
