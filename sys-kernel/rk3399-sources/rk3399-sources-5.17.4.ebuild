@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="4"
-MANJARO_COMMIT="8ef42edca8f7ed62aa315e2e2c3178c1e6495c83"
+K_GENPATCHES_VER="6"
+MANJARO_COMMIT="dc56bad7b50dd725176f8fe0a7f4a77d834ae230"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -35,12 +35,10 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1013-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1014-drm-rockchip-support-gamma-control-on-RK3399.patch
 	-> 1014-drm-rockchip-support-gamma-control-on-RK3399-${PV}.patch
-			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1015-media-rockchip-rga-do-proper-error-checking-in-probe.patch
-	-> 1015-media-rockchip-rga-do-proper-error-checking-in-probe-${PV}.patch
-			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1016-arm64-dts-rockchip-switch-to-hs200-on-rockpi4.patch
-	-> 1016-arm64-dts-rockchip-switch-to-hs200-on-rockpi4-${PV}.patch
-			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1019-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
-	-> 1019-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P-${PV}.patch
+			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1015-arm64-dts-rockchip-switch-to-hs200-on-rockpi4.patch
+	-> 1015-arm64-dts-rockchip-switch-to-hs200-on-rockpi4-${PV}.patch
+			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1018-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
+	-> 1018-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-Bluetooth-Add-new-quirk-for-broken-local-ext-features.patch
 	-> 2001-Bluetooth-Add-new-quirk-for-broken-local-ext-features-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2002-Bluetooth-btrtl-add-support-for-the-RTL8723CS.patch
