@@ -12,7 +12,7 @@ SRC_URI="https://jaist.dl.osdn.jp/tomoyo/70710/tomoyo-tools-2.6.1-20210910.tar.g
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86 arm64"
 
 COMMON_DEPEND="sys-libs/ncurses"
 DEPEND="${COMMON_DEPEND}
