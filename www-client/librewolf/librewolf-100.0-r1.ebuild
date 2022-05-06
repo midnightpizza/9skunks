@@ -1023,8 +1023,8 @@ src_install() {
 	# doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
-	# rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
-	# dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
+	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
+	dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
 
 	# Don't install llvm-symbolizer from sys-devel/llvm package
 	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" ]] ; then
