@@ -1,22 +1,23 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# @ECLASS: librewolf-r0.eclass
+# @ECLASS: librewolf-r2.eclass
 # @MAINTAINER:
-# aidanharris
+# emmata
 # @AUTHOR:
-# aidanharris
+# emmata
 # @BLURB:
 # @DESCRIPTION: librewolf customisation/configuration
 
-if [[ ! ${_LIBREWOLF_R1} ]]; then
+if [[ ! ${_LIBREWOLF_R2} ]]; then
 
 inherit git-r3
 
-librewolf-r1_src_configure() {
+librewolf-r2_src_configure() {
 local _PN="LibreWolf"
 [[ "${PN}" == "librewolf-nightly" ]] && _PN="${_PN}-Nightly"
 # stolen from the AUR PKGBUILD with irrelevant options removed (here irrelvant means the feature is controlled via a useflag so there's no need to unconditionally enable/disable it here. Only the common options we want to always apply are listed here)
+echo "E1"
 cat >> "${S}/.mozconfig" <<END
 ac_add_options --enable-application=browser
 
@@ -51,21 +52,49 @@ END
   # Remove some pre-installed addons that might be questionable
   eapply "${WORKDIR}/patches/remove_addons.patch"
 
+  # Disable (some) megabar functionality
+  # Adapted from https://github.com/WesleyBranton/userChrome.css-Customizations
+  # eapply "${WORKDIR}/patches/megabar.patch"
+
   # Disabling Pocket
+  echo "E2"
   sed -i "s/'pocket'/#'pocket'/g" "${S}"/browser/components/moz.build
 
   #eapply "${WORKDIR}/patches/context-menu.patch"
-  # eapply "${WORKDIR}/patches/arm.patch"
-  # Remove mozilla vpn ads
-  #eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
+   eapply "${WORKDIR}/patches/custom-ubo-assets-bootstrap-location.patch"
+   eapply "${WORKDIR}/patches/dbus_name.patch"
+   eapply "${WORKDIR}/patches/urlbarprovider-interventions.patch"
 
-  # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)   
+  #eapply "${WORKDIR}/patches/bootstrap-without-vcs.patch"
+   eapply "${WORKDIR}/patches/disable-data-reporting-at-compile-time.patch"
+   #eapply "${WORKDIR}/patches/xmas.patch"
+  #eapply "${WORKDIR}/patches/librewolf-pref-pane.patch"
+  eapply "${WORKDIR}/patches/ui-patches/sanitizing-description.patch"
+  eapply "${WORKDIR}/patches/ui-patches/remove-snippets-from-home.patch"
+  eapply "${WORKDIR}/patches/ui-patches/remove-organization-policy-banner.patch"
+  eapply "${WORKDIR}/patches/ui-patches/remove-cfrprefs.patch"
+  eapply "${WORKDIR}/patches/ui-patches/remove-branding-urlbar.patch"
+  eapply "${WORKDIR}/patches/ui-patches/pref-naming.patch"
+  eapply "${WORKDIR}/patches/ui-patches/hide-safe-browsing.patch"
+  eapply "${WORKDIR}/patches/sed-patches/disable-pocket.patch"
+  eapply "${WORKDIR}/patches/sed-patches/allow-searchengines-non-esr.patch"
+  #eapply "${WORKDIR}/patches/sed-patches/stop-undesired-requests.patch"
+  eapply "${WORKDIR}/patches/sed-patches/remove-internal-plugin-certs.patch"
+
+
+  #eapply "${WORKDIR}/patches/
+
+  # Remove mozilla vpn ads
+  # eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
+
+  # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)
   eapply "${WORKDIR}/patches/mozilla_dirs.patch"
 
   eapply "${WORKDIR}/patches/allow-ubo-private-mode.patch"
 
 
   # this one only to remove an annoying error message:
+  echo "E3"
   sed -i 's#SaveToPocket.init();#// SaveToPocket.init();#g' "${S}"/browser/components/BrowserGlue.jsm
 
   # Remove Internal Plugin Certificates
@@ -73,9 +102,11 @@ END
   _cert_sed+='[[:blank:]]\+return AddonManager\.SIGNEDSTATE_[[:upper:]]\+;\n'
   _cert_sed+='[[:blank:]]\+}#'
   _cert_sed+='// NOTE: removed#g'
+  echo "E4"
   sed -z "$_cert_sed" -i "${S}"/toolkit/mozapps/extensions/internal/XPIInstall.jsm
 
   # allow SearchEngines option in non-ESR builds
+  echo "E5"
   sed -i 's#"enterprise_only": true,#"enterprise_only": false,#g' "${S}"/browser/components/enterprisepolicies/schemas/policies-schema.json
 
   _settings_services_sed='s#firefox.settings.services.mozilla.com#f.s.s.m.c.qjz9zk#g'
@@ -91,12 +122,13 @@ END
   if [[ "$PN" == "librewolf-nightly" ]]
   then
 	  # This makes it so librewolf-nightly can be installed alongside librewolf using a different profile so things don't conflict
+	  echo "E6 Nightly"
 	  mv "${S}/browser/branding/librewolf"  "${S}/browser/branding/librewolf-nightly"
 	  eapply "${FILESDIR}/librewolf-nightly-branding.diff"
   fi
 }
 
-librewolf-r1_src_unpack() {
+librewolf-r2_src_unpack() {
 	if [[ "$PN" == "librewolf-nightly" ]]
 	then
 		mercurial_src_unpack
@@ -120,11 +152,25 @@ librewolf-r1_src_unpack() {
 	# after 89 patches were moved to 'common' 
         #"mozilla-vpn-ad.patch"
 	patch_list=(
-		"remove_addons.patch"
-		"context-menu.patch"
-		"megabar.patch"
-		"mozilla_dirs.patch"
-		"allow-ubo-private-mode.patch"
+"allow-ubo-private-mode.patch"
+"custom-ubo-assets-bootstrap-location.patch"
+"mozilla_dirs.patch"
+"remove_addons.patch"
+"unity-menubar.patch"
+"arm.patch"
+"dbus_name.patch"
+"mozilla-kde_after_unity.patch"
+"removed-patches"
+"urlbarprovider-interventions.patch"
+"bootstrap-without-vcs.patch"
+"disable-data-reporting-at-compile-time.patch"
+"mozilla-kde.patch"
+"sed-patches"
+"xmas.patch"
+"context-menu.patch"
+"librewolf-pref-pane.patch"
+"mozilla-vpn-ad.patch"
+"ui-patches"
 	)
 
 	if ver_test -lt "91.0"; then
@@ -136,17 +182,17 @@ librewolf-r1_src_unpack() {
 		mkdir "${WORKDIR}/patches"
 
 		for patch in ${patch_list[@]}; do
-			cp "${WORKDIR}/linux/${patch}" "${WORKDIR}/patches"
+			cp -r "${WORKDIR}/linux/${patch}" "${WORKDIR}/patches"
 		done
 	else
 		mkdir "${WORKDIR}/patches"
 		for patch in ${patch_list[@]}; do
-			cp "${WORKDIR}/common/patches/${patch}" "${WORKDIR}/patches"
+			cp -r "${WORKDIR}/common/patches/${patch}" "${WORKDIR}/patches"
 		done
 	fi
 }
 
-librewolf-r1_src_install() {
+librewolf-r2_src_install() {
   local vendorjs="$ED/usr/$(get_libdir)/${PN}/browser/defaults/preferences/vendor.js"
 
   cat >> "$vendorjs" <<END
@@ -174,5 +220,5 @@ app.partner.librewolf=${PN}
 END
 }
 
-_LIBREWOLF_R1=1
+_LIBREWOLF_R2=1
 fi

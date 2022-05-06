@@ -7,7 +7,7 @@ FIREFOX_PATCHSET="firefox-100-patches-02j.tar.xz"
 
 LLVM_MAX_SLOT=14
 
-PYTHON_COMPAT=( python3_{8..10} )
+PYTHON_COMPAT=( python3_{7,8,9,10} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -551,7 +551,7 @@ src_unpack() {
 		fi
 	done
 
-	librewolf-r1_src_unpack
+	librewolf-r2_src_unpack
 }
 
 src_prepare() {
@@ -955,7 +955,7 @@ src_configure() {
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
 
-	librewolf-r1_src_configure
+	librewolf-r2_src_configure
 
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
@@ -1023,8 +1023,8 @@ src_install() {
 	# doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
-	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
-	dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
+	# rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
+	# dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
 
 	# Don't install llvm-symbolizer from sys-devel/llvm package
 	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" ]] ; then
@@ -1141,7 +1141,7 @@ src_install() {
 		"${ED}/usr/bin/${PN}" \
 		|| die
 
-	librewolf-r1_src_install
+	librewolf-r2_src_install
 }
 
 pkg_preinst() {
