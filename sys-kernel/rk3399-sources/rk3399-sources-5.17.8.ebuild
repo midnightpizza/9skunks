@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="9"
-MANJARO_COMMIT="22f5b4a710c1e67be1c59d383dff205d871019f5"
+K_GENPATCHES_VER="12"
+MANJARO_COMMIT="805d6a54f54172792e87b84bca166ebe2822f384"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -37,8 +37,8 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1014-drm-rockchip-support-gamma-control-on-RK3399-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1015-arm64-dts-rockchip-switch-to-hs200-on-rockpi4.patch
 	-> 1015-arm64-dts-rockchip-switch-to-hs200-on-rockpi4-${PV}.patch
-			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1018-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
-	-> 1018-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P-${PV}.patch
+			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1016-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P.patch
+	-> 1016-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-Rock-P-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-Bluetooth-Add-new-quirk-for-broken-local-ext-features.patch
 	-> 2001-Bluetooth-Add-new-quirk-for-broken-local-ext-features-${PV}.patch
 			https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2002-Bluetooth-btrtl-add-support-for-the-RTL8723CS.patch
