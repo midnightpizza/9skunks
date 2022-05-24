@@ -4,7 +4,7 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="40"
+K_GENPATCHES_VER="45"
 MANJARO_COMMIT="80f5ae7a81187163755f94a62bf59f333f42b192"
 RESTRICT="MIRROR"
 
@@ -12,7 +12,7 @@ inherit kernel-2
 detect_version
 detect_arch
 
-KEYWORDS="~arm64"
+KEYWORDS="arm64"
 HOMEPAGE="https://dev.gentoo.org/~mpagano/genpatches"
 IUSE="experimental"
 
