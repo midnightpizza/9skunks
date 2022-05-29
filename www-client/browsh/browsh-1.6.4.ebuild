@@ -213,6 +213,7 @@ LICENSE="Apache-2.0 BSD BSD-2 CC0-1.0 CC-BY-3.0 ISC LGPL-2.1 MIT MPL-2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
+IUSE="+register +duckduckgo"
 BDEPEND="dev-go/go-bindata"
 DEPEND="|| ( www-client/firefox:* www-client/firefox-bin:* )"
 RDEPEND="${DEPEND}"
@@ -220,7 +221,13 @@ RDEPEND="${DEPEND}"
 src_unpack() {
 	go-module_src_unpack
 	cp "${DISTDIR}/${MY_P}-an.fx.xpi" "${S}/${PN}.xpi" || die
+	if use register; then
 	sed -i '/browsh_supporter = "♥"/c\browsh_supporter = "I have shown my support for Browsh"'  ${WORKDIR}/${PN}-${COMMIT}/interfacer/src/browsh/config_sample.go || die
+	fi
+	if use duckduckgo; then
+		sed -i '/default_search_engine_base/c\default_search_engine_base = "https://duckduckgo.com/?q="'  ${WORKDIR}/${PN}-${COMMIT}/interfacer/src/browsh/config_sample.go || die
+	fi
+
 }
 
  src_compile() {
