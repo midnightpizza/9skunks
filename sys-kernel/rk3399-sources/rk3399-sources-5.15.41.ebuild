@@ -49,8 +49,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0012-ayufan-drm-rockchip-add-support-for-modeline-32MHz-e-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0013-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch
 	-> 0013-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0018-drm-meson-add-YUV422-output-support.patch
-	-> 0018-drm-meson-add-YUV422-output-support-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0019-arm64-dts-meson-add-initial-Beelink-GT1-Ultimate-dev.patch
 	-> 0019-arm64-dts-meson-add-initial-Beelink-GT1-Ultimate-dev-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0020-add-ugoos-device.patch
