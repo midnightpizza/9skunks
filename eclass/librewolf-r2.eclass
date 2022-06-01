@@ -61,13 +61,13 @@ END
   sed -i "s/'pocket'/#'pocket'/g" "${S}"/browser/components/moz.build
 
   #eapply "${WORKDIR}/patches/context-menu.patch"
-   eapply "${WORKDIR}/patches/custom-ubo-assets-bootstrap-location.patch"
-   eapply "${WORKDIR}/patches/dbus_name.patch"
-   eapply "${WORKDIR}/patches/urlbarprovider-interventions.patch"
+  eapply "${WORKDIR}/patches/custom-ubo-assets-bootstrap-location.patch"
+  eapply "${WORKDIR}/patches/dbus_name.patch"
+  eapply "${WORKDIR}/patches/urlbarprovider-interventions.patch"
 
   #eapply "${WORKDIR}/patches/bootstrap-without-vcs.patch"
-   eapply "${WORKDIR}/patches/disable-data-reporting-at-compile-time.patch"
-   #eapply "${WORKDIR}/patches/xmas.patch"
+  eapply "${WORKDIR}/patches/disable-data-reporting-at-compile-time.patch"
+  #eapply "${WORKDIR}/patches/xmas.patch"
   #eapply "${WORKDIR}/patches/librewolf-pref-pane.patch"
   eapply "${WORKDIR}/patches/ui-patches/sanitizing-description.patch"
   eapply "${WORKDIR}/patches/ui-patches/remove-snippets-from-home.patch"
@@ -80,6 +80,7 @@ END
   eapply "${WORKDIR}/patches/sed-patches/allow-searchengines-non-esr.patch"
   #eapply "${WORKDIR}/patches/sed-patches/stop-undesired-requests.patch"
   eapply "${WORKDIR}/patches/sed-patches/remove-internal-plugin-certs.patch"
+  #eapply "${WORKDIR}/patches/sed-patches/aboutLogos.patch"
 
 
   #eapply "${WORKDIR}/patches/
@@ -170,7 +171,8 @@ librewolf-r2_src_unpack() {
 "context-menu.patch"
 "librewolf-pref-pane.patch"
 "mozilla-vpn-ad.patch"
-"ui-patches"
+"ui-patches
+aboutLogos.patch"
 	)
 
 	if ver_test -lt "91.0"; then
