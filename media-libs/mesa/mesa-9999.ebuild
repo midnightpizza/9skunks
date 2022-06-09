@@ -103,6 +103,7 @@ RDEPEND="
 	)
 	zink? ( media-libs/vulkan-loader:=[${MULTILIB_USEDEP}] )
 	zstd? ( app-arch/zstd:=[${MULTILIB_USEDEP}] )
+	dev-util/glslang
 "
 for card in ${RADEON_CARDS}; do
 	RDEPEND="${RDEPEND}
