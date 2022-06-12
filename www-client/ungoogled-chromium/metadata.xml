@@ -2,7 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://liguros.gitlab.io/dtd/metadata.dtd">
 <pkgmetadata>
  <maintainer type="person">
-  <email>myau@riseup.met</email>
+  <email>myau@riseup.net</email>
  </maintainer>
  <longdescription>
 		ungoogled-chromium is Google Chromium, sans integration with Google.

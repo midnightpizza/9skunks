@@ -22,14 +22,15 @@ DESCRIPTION="Modifications to Chromium for removing Google integration and enhan
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PATCHSET="6"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
-PATCHSET_NAME_PPC64="chromium_101.0.4951.41-2raptor0.debian"
+PATCHSET_NAME_PPC64="chromium_102.0.5005.61-1raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
-	${UGC_URL}"
+	ppc64? ( https://ppa.quickbuild.io/raptor-engineering-public/chromium/ubuntu/pool/main/c/chromium/${PATCHSET_NAME_PPC64}.tar.xz )
+"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~x86"
+KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
 IUSE="cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
@@ -44,18 +45,17 @@ REQUIRED_USE="
 	screencast? ( wayland )
 "
 
-# UGC_COMMIT_ID="4552de1c87ae70cde375b268d71df4360198e40b"
-UGC_PR_COMMITS=(
-	f2fbbb954431dcb4f1a62779053692fa2b5c7971
-	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
-)
+#UGC_COMMIT_ID="0218ef1e21cd13b9c81baa726b28da749d20fa6c"
+# UGC_PR_COMMITS=(
+# 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
+# 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
+# )
 
 UGC_PV="${PV/_p/-}"
 UGC_PF="${PN}-${UGC_PV}"
 UGC_URL="https://github.com/ungoogled-software/${PN}/archive/"
 
-if [ -z "$UGC_COMMIT_ID" ]
-then
+if [ -z "$UGC_COMMIT_ID" ]; then
 	UGC_URL="${UGC_URL}${UGC_PV}.tar.gz -> ${UGC_PF}.tar.gz"
 	UGC_WD="${WORKDIR}/${UGC_PF}"
 else
@@ -65,10 +65,13 @@ fi
 
 SRC_URI+="${UGC_URL}
 "
-for i in "${UGC_PR_COMMITS[@]}"; do
-	SRC_URI+="https://github.com/ungoogled-software/${PN}/commit/$i.patch -> ${PN}-$i.patch
-	"
-done
+
+if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
+	for i in "${UGC_PR_COMMITS[@]}"; do
+		SRC_URI+="https://github.com/ungoogled-software/${PN}/commit/$i.patch -> ${PN}-$i.patch
+		"
+	done
+fi
 
 COMMON_X_DEPEND="
 	x11-libs/gdk-pixbuf:2
@@ -416,11 +419,13 @@ src_prepare() {
 	fi
 
 	#* Applying UGC PRs here
-	pushd "${UGC_WD}" >/dev/null
-	for i in "${UGC_PR_COMMITS[@]}"; do
-		eapply "${DISTDIR}/${PN}-$i.patch"
-	done
-	popd >/dev/null
+	if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
+		pushd "${UGC_WD}" >/dev/null
+		for i in "${UGC_PR_COMMITS[@]}"; do
+			eapply "${DISTDIR}/${PN}-$i.patch"
+		done
+		popd >/dev/null
+	fi
 
 	# From here we adapt ungoogled-chromium's patches to our needs
 	local ugc_pruning_list="${UGC_WD}/pruning.list"
