@@ -20,18 +20,16 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
-PATCHSET="6"
+PATCHSET="4"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
-PATCHSET_NAME_PPC64="chromium_102.0.5005.61-1raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
-	ppc64? ( https://ppa.quickbuild.io/raptor-engineering-public/chromium/ubuntu/pool/main/c/chromium/${PATCHSET_NAME_PPC64}.tar.xz )
 "
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
-IUSE="cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
+KEYWORDS="amd64 ~arm64 ~x86"
+IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -43,9 +41,10 @@ REQUIRED_USE="
 	pgo? ( clang )
 	x86? ( !thinlto !widevine )
 	screencast? ( wayland )
+	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="0218ef1e21cd13b9c81baa726b28da749d20fa6c"
+#UGC_COMMIT_ID="63c081934418670292e9c85b4ff4e6ae9daeb830"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -74,7 +73,6 @@ if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
 fi
 
 COMMON_X_DEPEND="
-	x11-libs/gdk-pixbuf:2
 	x11-libs/libXcomposite:=
 	x11-libs/libXcursor:=
 	x11-libs/libXdamage:=
@@ -84,7 +82,6 @@ COMMON_X_DEPEND="
 	x11-libs/libXrender:=
 	x11-libs/libXtst:=
 	x11-libs/libxshmfence:=
-	virtual/opengl
 "
 
 COMMON_SNAPSHOT_DEPEND="
@@ -95,7 +92,7 @@ COMMON_SNAPSHOT_DEPEND="
 	system-re2? ( >=dev-libs/re2-0.2019.08.01:= )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:=[postproc] )
 	system-libusb? ( virtual/libusb:1 )
-	system-icu? ( >=dev-libs/icu-69.1:= )
+	system-icu? ( >=dev-libs/icu-71.1:= )
 	>=dev-libs/libxml2-2.9.4-r3:=[icu]
 	dev-libs/nspr:=
 	>=dev-libs/nss-3.26:=
@@ -121,10 +118,12 @@ COMMON_SNAPSHOT_DEPEND="
 		)
 		sys-apps/pciutils:=
 		kerberos? ( virtual/krb5 )
-		vaapi? ( >=x11-libs/libva-2.7:=[X] )
-		x11-libs/libX11:=
-		x11-libs/libXext:=
-		x11-libs/libxcb:=
+		vaapi? ( >=x11-libs/libva-2.7:=[X?,wayland?] )
+		X? (
+			x11-libs/libX11:=
+			x11-libs/libXext:=
+			x11-libs/libxcb:=
+		)
 		x11-libs/libxkbcommon:=
 		wayland? (
 			dev-libs/wayland:=
@@ -150,24 +149,26 @@ COMMON_DEPEND="
 	media-libs/flac:=
 	sys-libs/zlib:=[minizip]
 	!headless? (
-		${COMMON_X_DEPEND}
+		X? ( ${COMMON_X_DEPEND} )
 		>=app-accessibility/at-spi2-atk-2.26:2
 		>=app-accessibility/at-spi2-core-2.26:2
 		>=dev-libs/atk-2.26
+		media-libs/mesa:=[X?,wayland?]
 		cups? ( >=net-print/cups-1.3.11:= )
 		virtual/udev
 		x11-libs/cairo:=
+		x11-libs/gdk-pixbuf:2
 		x11-libs/pango:=
 	)
 "
 RDEPEND="${COMMON_DEPEND}
 	!headless? (
 		|| (
-			x11-libs/gtk+:3[X,wayland?]
-			gui-libs/gtk:4[X,wayland?]
+			x11-libs/gtk+:3[X?,wayland?]
+			gui-libs/gtk:4[X?,wayland?]
 		)
+		x11-misc/xdg-utils
 	)
-	x11-misc/xdg-utils
 	virtual/ttf-fonts
 	selinux? ( sec-policy/selinux-chromium )
 	!www-client/chromium
@@ -176,8 +177,8 @@ RDEPEND="${COMMON_DEPEND}
 "
 DEPEND="${COMMON_DEPEND}
 	!headless? (
-		gtk4? ( gui-libs/gtk:4[X,wayland?] )
-		!gtk4? ( x11-libs/gtk+:3[X,wayland?] )
+		gtk4? ( gui-libs/gtk:4[X?,wayland?] )
+		!gtk4? ( x11-libs/gtk+:3[X?,wayland?] )
 	)
 "
 BDEPEND="
@@ -321,68 +322,15 @@ src_prepare() {
 	local PATCHES=(
 		"${WORKDIR}/patches"
 		"${FILESDIR}/chromium-93-InkDropHost-crash.patch"
-		"${FILESDIR}/chromium-97-arm-tflite-cast.patch"
 		"${FILESDIR}/chromium-98-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
-		"${FILESDIR}/chromium-101-libxml-unbundle.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
-		"${FILESDIR}/sql-VirtualCursor-standard-layout.patch"
 		"${FILESDIR}/perfetto-system-zlib.patch"
 		"${FILESDIR}/gtk-fix-prefers-color-scheme-query.diff"
 		"${FILESDIR}/restore-x86.patch"
-	)
-
-	use ppc64 && PATCHES+=(
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-linux-seccomp-bpf-ppc64-glibc-workaround-in-SIGSYS-h.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-sandbox-Enable-seccomp_bpf-for-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-services-service_manager-sandbox-linux-Fix-TCGETS-de.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-sandbox-linux-bpf_dsl-Update-syscall-ranges-for-ppc6.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-sandbox-linux-Implement-partial-support-for-ppc64-sy.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-sandbox-linux-Update-IsSyscallAllowed-in-broker_proc.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0001-sandbox-linux-Update-syscall-helpers-lists-for-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0002-sandbox-linux-bpf_dsl-Modify-seccomp_macros-to-add-s.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0003-sandbox-linux-system_headers-Update-linux-seccomp-he.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0004-sandbox-linux-system_headers-Update-linux-signal-hea.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0005-sandbox-linux-seccomp-bpf-Add-ppc64-syscall-stub.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0005-sandbox-linux-update-unit-test-for-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0006-sandbox-linux-disable-timedwait-time64-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0007-sandbox-linux-add-ppc64-stat.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/Sandbox-linux-services-credentials.cc-PPC.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/0008-sandbox-fix-ppc64le-glibc234.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-third_party-angle-Include-missing-header-cstddef-in-.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-third_party-boringssl-Properly-detect-ppc64le-in-BUI.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-third_party-libvpx-Properly-generate-gni-on-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-third_party-lss-Don-t-look-for-mmap2-on-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-third_party-pffft-Include-altivec.h-on-ppc64-with-SI.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0002-third_party-libvpx-Add-ppc64-sources-to-gni.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0002-third_party-lss-kernel-structs.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-Enable-third-party-libgav1-parser.patch"
-		"${WORKDIR}/debian/patches/ppc64le/webrtc/Modules-desktop_capture-differ_block.cc-PPC.patch"
-		"${WORKDIR}/debian/patches/ppc64le/webrtc/Rtc_base-system-arch.h-PPC.patch"
-		"${WORKDIR}/debian/patches/ppc64le/crashpad/0002-Include-cstddef-to-fix-build.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0004-third_party-crashpad-port-curl-transport-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/workarounds/HACK-third_party-libvpx-use-generic-gnu.patch"
-		"${WORKDIR}/debian/patches/ppc64le/libaom/0001-Add-ppc64-target-to-libaom.patch"
-		"${WORKDIR}/debian/patches/ppc64le/libaom/0001-Add-pregenerated-config-for-libaom-on-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0003-third_party-libvpx-Add-ppc64-generated-config.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0003-third_party-ffmpeg-Add-ppc64-generated-config.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0004-third_party-libvpx-work-around-ambiguous-vsx.patch"
-		"${WORKDIR}/debian/patches/ppc64le/ffmpeg/0001-Add-support-for-ppc64.patch"
-		"${WORKDIR}/debian/patches/ppc64le/breakpad/0001-Implement-support-for-ppc64-on-Linux.patch"
-		"${WORKDIR}/debian/patches/ppc64le/crashpad/0001-Implement-support-for-PPC64-on-Linux.patch"
-		"${WORKDIR}/debian/patches/ppc64le/database/0001-Properly-detect-little-endian-PPC64-systems.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-Force-baseline-POWER8-AltiVec-VSX-CPU-features-when-.patch"
-		"${FILESDIR}/ppc64le/fix-breakpad-compile.patch"
-		"${WORKDIR}/debian/patches/ppc64le/v8/0002-Add-ppc64-trap-instructions.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-Add-PPC64-support-for-libdav1d.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0001-Fix-libdav1d-compilation-on-clang-ppc.patch"
-		"${WORKDIR}/debian/patches/ppc64le/sandbox/fix-ppc64-linux-syscalls-headers.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/0003-thirdparty-fix-dav1d-gn.patch"
-		"${WORKDIR}/debian/patches/ppc64le/third_party/use-sysconf-page-size-on-ppc64.patch"
-		"${FILESDIR}/ppc64le/libpng-pdfium-compile-98.patch"
-		"${FILESDIR}/ppc64le/fix-swiftshader-compile.patch"
+		"${FILESDIR}/disable-GlobalMediaControlsCastStartStop.patch"
 	)
 
 	default
@@ -397,6 +345,8 @@ src_prepare() {
 	cp "${FILESDIR}/libusb.gn" build/linux/unbundle || die
 	sed -i '/^REPLACEMENTS.*$/{s++REPLACEMENTS = {"libusb":"third_party/libusb/BUILD.gn","jsoncpp":"third_party/jsoncpp/BUILD.gn",+;h};${x;/./{x;q0};x;q1}' \
 		build/linux/unbundle/replace_gn_files.py || die
+	sed -i '/^.*deps.*third_party\/jsoncpp.*$/{s++public_deps = [ "//third_party/jsoncpp" ]+;h};${x;/./{x;q0};x;q1}' \
+		third_party/webrtc/rtc_base/BUILD.gn || die
 
 	use convert-dict && eapply "${FILESDIR}/chromium-ucf-dict-utility.patch"
 
@@ -413,10 +363,6 @@ src_prepare() {
 	use system-openjpeg && eapply "${FILESDIR}/chromium-system-openjpeg-r3.patch"
 
 	use vdpau && eapply "${FILESDIR}/vdpau-support-r4.patch"
-
-	if has_version ">=sys-devel/clang-15"; then
-		eapply "${FILESDIR}/clang-15.patch"
-	fi
 
 	#* Applying UGC PRs here
 	if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
@@ -538,6 +484,7 @@ src_prepare() {
 		third_party/ced
 		third_party/cld_3
 		third_party/closure_compiler
+		third_party/cpuinfo
 		third_party/crashpad
 		third_party/crashpad/crashpad/third_party/lss
 		third_party/crashpad/crashpad/third_party/zlib
@@ -574,8 +521,10 @@ src_prepare() {
 		third_party/fdlibm
 		third_party/fft2d
 		third_party/flatbuffers
+		third_party/fp16
 		third_party/freetype
 		third_party/fusejs
+		third_party/fxdiv
 		third_party/highway
 		third_party/libgifcodec
 		third_party/liburlpattern
@@ -674,6 +623,7 @@ src_prepare() {
 		third_party/private_membership
 		third_party/protobuf
 		third_party/protobuf/third_party/six
+		third_party/pthreadpool
 		third_party/pyjson5
 		third_party/qcms
 		third_party/rnnoise
@@ -698,7 +648,7 @@ src_prepare() {
 		third_party/swiftshader/third_party/llvm-subzero
 		third_party/swiftshader/third_party/marl
 		third_party/swiftshader/third_party/subzero
-		third_party/swiftshader/third_party/SPIRV-Headers/include/spirv/unified1
+		third_party/swiftshader/third_party/SPIRV-Headers/include/spirv
 		third_party/swiftshader/third_party/SPIRV-Tools
 		third_party/tensorflow-text
 		third_party/tflite
@@ -725,6 +675,7 @@ src_prepare() {
 		third_party/wuffs
 		third_party/x11proto
 		third_party/xcbproto
+		third_party/xnnpack
 		third_party/zxcvbn-cpp
 		third_party/zlib/google
 		url/third_party/mozilla
@@ -765,26 +716,9 @@ src_prepare() {
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64 || use ppc64 ; then
+	if use arm64 ; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
 	fi
-	# we need to generate ppc64 stuff because upstream does not ship it yet
-	# it has to be done before unbundling.
-	if use ppc64; then
-		pushd third_party/libvpx >/dev/null || die
-		mkdir -p source/config/linux/ppc64 || die
-		# requires git and clang, bug #832803
-		sed -i -e "s|^update_readme||g; s|clang-format|${EPREFIX}/bin/true|g" \
-			generate_gni.sh || die
-		./generate_gni.sh || die
-		popd >/dev/null || die
-
-		pushd third_party/ffmpeg >/dev/null || die
-		cp libavcodec/ppc/h264dsp.c libavcodec/ppc/h264dsp_ppc.c || die
-		cp libavcodec/ppc/h264qpel.c libavcodec/ppc/h264qpel_ppc.c || die
-		popd >/dev/null || die
-	fi
-
 	# Remove most bundled libraries. Some are still needed.
 	build/linux/unbundle/remove_bundled_libraries.py "${keeplibs[@]}" --do-remove || die
 
@@ -813,17 +747,21 @@ src_configure() {
 			CXX="${CBUILD}-clang++ -target ${CHOST} --sysroot ${ESYSROOT}"
 			BUILD_CC=${CBUILD}-clang
 			BUILD_CXX=${CBUILD}-clang++
+			BUILD_AR=llvm-ar
+			BUILD_NM=llvm-nm
 		else
 			CC=${CHOST}-clang
 			CXX=${CHOST}-clang++
+			AR=llvm-ar #thinlto fails otherwise
+			NM=llvm-nm #just in case
 		fi
-		AR=llvm-ar #thinlto fails otherwise
 		strip-unsupported-flags
 	elif ! use clang && ! tc-is-gcc ; then
 		einfo "Enforcing the use of gcc due to USE=-clang ..."
 		CC=${CHOST}-gcc
 		CXX=${CHOST}-g++
 		AR=gcc-ar #just in case
+		NM=gcc-nm #just in case
 		strip-unsupported-flags
 	fi
 
@@ -1046,9 +984,6 @@ src_configure() {
 	elif [[ $myarch = arm ]] ; then
 		myconf_gn+=" target_cpu=\"arm\""
 		ffmpeg_target_arch=$(usex cpu_flags_arm_neon arm-neon arm)
-	elif [[ $myarch = ppc64 ]] ; then
-		myconf_gn+=" target_cpu=\"ppc64\""
-		ffmpeg_target_arch=ppc64
 	else
 		die "Failed to determine target arch, got '$myarch'."
 	fi
@@ -1117,6 +1052,17 @@ src_configure() {
 		fi
 	fi
 
+	# Disable opaque pointers, https://crbug.com/1316298
+	if tc-is-clang; then
+		if test-flag-CXX -Xclang -no-opaque-pointers; then
+			append-flags -Xclang -no-opaque-pointers
+			if tc-is-cross-compiler; then
+				export BUILD_CXXFLAGS+=" -Xclang -no-opaque-pointers"
+				export BUILD_CFLAGS+=" -Xclang -no-opaque-pointers"
+			fi
+		fi
+	fi
+
 	# Explicitly disable ICU data file support for system-icu/headless builds.
 	if use system-icu || use headless; then
 		myconf_gn+=" icu_use_data_file=false"
@@ -1125,25 +1071,26 @@ src_configure() {
 	# Enable ozone wayland and/or headless support
 	myconf_gn+=" use_ozone=true ozone_auto_platforms=false"
 	myconf_gn+=" ozone_platform_headless=true"
-	myconf_gn+=" ozone_platform_x11=$(usex headless false true)"
-	if use wayland || use headless; then
-		if use headless; then
-			myconf_gn+=" ozone_platform=\"headless\""
-			myconf_gn+=" use_xkbcommon=false use_gtk=false"
-			myconf_gn+=" use_glib=false use_gio=false"
-			myconf_gn+=" use_pangocairo=false use_alsa=false"
-			myconf_gn+=" use_libpci=false use_udev=false"
-			myconf_gn+=" enable_print_preview=false"
-			myconf_gn+=" enable_remoting=false"
-		else
-			myconf_gn+=" ozone_platform_wayland=true"
-			myconf_gn+=" use_system_libdrm=true"
-			myconf_gn+=" use_system_minigbm=true"
-			myconf_gn+=" use_xkbcommon=true"
-			myconf_gn+=" ozone_platform=\"wayland\""
-		fi
+	if use headless; then
+		myconf_gn+=" ozone_platform=\"headless\""
+		myconf_gn+=" use_xkbcommon=false use_gtk=false"
+		myconf_gn+=" use_glib=false use_gio=false"
+		myconf_gn+=" use_pangocairo=false use_alsa=false"
+		myconf_gn+=" use_libpci=false use_udev=false"
+		myconf_gn+=" enable_print_preview=false"
+		myconf_gn+=" enable_remoting=false"
 	else
-		myconf_gn+=" ozone_platform=\"x11\""
+		myconf_gn+=" use_system_libdrm=true"
+		myconf_gn+=" use_system_minigbm=true"
+		myconf_gn+=" use_xkbcommon=true"
+		myconf_gn+=" ozone_platform_x11=$(usex X true false)"
+		myconf_gn+=" ozone_platform_wayland=$(usex wayland true false)"
+		myconf_gn+=" ozone_platform=$(usex wayland \"wayland\" \"x11\")"
+	fi
+
+	# Results in undefined references in chrome linking, may require CFI to work
+	if use arm64; then
+		myconf_gn+=" arm_control_flow_integrity=\"none\""
 	fi
 
 	# Enable official builds
@@ -1259,7 +1206,7 @@ src_install() {
 	#doexe out/Release/chrome_crashpad_handler
 
 	ozone_auto_session () {
-		use wayland && ! use headless && echo true || echo false
+		use X && use wayland && ! use headless && echo true || echo false
 	}
 	local sedargs=( -e
 			"s:/usr/lib/:/usr/$(get_libdir)/:g;
@@ -1344,6 +1291,10 @@ pkg_postrm() {
 }
 
 pkg_postinst() {
+	xdg_icon_cache_update
+	xdg_desktop_database_update
+	readme.gentoo_print_elog
+
 	if ! use headless; then
 		if use vaapi; then
 			elog "VA-API is disabled by default at runtime. You have to enable it"
@@ -1367,8 +1318,4 @@ pkg_postinst() {
 			elog "Make sure you have www-plugins/chrome-binary-plugins installed"
 		fi
 	fi
-
-	xdg_icon_cache_update
-	xdg_desktop_database_update
-	readme.gentoo_print_elog
 }
