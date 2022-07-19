@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=5
+EAPI=6
 
 inherit toolchain-funcs
 
@@ -22,6 +22,7 @@ DEPEND="${RDEPEND}
 	virtual/pkgconfig"
 
 src_prepare() {
+	eapply_user
 	sed -e 's:\(CFLAGS\)=-O3:\1+=:' \
 		-e 's:-L/usr/X11R6/lib:-lm:' \
 		-i Makefile.linux || die

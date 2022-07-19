@@ -1,7 +1,7 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 
 inherit autotools eutils flag-o-matic toolchain-funcs
 
@@ -39,6 +39,7 @@ src_prepare() {
 }
 
 src_configure() {
+	eapply_user
 	replace-flags "-O?" "-O"
 
 	# copied from alt overlay

@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI=5
+EAPI=6
 
 inherit multilib linux-info
 
@@ -26,6 +26,7 @@ CONFIG_CHECK="~POSIX_MQUEUE"
 DOCS=( AUTHORS ChangeLog NEWS README )
 
 src_configure() {
+	eapply_user
 	econf \
 		$(use_enable static-libs static) \
 		--libdir=/$(get_libdir) \

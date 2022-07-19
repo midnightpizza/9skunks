@@ -1,7 +1,7 @@
 # Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 
 inherit eutils multilib
 
@@ -55,6 +55,7 @@ pkg_postinst() {
 }
 
 src_prepare() {
+	eapply_user
 	# don't die on Darwin users
 	if [[ ${CHOST} == *-darwin* ]] ; then
 		sed -i -e 's/libGL\.so/libGL.dylib/' opengl.eselect-${PV} || die
