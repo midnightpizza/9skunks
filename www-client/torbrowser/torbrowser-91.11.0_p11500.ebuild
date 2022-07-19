@@ -3,7 +3,7 @@
 
 EAPI="8"
 
-FIREFOX_PATCHSET="firefox-91esr-patches-08j.tar.xz"
+FIREFOX_PATCHSET="firefox-91esr-patches-10j.tar.xz"
 
 LLVM_MAX_SLOT=14
 
@@ -15,15 +15,13 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream mozilla version, used by mozlinguas
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.0#n4
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.0#n11
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-11.0#n2
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/https-everywhere/config?h=maint-11.0#n2
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-11.0#n81
-TOR_PV="11.0.14"
-TOR_TAG="11.0-1-build1"
-TORLAUNCHER_VERSION="0.2.33"
-HTTPSEVERYWHERE_VERSION="2021.7.13"
+# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.5#n4
+# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.5#n11
+# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-11.5#n2
+# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-11.5#n80
+TOR_PV="11.5"
+TOR_TAG="11.5-1-build1"
+TORLAUNCHER_VERSION="0.2.37"
 NOSCRIPT_VERSION="11.4.6"
 
 inherit autotools check-reqs desktop flag-o-matic llvm \
@@ -44,7 +42,6 @@ SRC_URI="
 	${TOR_SRC_ARCHIVE_URI}/src-tor-launcher-${TORLAUNCHER_VERSION}.tar.xz
 	${TOR_SRC_ARCHIVE_URI}/tor-browser-linux64-${TOR_PV}_en-US.tar.xz
 	https://addons.mozilla.org/firefox/downloads/file/3954910/noscript-${NOSCRIPT_VERSION}.xpi
-	https://www.eff.org/files/https-everywhere-${HTTPSEVERYWHERE_VERSION}-eff.xpi
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="Private browsing without tracking, surveillance, or censorship"
@@ -336,7 +333,7 @@ src_unpack() {
 				cp "${DISTDIR}/${a}" "${destdir}" || die
 				;;
 
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.0#n35
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n35
 			"tor-browser-linux64-${TOR_PV}_en-US.tar.xz")
 				local destdir="${WORKDIR}"/profile
 				echo ">>> Unpacking ${a} to ${destdir}"
@@ -366,8 +363,8 @@ src_prepare() {
 	eapply "${WORKDIR}/firefox-patches"
 
 	# Revert "Change the default Firefox profile directory to be TBB-relative"
-	eapply "${FILESDIR}"/${PN}-91.3.0-Do_not_store_data_in_the_app_bundle.patch
-	eapply "${FILESDIR}"/${PN}-91.3.0-Change_the_default_Firefox_profile_directory.patch
+	eapply "${FILESDIR}"/${PN}-91.11.0-Do_not_store_data_in_the_app_bundle.patch
+	eapply "${FILESDIR}"/${PN}-91.11.0-Change_the_default_Firefox_profile_directory.patch
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -408,7 +405,7 @@ src_prepare() {
 	BUILD_DIR="${WORKDIR}/${PN}_build"
 	mkdir -p "${BUILD_DIR}" || die
 
-	xdg_src_prepare
+	xdg_environment_reset
 }
 
 src_configure() {
@@ -548,7 +545,7 @@ src_configure() {
 
 	# see https://gitweb.torproject.org/tor-browser.git/tree/old-configure.in?h=tor-browser-91.3.0esr-11.0-1#n1885
 	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/mozconfig-linux-x86_64?h=maint-11.0
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/build?h=maint-11.0#n114
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/build?h=maint-11.5#n114
 	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
 	mozconfig_add_options_ac 'torbrowser' \
 		--enable-optimize \
@@ -564,7 +561,7 @@ src_configure() {
 		--disable-eme \
 		--enable-proxy-bypass-protection \
 		MOZ_TELEMETRY_REPORTING= \
-		--with-tor-browser-version=${TOR_PV}  \
+		--with-tor-browser-version=${TOR_PV} \
 		--enable-update-channel=release \
 		--enable-bundled-fonts \
 		--with-branding=browser/branding/official \
@@ -724,20 +721,15 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.0#n48
+	# https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n48
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
 	newins "${WORKDIR}"/noscript-${NOSCRIPT_VERSION}.xpi {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
-
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.0#n75
-	pushd "${WORKDIR}"/https-everywhere || die
-		find chrome/ | zip -q -X -@ "${ED}${MOZILLA_FIVE_HOME}/omni.ja"
-	popd || die
 
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
 	insinto "${PREFS_DIR}"
 
-	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.0#n132
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build#n174
+	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n151
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n187
 	newins - 000-tor-browser.js <<-EOF
 		pref("extensions.torlauncher.prompt_for_locale", "false");
 		pref("intl.locale.requested", "en-US");
@@ -799,7 +791,7 @@ src_install() {
 			fi
 		fi
 
-		exec /usr/$(get_libdir)/torbrowser/torbrowser --class "Tor Browser" "\${@}"
+		exec /usr/$(get_libdir)/torbrowser/torbrowser --class "Tor Browser" --name "Tor Browser" "\${@}"
 	EOF
 
 	# Update wrapper
