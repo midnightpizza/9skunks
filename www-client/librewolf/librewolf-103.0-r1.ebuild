@@ -74,9 +74,7 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
-IUSE+=" geckodriver"
-IUSE+=" +gmp-autoupdate"
-IUSE+=" screencast"
+IUSE+=" geckodriver +gmp-autoupdate screencast +X"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
@@ -84,13 +82,15 @@ REQUIRED_USE="debug? ( !system-av1 )
 	wifi? ( dbus )"
 
 # Firefox-only REQUIRED_USE flags
+REQUIRED_USE+=" || ( X wayland )"
+REQUIRED_USE+=" pgo? ( X )"
 REQUIRED_USE+=" screencast? ( wayland )"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.19.0
-	>=net-libs/nodejs-10.23.1
+	>=dev-util/cbindgen-0.24.3
+	net-libs/nodejs
 	virtual/pkgconfig
 	virtual/rust
 	sys-devel/clang
@@ -103,53 +103,52 @@ BDEPEND="${PYTHON_DEPS}
 	x86? ( >=dev-lang/nasm-2.14 )"
 
 COMMON_DEPEND="
-	>=dev-libs/nss-3.76
-	>=dev-libs/nspr-4.32
 	dev-libs/atk
 	dev-libs/expat
+	dev-libs/glib:2
+	dev-libs/libffi:=
+	>=dev-libs/nss-3.80
+	>=dev-libs/nspr-4.34
 	media-libs/alsa-lib
-	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
-	>=media-libs/freetype-2.9
-	virtual/freedesktop-icon-theme
-	>=x11-libs/pixman-0.19.2
-	>=dev-libs/glib-2.42:2
-	>=sys-libs/zlib-1.2.3
-	>=dev-libs/libffi-3.0.10:=
+	media-libs/freetype
+	media-libs/mesa
 	media-video/ffmpeg
-	>=x11-libs/cairo-1.10[X]
-	>=x11-libs/gtk+-3.4.0:3[X]
+	sys-libs/zlib
+	virtual/freedesktop-icon-theme
+	x11-libs/cairo
 	x11-libs/gdk-pixbuf
-	x11-libs/libX11
-	x11-libs/libXcomposite
-	x11-libs/libXdamage
-	x11-libs/libXext
-	x11-libs/libXfixes
-	x11-libs/libXrandr
-	x11-libs/libXrender
-	x11-libs/libXtst
-	x11-libs/libxcb:=
-	>=x11-libs/pango-1.22.0
+	x11-libs/pango
+	x11-libs/pixman
 	dbus? (
 		sys-apps/dbus
 		dev-libs/dbus-glib
 	)
+	jack? ( virtual/jack )
 	libproxy? ( net-libs/libproxy )
+	selinux? ( sec-policy/selinux-mozilla )
+	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	screencast? ( media-video/pipewire:= )
 	system-av1? (
 		>=media-libs/dav1d-0.9.3:=
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
-		>=media-libs/harfbuzz-2.8.1:0=
 		>=media-gfx/graphite2-1.3.13
+		>=media-libs/harfbuzz-2.8.1:0=
 	)
-	system-icu? ( >=dev-libs/icu-70.1:= )
+	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
+	wayland? (
+		>=media-libs/libepoxy-1.5.10-r1
+		x11-libs/gtk+:3[wayland]
+		x11-libs/libdrm
+		x11-libs/libxkbcommon[wayland]
+	)
 	wifi? (
 		kernel_linux? (
 			sys-apps/dbus
@@ -157,9 +156,20 @@ COMMON_DEPEND="
 			net-misc/networkmanager
 		)
 	)
-	jack? ( virtual/jack )
-	selinux? ( sec-policy/selinux-mozilla )
-	sndio? ( media-sound/sndio )"
+	X? (
+		virtual/opengl
+		x11-libs/cairo[X]
+		x11-libs/gtk+:3[X]
+		x11-libs/libX11
+		x11-libs/libXcomposite
+		x11-libs/libXdamage
+		x11-libs/libXext
+		x11-libs/libXfixes
+		x11-libs/libxkbcommon[X]
+		x11-libs/libXrandr
+		x11-libs/libXtst
+		x11-libs/libxcb:=
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
@@ -173,17 +183,16 @@ RDEPEND="${COMMON_DEPEND}
 	selinux? ( sec-policy/selinux-mozilla )"
 
 DEPEND="${COMMON_DEPEND}
-	x11-libs/libICE
-	x11-libs/libSM
 	pulseaudio? (
 		|| (
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
 	)
-	wayland? ( >=x11-libs/gtk+-3.11:3[wayland] )
-	amd64? ( virtual/opengl )
-	x86? ( virtual/opengl )"
+	X? (
+		x11-libs/libICE
+		x11-libs/libSM
+	)"
 
 S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
 
@@ -253,6 +262,7 @@ MOZ_LANGS+=( oc )
 MOZ_LANGS+=( sco )
 MOZ_LANGS+=( si )
 MOZ_LANGS+=( son )
+MOZ_LANGS+=( szl )
 MOZ_LANGS+=( ta )
 MOZ_LANGS+=( te )
 MOZ_LANGS+=( tl )
@@ -297,10 +307,10 @@ moz_clear_vendor_checksums() {
 
 	einfo "Clearing cargo checksums for ${1} ..."
 
-	#sed -i \
-	#	-e 's/\("files":{\)[^}]*/\1/' \
-	#	"${S}"/third_party/rust/${1}/.cargo-checksum.json \
-	#	|| die
+	sed -i \
+		-e 's/\("files":{\)[^}]*/\1/' \
+		"${S}"/third_party/rust/${1}/.cargo-checksum.json \
+		|| die
 }
 
 moz_install_xpi() {
@@ -595,7 +605,9 @@ src_prepare() {
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
 	# Clearing checksums where we have applied patches
-	moz_clear_vendor_checksums target-lexicon-0.9.0
+	moz_clear_vendor_checksums audioipc
+	moz_clear_vendor_checksums audioipc-client
+	moz_clear_vendor_checksums audioipc-server
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -606,7 +618,7 @@ src_prepare() {
 	echo -n "${MOZ_API_KEY_LOCATION//gGaPi/}" > "${S}"/api-location.key || die
 	echo -n "${MOZ_API_KEY_MOZILLA//m0ap1/}" > "${S}"/api-mozilla.key || die
 
-	xdg_src_prepare
+	xdg_environment_reset
 }
 
 src_configure() {
@@ -677,12 +689,14 @@ src_configure() {
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
 		--disable-crashreporter \
+		--disable-gpsd \
 		--disable-install-strip \
 		--disable-parental-controls \
 		--disable-strip \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
+		--enable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
@@ -802,10 +816,12 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	if use wayland ; then
-		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
+	if use X && use wayland ; then
+		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
+	elif ! use X && use wayland ; then
+		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland-only
 	else
-		mozconfig_add_options_ac '' --enable-default-toolkit=cairo-gtk3
+		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
 
 	if use lto ; then
@@ -1015,7 +1031,11 @@ src_compile() {
 		addpredict /root
 	fi
 
-	local -x GDK_BACKEND=x11
+	if ! use X && use wayland; then
+		local -x GDK_BACKEND=wayland
+	else
+		local -x GDK_BACKEND=x11
+	fi
 
 	${virtx_cmd} ./mach build --verbose \
 		|| die
