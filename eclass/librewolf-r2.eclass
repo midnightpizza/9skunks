@@ -62,7 +62,7 @@ END
 
   #eapply "${WORKDIR}/patches/context-menu.patch"
   eapply "${WORKDIR}/patches/custom-ubo-assets-bootstrap-location.patch"
-  eapply "${WORKDIR}/patches/dbus_name.patch"
+#  eapply "${WORKDIR}/patches/dbus_name.patch"
   eapply "${WORKDIR}/patches/urlbarprovider-interventions.patch"
 
   #eapply "${WORKDIR}/patches/bootstrap-without-vcs.patch"
@@ -76,7 +76,7 @@ END
   eapply "${WORKDIR}/patches/ui-patches/remove-branding-urlbar.patch"
   eapply "${WORKDIR}/patches/ui-patches/pref-naming.patch"
   eapply "${WORKDIR}/patches/ui-patches/hide-safe-browsing.patch"
-  eapply "${WORKDIR}/patches/sed-patches/disable-pocket.patch"
+#  eapply "${WORKDIR}/patches/sed-patches/disable-pocket.patch"
   eapply "${WORKDIR}/patches/sed-patches/allow-searchengines-non-esr.patch"
   #eapply "${WORKDIR}/patches/sed-patches/stop-undesired-requests.patch"
   eapply "${WORKDIR}/patches/sed-patches/remove-internal-plugin-certs.patch"
