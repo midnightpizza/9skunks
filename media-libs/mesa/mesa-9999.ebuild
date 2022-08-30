@@ -430,10 +430,10 @@ multilib_src_configure() {
 		-Ddri3=enabled
 		-Degl=enabled
 		-Dgbm=enabled
+		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
 		$(meson_feature gles2)
 		$(meson_feature llvm)
-		$(meson_use libglvnd glvnd)
 		$(meson_feature lm-sensors lmsensors)
 		$(meson_use osmesa)
 		$(meson_use selinux)
