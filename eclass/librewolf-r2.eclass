@@ -78,7 +78,7 @@ END
   eapply "${WORKDIR}/patches/ui-patches/hide-safe-browsing.patch"
 #  eapply "${WORKDIR}/patches/sed-patches/disable-pocket.patch"
   eapply "${WORKDIR}/patches/sed-patches/allow-searchengines-non-esr.patch"
-  #eapply "${WORKDIR}/patches/sed-patches/stop-undesired-requests.patch"
+  eapply "${WORKDIR}/patches/sed-patches/stop-undesired-requests.patch"
   eapply "${WORKDIR}/patches/sed-patches/remove-internal-plugin-certs.patch"
   #eapply "${WORKDIR}/patches/sed-patches/aboutLogos.patch"
 
