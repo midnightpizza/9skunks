@@ -25,15 +25,17 @@ DEPEND="x11-libs/libX11
 
 RDEPEND="${DEPEND}"
 
-src_configure() {
-	autoreconf --install
-	econf
-}
 
 src_prepare() {
-	append-ldflags "-Wl,-z,relro -Wl,-z,now"
-	append-flags "-fcommon"
 	eapply_user
+	sed -i '87d' ./src/evrouter.c
+	sed -i '46d' ./configure.ac
+	aclocal
+	automake --add-missing
+	./configure --prefix=/usr --without-xmms
+	make
+	#append-ldflags "-Wl,-z,relro -Wl,-z,now"
+	#append-flags "-fcommon"
 }
 
 src_install() {
