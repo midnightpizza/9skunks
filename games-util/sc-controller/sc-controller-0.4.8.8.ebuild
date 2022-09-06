@@ -8,7 +8,7 @@ DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{8..10} )
 inherit distutils-r1 linux-info xdg
 
-COMMIT="3ce2d23c873f6f5ecc80ef90f153c14f744368f9"
+COMMIT="847b0246a1bb509b736589956f1637b11f1cf97a"
 DESCRIPTION="User-mode driver and GTK-based GUI for Steam Controllers and others"
 HOMEPAGE="https://github.com/kozec/sc-controller"
 SRC_URI="https://github.com/kozec/sc-controller/archive/${COMMIT}.tar.gz -> ${P}.tar.gz"
