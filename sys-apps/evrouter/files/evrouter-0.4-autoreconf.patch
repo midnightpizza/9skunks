@@ -1,0 +1,45 @@
+From 73ed0fef1480d8895ef44c4337dbd8cd0b098515 Mon Sep 17 00:00:00 2001
+From: orbea <orbea@riseup.net>
+Date: Mon, 5 Sep 2022 20:41:29 -0700
+Subject: [PATCH] build: Fix autoreconf
+
+---
+ configure.ac | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index bfe1f58..d715203 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -18,15 +18,13 @@ dnl
+ 
+ dnl Process this file with autoconf to produce a configure script.
+ 
+-AC_INIT(src/evrouter.c)
++AC_INIT([evrouter],[0.4])
+ 
+ AC_CANONICAL_SYSTEM
+ AC_CANONICAL_HOST
+ AC_CANONICAL_TARGET
+ 
+-dnl Magic to obtain the version from debian/changelog, where it should
+-dnl reside.
+-AM_INIT_AUTOMAKE($PACKAGE,$$PACKAGE_VERSION)
++AM_INIT_AUTOMAKE([AC_PACKAGE_NAME],[AC_PACKAGE_VERSION])
+ 
+ dnl Essential info (some autodetected)
+ PACKAGE=`grep urgency= debian/changelog|head -1 | sed 's/ .*//'`
+@@ -40,11 +38,6 @@ AC_SUBST(PACKAGE_VERSION)
+ dnl AC_SUBST(LIBVERSION)
+ AC_SUBST(ISODATE)
+ 
+-dnl Every other copy of the package version number gets its value from
+-dnl here (BUT NOT the files in debian/)
+-
+-AM_INIT_AUTOMAKE(evrouter, $PACKAGE_VERSION)
+-
+ dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
+ AM_CONFIG_HEADER(config.h)
+ 
+-- 
+2.35.1
