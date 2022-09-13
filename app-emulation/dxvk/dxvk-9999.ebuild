@@ -1,170 +1,136 @@
-# Copyright 1999-2019 Gentoo Authors
+# Copyright 2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 MULTILIB_COMPAT=( abi_x86_{32,64} )
+inherit flag-o-matic meson-multilib
 
-inherit meson multilib-minimal flag-o-matic
-
-DESCRIPTION="A Vulkan-based translation layer for Direct3D 10/11"
-HOMEPAGE="https://github.com/doitsujin/dxvk"
-
-if [[ ${PV} == "9999" ]] ; then
-	EGIT_REPO_URI="https://github.com/doitsujin/dxvk.git"
-	EGIT_BRANCH="master"
+if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
-	SRC_URI=""
+	EGIT_REPO_URI="https://github.com/doitsujin/dxvk.git"
 else
-	SRC_URI="https://github.com/doitsujin/dxvk/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="-* ~amd64"
+	SRC_URI="https://github.com/doitsujin/dxvk/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+	KEYWORDS="-* ~amd64 ~x86"
 fi
 
+DESCRIPTION="Vulkan-based implementation of D3D9, D3D10 and D3D11 for Linux / Wine"
+HOMEPAGE="https://github.com/doitsujin/dxvk/"
+
 LICENSE="ZLIB"
-SLOT=0
+SLOT="0"
+IUSE="+abi_x86_32 crossdev-mingw +d3d9 +d3d10 +d3d11 debug +dxgi"
+REQUIRED_USE="
+	|| ( d3d9 d3d10 d3d11 dxgi )
+	d3d10? ( d3d11 )
+	dxgi? ( d3d11 )"
 
-IUSE="+d3d9 +d3d10 +d3d11 debug dxgi test"
-
-RESTRICT="test"
-
-RDEPEND="
-	|| (
-		>=app-emulation/wine-vanilla-6.0:*[${MULTILIB_USEDEP},vulkan]
-		>=app-emulation/wine-staging-6.0:*[${MULTILIB_USEDEP},vulkan]
-	)"
-DEPEND="${RDEPEND}
+BDEPEND="
 	dev-util/glslang
-	dev-util/vulkan-headers"
-
-PATCHES=(
-	"${FILESDIR}/flags-r2.patch"
-)
-
-bits() { [[ ${ABI} = amd64 ]] && echo 64 || echo 32; }
-
-dxvk_check_requirements() {
-	if [[ ${MERGE_TYPE} != binary ]]; then
-		if ! tc-is-gcc || [[ $(gcc-major-version) -lt 7 || $(gcc-major-version) -eq 7 && $(gcc-minor-version) -lt 3 ]]; then
-			die "At least gcc 7.3 is required"
-		fi
-	fi
-
-	if ! use abi_x86_64 && ! use abi_x86_32; then
-		eerror "You need to enable at least one of abi_x86_32 and abi_x86_64."
-		die
-	fi
-
-	local -a categories
-	use abi_x86_64 && categories+=("cross-x86_64-w64-mingw32")
-	use abi_x86_32 && categories+=("cross-i686-w64-mingw32")
-
-	for cat in ${categories[@]}; do
-		local thread_model="$(LC_ALL=C ${cat/cross-/}-gcc -v 2>&1 \
-			  | grep 'Thread model' | cut -d' ' -f3)"
-		if ! has_version -b "${cat}/mingw64-runtime[libraries]" ||
-				! has_version -b "${cat}/gcc" ||
-				[[ "${thread_model}" != "posix" ]]; then
-			eerror "The ${cat} toolchain is not properly installed."
-			eerror "Make sure to install ${cat}/gcc with EXTRA_ECONF=\"--enable-threads=posix\""
-			eerror "and ${cat}/mingw64-runtime with USE=\"libraries\"."
-			elog "See <https://wiki.gentoo.org/wiki/Mingw> for more information."
-			einfo "In short:"
-			einfo "echo '~${cat}/mingw64-runtime-7.0.0 ~amd64' >> \\"
-			einfo "    /etc/portage/package.accept_keywords/mingw"
-			einfo "crossdev --stable --target ${cat}"
-			einfo "echo 'EXTRA_ECONF=\"--enable-threads=posix\"' >> \\"
-			einfo "    /etc/portage/env/mingw-gcc.conf"
-			einfo "echo '${cat}/gcc mingw-gcc.conf' >> \\"
-			einfo "    /etc/portage/package.env/mingw"
-			einfo "echo '${cat}/mingw64-runtime libraries' >> \\"
-			einfo "    /etc/portage/package.use/mingw"
-			einfo "emerge --oneshot ${cat}/gcc ${cat}/mingw64-runtime"
-
-			die "${cat} toolchain is not properly installed."
-		fi
-	done
-}
+	!crossdev-mingw? ( dev-util/mingw64-toolchain[${MULTILIB_USEDEP}] )"
 
 pkg_pretend() {
-	dxvk_check_requirements
-}
+	[[ ${MERGE_TYPE} == binary ]] && return
 
-pkg_setup() {
-	dxvk_check_requirements
+	if use crossdev-mingw && [[ ! -v MINGW_BYPASS ]]; then
+		local tool=-w64-mingw32-g++
+		for tool in $(usev abi_x86_64 x86_64${tool}) $(usev abi_x86_32 i686${tool}); do
+			if ! type -P ${tool} >/dev/null; then
+				eerror "With USE=crossdev-mingw, it is necessary to setup the mingw toolchain."
+				eerror "For instructions, please see: https://wiki.gentoo.org/wiki/Mingw"
+				use abi_x86_32 && use abi_x86_64 &&
+					eerror "Also, with USE=abi_x86_32, will need both i686 and x86_64 toolchains."
+				die "USE=crossdev-mingw is set but ${tool} was not found"
+			elif [[ ! $(LC_ALL=C ${tool} -v 2>&1) =~ "Thread model: posix" ]]; then
+				eerror "${PN} requires GCC to be built with --enable-threads=posix"
+				eerror "Please see: https://wiki.gentoo.org/wiki/Mingw#POSIX_threads_for_Windows"
+				die "USE=crossdev-mingw is set but ${tool} does not use POSIX threads"
+			fi
+		done
+	fi
 }
 
 src_prepare() {
 	default
 
-	# mingw ld doesn't like hash style
-	filter-flags -Wl,--hash-style*
+	sed -i "/^basedir=/s|=.*|=${EPREFIX}/usr/lib/${PN}|" setup_dxvk.sh || die
+}
 
-	# Create versioned setup script
-	cp "setup_dxvk.sh" "dxvk-setup"
-	sed -e "s#basedir=.*#basedir=\"${EPREFIX}/usr\"#" -i "dxvk-setup" || die
+src_configure() {
+	use crossdev-mingw || PATH=${BROOT}/usr/lib/mingw64-toolchain/bin:${PATH}
 
-	bootstrap_dxvk() {
-		# Set DXVK location for each ABI
-		sed -e "s#x$(bits)#$(get_libdir)/dxvk#" -i "${S}/dxvk-setup" || die
+	# AVX has a history of causing issues with this package, disable for safety
+	# https://github.com/Tk-Glitch/PKGBUILDS/issues/515
+	append-flags -mno-avx
 
-		# Add *FLAGS to cross-file
-		sed -i \
-			-e "s!@CFLAGS@!$(_meson_env_array "${CFLAGS}")!" \
-			-e "s!@CXXFLAGS@!$(_meson_env_array "${CXXFLAGS}")!" \
-			-e "s!@LDFLAGS@!$(_meson_env_array "${LDFLAGS}")!" \
-			build-win$(bits).txt || die
-	}
+	if [[ ${CHOST} != *-mingw* ]]; then
+		if [[ ! -v MINGW_BYPASS ]]; then
+			unset AR CC CXX RC STRIP
+			filter-flags '-fuse-ld=*'
+		fi
 
-	multilib_foreach_abi bootstrap_dxvk
+		CHOST_amd64=x86_64-w64-mingw32
+		CHOST_x86=i686-w64-mingw32
+		CHOST=$(usex x86 ${CHOST_x86} ${CHOST_amd64})
 
-	# Clean missed ABI in setup script
-	sed -e "s#.*x32.*##" -e "s#.*x64.*##" \
-		-i "dxvk-setup" || die
+		strip-unsupported-flags
+	fi
 
-	# Load configuration file from /etc/dxvk.conf.
-	sed -Ei 's|filePath = "^(\s+)dxvk.conf";$|\1filePath = "/etc/dxvk.conf";|' \
-		src/util/config/config.cpp || die
+	multilib-minimal_src_configure
 }
 
 multilib_src_configure() {
+	# multilib's ${CHOST_amd64}-gcc -m32 is unusable with crossdev,
+	# unset again so meson eclass will set ${CHOST}-gcc + others
+	use crossdev-mingw && [[ ! -v MINGW_BYPASS ]] && unset AR CC CXX RC STRIP
+
 	local emesonargs=(
-		--cross-file="${S}/build-win$(bits).txt"
-		--libdir="$(get_libdir)/dxvk"
-		--bindir="$(get_libdir)/dxvk/bin"
-		--buildtype="release"
-		$(usex debug "" "--strip")
-		$(meson_use d3d9 "enable_d3d9")
-		$(meson_use d3d10 "enable_d3d10")
-		$(meson_use d3d11 "enable_d3d11")
-		$(meson_use dxgi "enable_dxgi")
-		$(meson_use test "enable_tests")
+		--prefix="${EPREFIX}"/usr/lib/${PN}
+		--{bin,lib}dir=x${MULTILIB_ABI_FLAG: -2}
+		$(meson_use {,enable_}d3d9)
+		$(meson_use {,enable_}d3d10)
+		$(meson_use {,enable_}d3d11)
+		$(meson_use {,enable_}dxgi)
+		$(usev !debug --strip) # portage won't strip .dll, so allow it here
 	)
+
 	meson_src_configure
 }
 
-multilib_src_install() {
-	meson_src_install
+multilib_src_install_all() {
+	dobin setup_dxvk.sh
+	dodoc README.md dxvk.conf
+
+	find "${ED}" -type f -name '*.a' -delete || die
 }
 
-multilib_src_install_all() {
-	find "${D}" -name '*.a' -delete -print
-	if use abi_x86_32; then
-		mv "${D}/usr/lib/dxvk/" "${D}/usr/lib/temp/"
-		mv "${D}/usr/lib/temp/bin/" "${D}/usr/lib/dxvk/"
-		rm -rf "${D}/usr/lib/temp/"
+pkg_preinst() {
+	[[ -e ${EROOT}/usr/$(get_libdir)/dxvk/d3d11.dll ]] && DXVK_HAD_OVERLAY=
+}
+
+pkg_postinst() {
+	if [[ ! ${REPLACING_VERSIONS} ]]; then
+		elog "To enable ${PN} on a wine prefix, you can run the following command:"
+		elog
+		elog "	WINEPREFIX=/path/to/prefix setup_dxvk.sh install --symlink"
+		elog
+		elog "See ${EROOT}/usr/share/doc/${PF}/README.md* for details."
+	elif [[ -v DXVK_HAD_OVERLAY ]]; then
+		# temporary warning until this version is more widely used
+		elog "Gentoo's main repo ebuild for ${PN} uses different paths than most overlays."
+		elog "If you were using symbolic links in wine prefixes it may be necessary to"
+		elog "refresh them by re-running the command:"
+		elog
+		elog "	WINEPREFIX=/path/to/prefix setup_dxvk.sh install --symlink"
+		elog
+		elog "Also, if you were using /etc/${PN}.conf, ${PN} is no longer patched to load"
+		elog "it. See ${EROOT}/usr/share/doc/${PF}/README.md* for handling configs."
 	fi
-	if use abi_x86_64; then
-		mv "${D}/usr/lib64/dxvk/" "${D}/usr/lib64/temp/"
-		mv "${D}/usr/lib64/temp/bin/" "${D}/usr/lib64/dxvk/"
-		rm -rf "${D}/usr/lib64/temp/"
-	fi
 
-	# create combined setup helper
-	exeinto /usr/bin
-	doexe "${S}/dxvk-setup"
-
-	insinto etc
-	doins "dxvk.conf"
-
-	einstalldocs
+	# don't try to keep wine-*[vulkan] in RDEPEND, but still give a warning
+	local wine
+	for wine in app-emulation/wine-{vanilla,staging}; do
+		has_version ${wine} && ! has_version ${wine}[vulkan] &&
+			ewarn "${wine} was not built with USE=vulkan, ${PN} will not be usable with it"
+	done
 }
