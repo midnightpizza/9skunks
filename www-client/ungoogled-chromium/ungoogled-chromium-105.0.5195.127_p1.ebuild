@@ -22,16 +22,14 @@ DESCRIPTION="Modifications to Chromium for removing Google integration and enhan
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PATCHSET="1"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
-PATCHSET_NAME_PPC64="chromium_104.0.5112.101-1raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
-
 "
 
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="amd64 ~arm64 ~x86"
-IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
+IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -46,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="6189820f350e6d7e7316bd6bd0e85fd60230dbf5"
+#UGC_COMMIT_ID="ac758db8b945182175e4aabf0faa6ee2ea9eecfb"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -67,7 +65,7 @@ fi
 SRC_URI+="${UGC_URL}
 "
 
-if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
+if [ ! -z "${UGC_PR_COMMITS[*]}" ]; then
 	for i in "${UGC_PR_COMMITS[@]}"; do
 		SRC_URI+="https://github.com/ungoogled-software/${PN}/commit/$i.patch -> ${PN}-$i.patch
 		"
@@ -337,7 +335,6 @@ src_prepare() {
 		"${FILESDIR}/disable-GlobalMediaControlsCastStartStop.patch"
 	)
 
-
 	default
 
 	mkdir -p third_party/node/linux/node-linux-x64/bin || die
@@ -355,6 +352,11 @@ src_prepare() {
 
 	use convert-dict && eapply "${FILESDIR}/chromium-ucf-dict-utility.patch"
 
+	if use hevc; then
+		sed -i '/^bool IsHevcProfileSupported(const VideoType& type) {$/{s++bool IsHevcProfileSupported(const VideoType\& type) { return true;+;h};${x;/./{x;q0};x;q1}' \
+			media/base/supported_types.cc || die
+	fi
+
 	use system-ffmpeg && eapply "${FILESDIR}/chromium-99-opus.patch"
 
 	if use system-ffmpeg; then
@@ -370,7 +372,7 @@ src_prepare() {
 	use vdpau && eapply "${FILESDIR}/vdpau-support-r4.patch"
 
 	#* Applying UGC PRs here
-	if [ ! -z "${UGC_PR_COMMITS[@]}" ]; then
+	if [ ! -z "${UGC_PR_COMMITS[*]}" ]; then
 		pushd "${UGC_WD}" >/dev/null
 		for i in "${UGC_PR_COMMITS[@]}"; do
 			eapply "${DISTDIR}/${PN}-$i.patch"
@@ -726,7 +728,7 @@ src_prepare() {
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64; then
+	if use arm64 ; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
 	fi
 
@@ -912,6 +914,8 @@ src_configure() {
 	myconf_gn+=" enable_pdf=true"
 	myconf_gn+=" use_system_lcms2=true"
 	myconf_gn+=" enable_print_preview=true"
+	myconf_gn+=" enable_platform_hevc=$(usex hevc true false)"
+	myconf_gn+=" enable_platform_hevc_decoding=$(usex hevc true false)"
 
 	# Ungoogled flags
 	myconf_gn+=" enable_mdns=false"
@@ -1300,6 +1304,11 @@ pkg_postinst() {
 			elog "VA-API is disabled by default at runtime. You have to enable it"
 			elog "by adding --enable-features=VaapiVideoDecoder and "
 			elog "--disable-features=UseChromeOSDirectVideoDecoder to CHROMIUM_FLAGS"
+			elog "in /etc/chromium/default."
+		fi
+		if use hevc; then
+			elog "HEVC decoding is disabled by default at runtime. You have to enable it"
+			elog "by adding --enable-features=PlatformHEVCDecoderSupport to CHROMIUM_FLAGS"
 			elog "in /etc/chromium/default."
 		fi
 		if use screencast; then
