@@ -1,13 +1,13 @@
 # Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI="7"
+EAPI=8
 
-FIREFOX_PATCHSET="firefox-101-patches-01j.tar.xz"
+FIREFOX_PATCHSET="firefox-105-patches-01j.tar.xz"
 
-LLVM_MAX_SLOT=14
+LLVM_MAX_SLOT=15
 
-PYTHON_COMPAT=( python3_{8..10} )
+PYTHON_COMPAT=( python3_{8..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -43,19 +43,20 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs \
-	virtualx xdg librewolf-r2
+	virtualx xdg
 
-MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-
-if [[ ${PV} == *_rc* ]] ; then
-	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
-fi
+# MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
+#
+# if [[ ${PV} == *_rc* ]] ; then
+# 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
+# fi
+MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~{juippis,polynomial-c,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
+SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="LibreWolf Web Browser"
@@ -64,6 +65,7 @@ HOMEPAGE="https://librewolf-community.gitlab.io/"
 KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 
 SLOT="rapid"
+SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
@@ -72,9 +74,7 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
-IUSE+=" geckodriver"
-IUSE+=" +gmp-autoupdate"
-IUSE+=" screencast"
+IUSE+=" geckodriver +gmp-autoupdate screencast +X"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
@@ -82,13 +82,15 @@ REQUIRED_USE="debug? ( !system-av1 )
 	wifi? ( dbus )"
 
 # Firefox-only REQUIRED_USE flags
+REQUIRED_USE+=" || ( X wayland )"
+REQUIRED_USE+=" pgo? ( X )"
 REQUIRED_USE+=" screencast? ( wayland )"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.19.0
-	>=net-libs/nodejs-10.23.1
+	>=dev-util/cbindgen-0.24.3
+	net-libs/nodejs
 	virtual/pkgconfig
 	virtual/rust
 	sys-devel/clang
@@ -99,55 +101,53 @@ BDEPEND="${PYTHON_DEPS}
 		)
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )"
-
-COMMON_DEPEND="
-	>=dev-libs/nss-3.76
-	>=dev-libs/nspr-4.32
+COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/atk
 	dev-libs/expat
+	dev-libs/glib:2
+	dev-libs/libffi:=
+	>=dev-libs/nss-3.80
+	>=dev-libs/nspr-4.34
 	media-libs/alsa-lib
-	>=media-libs/mesa-10.2:*
 	media-libs/fontconfig
-	>=media-libs/freetype-2.9
-	virtual/freedesktop-icon-theme
-	>=x11-libs/pixman-0.19.2
-	>=dev-libs/glib-2.42:2
-	>=sys-libs/zlib-1.2.3
-	>=dev-libs/libffi-3.0.10:=
+	media-libs/freetype
+	media-libs/mesa
 	media-video/ffmpeg
-	>=x11-libs/cairo-1.10[X]
-	>=x11-libs/gtk+-3.4.0:3[X]
+	sys-libs/zlib
+	virtual/freedesktop-icon-theme
+	x11-libs/cairo
 	x11-libs/gdk-pixbuf
-	x11-libs/libX11
-	x11-libs/libXcomposite
-	x11-libs/libXdamage
-	x11-libs/libXext
-	x11-libs/libXfixes
-	x11-libs/libXrandr
-	x11-libs/libXrender
-	x11-libs/libXtst
-	x11-libs/libxcb:=
-	>=x11-libs/pango-1.22.0
+	x11-libs/pango
+	x11-libs/pixman
 	dbus? (
 		sys-apps/dbus
 		dev-libs/dbus-glib
 	)
+	jack? ( virtual/jack )
 	libproxy? ( net-libs/libproxy )
+	selinux? ( sec-policy/selinux-mozilla )
+	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	screencast? ( media-video/pipewire:= )
 	system-av1? (
-		>=media-libs/dav1d-0.9.3:=
+		>=media-libs/dav1d-1.0.0:=
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
-		>=media-libs/harfbuzz-2.8.1:0=
 		>=media-gfx/graphite2-1.3.13
+		>=media-libs/harfbuzz-2.8.1:0=
 	)
-	system-icu? ( >=dev-libs/icu-70.1:= )
+	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
+	wayland? (
+		>=media-libs/libepoxy-1.5.10-r1
+		x11-libs/gtk+:3[wayland]
+		x11-libs/libdrm
+		x11-libs/libxkbcommon[wayland]
+	)
 	wifi? (
 		kernel_linux? (
 			sys-apps/dbus
@@ -155,9 +155,20 @@ COMMON_DEPEND="
 			net-misc/networkmanager
 		)
 	)
-	jack? ( virtual/jack )
-	selinux? ( sec-policy/selinux-mozilla )
-	sndio? ( media-sound/sndio )"
+	X? (
+		virtual/opengl
+		x11-libs/cairo[X]
+		x11-libs/gtk+:3[X]
+		x11-libs/libX11
+		x11-libs/libXcomposite
+		x11-libs/libXdamage
+		x11-libs/libXext
+		x11-libs/libXfixes
+		x11-libs/libxkbcommon[X]
+		x11-libs/libXrandr
+		x11-libs/libXtst
+		x11-libs/libxcb:=
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
@@ -167,23 +178,20 @@ RDEPEND="${COMMON_DEPEND}
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4
 		)
-	)
-	selinux? ( sec-policy/selinux-mozilla )"
-
+	)"
 DEPEND="${COMMON_DEPEND}
-	x11-libs/libICE
-	x11-libs/libSM
 	pulseaudio? (
 		|| (
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
 	)
-	wayland? ( >=x11-libs/gtk+-3.11:3[wayland] )
-	amd64? ( virtual/opengl )
-	x86? ( virtual/opengl )"
+	X? (
+		x11-libs/libICE
+		x11-libs/libSM
+	)"
 
-S="${WORKDIR}/firefox-${PV%_*}"
+S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -451,13 +459,6 @@ pkg_setup() {
 			fi
 		fi
 
-		if ! use clang && [[ $(gcc-major-version) -eq 11 ]] \
-			&& ! has_version -b ">sys-devel/gcc-11.1.0:11" ; then
-			# bug 792705
-			eerror "Using GCC 11 to compile firefox is currently known to be broken (see bug #792705)."
-			die "Set USE=clang or select <gcc-11 to build ${CATEGORY}/${P}."
-		fi
-
 		python-any-r1_pkg_setup
 
 		# Avoid PGO profiling problems due to enviroment leakage
@@ -472,7 +473,11 @@ pkg_setup() {
 			XDG_SESSION_COOKIE
 
 		# Build system is using /proc/self/oom_score_adj, bug #604394
-		addpredict /proc/self/oom_score_adj
+		# Update 105.0: "/proc/self/oom_score_adj" isn't enough anymore, but not sure whether that's
+		# due to better OOM handling by Firefox, or portage (PORTAGE_SCHEDULING_POLICY) update...
+		# addpredict /proc/self/oom_score_adj
+		addpredict /proc
+		# addpredict /dev/dri
 
 		if use pgo ; then
 			# Allow access to GPU during PGO run
@@ -550,8 +555,6 @@ src_unpack() {
 			unpack ${_src_file}
 		fi
 	done
-
-	librewolf-r2_src_unpack
 }
 
 src_prepare() {
@@ -596,7 +599,9 @@ src_prepare() {
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
 	# Clearing checksums where we have applied patches
-	moz_clear_vendor_checksums target-lexicon-0.9.0
+	moz_clear_vendor_checksums audioipc
+	moz_clear_vendor_checksums audioipc-client
+	moz_clear_vendor_checksums audioipc-server
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -607,7 +612,7 @@ src_prepare() {
 	echo -n "${MOZ_API_KEY_LOCATION//gGaPi/}" > "${S}"/api-location.key || die
 	echo -n "${MOZ_API_KEY_MOZILLA//m0ap1/}" > "${S}"/api-mozilla.key || die
 
-	xdg_src_prepare
+	xdg_environment_reset
 }
 
 src_configure() {
@@ -678,12 +683,14 @@ src_configure() {
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
 		--disable-crashreporter \
+		--disable-gpsd \
 		--disable-install-strip \
 		--disable-parental-controls \
 		--disable-strip \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
+		--enable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
@@ -702,6 +709,20 @@ src_configure() {
 		--with-unsigned-addon-scopes=app,system \
 		--x-includes="${SYSROOT}${EPREFIX}/usr/include" \
 		--x-libraries="${SYSROOT}${EPREFIX}/usr/$(get_libdir)"
+
+	# Librewolf
+	mozconfig_add_options_ac 'LibreWolf Branding' \
+		--with-app-name="librewolf" \
+		--with-app-basename="LibreWolf" \
+		--with-branding=browser/branding/librewolf
+
+	mozconfig_add_options_mk 'Librewolf Disable Telemetry' \
+		MOZ_CRASHREPORTER=0 \
+		MOZ_DATA_REPORTING=0 \
+		MOZ_SERVICES_HEALTHREPORT=0 \
+		MOZ_TELEMETRY_REPORTING=0
+
+	export MOZ_REQUIRE_SIGNING=
 
 	# Set update channel
 	local update_channel=release
@@ -789,10 +810,12 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	if use wayland ; then
-		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
+	if use X && use wayland ; then
+		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
+	elif ! use X && use wayland ; then
+		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland-only
 	else
-		mozconfig_add_options_ac '' --enable-default-toolkit=cairo-gtk3
+		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
 
 	if use lto ; then
@@ -940,10 +963,13 @@ src_configure() {
 	export MOZ_MAKE_FLAGS="${MAKEOPTS}"
 
 	# Use system's Python environment
-	export MACH_USE_SYSTEM_PYTHON=1
-	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_MACH_SITE=1
-	export MACH_SYSTEM_ASSERTED_COMPATIBLE_WITH_BUILD_SITE=1
-	export PIP_NO_CACHE_DIR=off
+	PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
+
+	if use system-python-libs; then
+		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="system"
+	else
+		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="none"
+	fi
 
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
@@ -954,8 +980,6 @@ src_configure() {
 
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
-
-	librewolf-r2_src_configure
 
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
@@ -1001,7 +1025,11 @@ src_compile() {
 		addpredict /root
 	fi
 
-	local -x GDK_BACKEND=x11
+	if ! use X && use wayland; then
+		local -x GDK_BACKEND=wayland
+	else
+		local -x GDK_BACKEND=x11
+	fi
 
 	${virtx_cmd} ./mach build --verbose \
 		|| die
@@ -1019,8 +1047,8 @@ src_install() {
 	## LibreWolf
 	# For some reason 'local-settings.js' doesn't get properly packaged.
 	# Install it manually
-	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
-	# doins "${S}/lw/local-settings.js"
+	insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
@@ -1140,8 +1168,6 @@ src_install() {
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
 		"${ED}/usr/bin/${PN}" \
 		|| die
-
-	librewolf-r2_src_install
 }
 
 pkg_preinst() {
@@ -1235,8 +1261,24 @@ pkg_postinst() {
 		elog
 		elog "Since ${PN}-91.0 we no longer install multiple shortcuts for"
 		elog "each supported display protocol.  Instead we will only install"
-		elog "one generic Mozilla ${PN^} shortcut."
+		elog "one generic ${PN^} shortcut."
 		elog "If you still want to be able to select between running ${PN^}"
 		elog "on X11 or Wayland, you have to re-create these shortcuts on your own."
 	fi
+
+	# bug 835078
+	if use hwaccel && has_version "x11-drivers/xf86-video-nouveau"; then
+		ewarn "You have nouveau drivers installed in your system and 'hwaccel' "
+		ewarn "enabled for LibreWolf. Nouveau / your GPU might not supported the "
+		ewarn "required EGL, so either disable 'hwaccel' or try the workaround "
+		ewarn "explained in https://bugs.gentoo.org/835078#c5 if LibreWolf crashes."
+	fi
+
+	elog
+	elog "Unfortunately LibreWolf-100.0 breaks compatibility with some sites using "
+	elog "useragent checks. To temporarily fix this, enter about:config and modify "
+	elog "network.http.useragent.forceVersion preference to \"99\"."
+	elog "Or install an addon to change your useragent."
+	elog "See: https://support.mozilla.org/en-US/kb/difficulties-opening-or-using-website-firefox-100"
+	elog
 }
