@@ -190,6 +190,7 @@ DEPEND="${RDEPEND}
 	X? (
 		x11-libs/libXrandr[${MULTILIB_USEDEP}]
 		x11-base/xorg-proto
+		dev-util/glslang
 	)
 "
 BDEPEND="
