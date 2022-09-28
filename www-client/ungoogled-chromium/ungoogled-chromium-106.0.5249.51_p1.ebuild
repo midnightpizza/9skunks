@@ -3,7 +3,7 @@
 
 EAPI=8
 PYTHON_COMPAT=( python3_{7,8,9,10} )
-PYTHON_REQ_USE="xml"
+PYTHON_REQ_USE="xml(+)"
 
 CHROMIUM_LANGS="af am ar bg bn ca cs da de el en-GB es es-419 et fa fi fil fr gu he
 	hi hr hu id it ja kn ko lt lv ml mr ms nb nl pl pt-BR pt-PT ro ru sk sl sr
@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="ac758db8b945182175e4aabf0faa6ee2ea9eecfb"
+UGC_COMMIT_ID="618840e848e18f2dc25a44a31b4efe95315a2c99"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -324,8 +324,8 @@ src_prepare() {
 		"${FILESDIR}/chromium-93-InkDropHost-crash.patch"
 		"${FILESDIR}/chromium-98-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
-		"${FILESDIR}/chromium-104-tflite-system-zlib.patch"
 		"${FILESDIR}/chromium-105-swiftshader-no-wayland.patch"
+		"${FILESDIR}/chromium-106-python3_11.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
@@ -365,6 +365,7 @@ src_prepare() {
 			eapply "${FILESDIR}/unbundle-ffmpeg-av_stream_get_first_dts.patch"
 		fi
 		eapply "${FILESDIR}/reverse-roll-src-third_party-ffmpeg.patch"
+		eapply "${FILESDIR}/reverse-roll-src-third_party-ffmpeg_duration.patch"
 	fi
 
 	use system-openjpeg && eapply "${FILESDIR}/chromium-system-openjpeg-r3.patch"
@@ -469,6 +470,7 @@ src_prepare() {
 		third_party/apple_apsl
 		third_party/axe-core
 		third_party/blink
+		third_party/bidimapper
 		third_party/boringssl
 		third_party/boringssl/src/third_party/fiat
 		third_party/breakpad
@@ -545,6 +547,7 @@ src_prepare() {
 		third_party/hunspell
 		third_party/iccjpeg
 		third_party/inspector_protocol
+		third_party/ipcz
 		third_party/jinja2
 	)
 	use system-jsoncpp || keeplibs+=(
