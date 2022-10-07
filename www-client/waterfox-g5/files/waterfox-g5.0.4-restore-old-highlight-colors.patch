@@ -1,0 +1,136 @@
+--- a/toolkit/themes/shared/media/videocontrols.css
++++ b/toolkit/themes/shared/media/videocontrols.css
+@@ -35,7 +35,7 @@
+   --pip-toggle-padding: 5px;
+   --pip-toggle-icon-width-height: 16px;
+   --pip-toggle-translate-x: calc(100% - var(--pip-toggle-icon-width-height) - 2 * var(--pip-toggle-padding));
+-  --control-focus-outline: 2px solid #00DDFF;
++  --control-focus-outline: 2px solid #0A84FF;
+   --control-focus-outline-offset: -2px;
+ 
+   color: #fff;
+--- a/toolkit/components/extensions/test/browser/browser_ext_themes_autocomplete_popup.js
++++ b/toolkit/components/extensions/test/browser/browser_ext_themes_autocomplete_popup.js
+@@ -10,7 +10,7 @@
+ 
+ const POPUP_URL_COLOR_DARK = "#0061e0";
+ const POPUP_ACTION_COLOR_DARK = "#5b5b66";
+-const POPUP_URL_COLOR_BRIGHT = "#00ddff";
++const POPUP_URL_COLOR_BRIGHT = "#0a84ff";
+ const POPUP_ACTION_COLOR_BRIGHT = "#bfbfc9";
+ 
+ const SEARCH_TERM = "urlbar-reflows-" + Date.now();
+--- a/devtools/client/aboutdebugging/src/base.css
++++ b/devtools/client/aboutdebugging/src/base.css
+@@ -132,7 +132,7 @@
+     --box-background: rgb(35, 34, 43);
+     --box-border-color: rgba(249,249,250,0.2);
+ 
+-    --link-color: #00ddff;
++    --link-color: #0a84ff;
+     --link-color-active: rgb(170,242,255);
+     --link-color-hover: rgb(128,235,255);
+ 
+@@ -159,7 +159,7 @@
+      * From common.inc.css
+      * https://searchfox.org/mozilla-central/rev/b52cf6bbe214bd9d93ed9333d0403f7d556ad7c8/toolkit/themes/shared/in-content/common.inc.css#165-168
+      */
+-    --primary-button-background-color: #00ddff;
++    --primary-button-background-color: #0a84ff;
+     --primary-button-color: rgb(43,42,51);
+     --primary-button-active-background-color: rgb(170,242,255);
+     --primary-button-hover-background-color: rgb(128,235,255);
+--- a/browser/themes/shared/browser.inc.css
++++ b/browser/themes/shared/browser.inc.css
+@@ -106,12 +106,12 @@
+   }
+ 
+   :root:-moz-lwtheme-brighttext {
+-    --focus-outline-color: #00DDFF;
++    --focus-outline-color: #0A84FF;
+   }
+ }
+ 
+ :root[lwt-toolbar-field-focus-brighttext] {
+-  --lwt-popup-brighttext-url-color: #00ddff;
++  --lwt-popup-brighttext-url-color: #0a84ff;
+ }
+ 
+ /* Increase the contrast of urlbar boxes in brighttext LWT.
+--- a/browser/themes/shared/identity-block/tracking-protection-active-brighttext.svg
++++ b/browser/themes/shared/identity-block/tracking-protection-active-brighttext.svg
+@@ -5,7 +5,7 @@
+   <defs>
+     <linearGradient id="a" x1="16" y1="0" x2="0" y2="16" gradientUnits="userSpaceOnUse">
+       <stop stop-color="#CB9EFF"/>
+-      <stop offset="1" stop-color="#00DDFF"/>
++      <stop offset="1" stop-color="#0A84FF"/>
+     </linearGradient>
+   </defs>
+   <path d="M8 16a1.88 1.88 0 0 1-.872-.215c-1.763-.919-3.382-2.408-4.559-4.193-.563-.853-.962-1.893-1.182-3.09L.776 5.177a1.998 1.998 0 0 1 1.015-2.12L7.064.237A1.973 1.973 0 0 1 8.932.234l5.273 2.872a2 2 0 0 1 1.018 2.127l-.61 3.279c-.22 1.188-.616 2.223-1.179 3.076-1.177 1.786-2.798 3.277-4.563 4.198A1.879 1.879 0 0 1 8 16zM7.659 1.336 2.363 4.168 2 4.928l.616 3.348c.19 1.031.525 1.915.996 2.628 1.062 1.611 2.517 2.951 4.095 3.773l.585.001.001-.001c1.581-.823 3.037-2.165 4.099-3.777.469-.713.804-1.593.993-2.617l.614-3.3-.367-.766-5.291-2.882-.682.001z" fill="url(#a)"/>
+--- a/browser/themes/shared/customizableui/panelUI.inc.css
++++ b/browser/themes/shared/customizableui/panelUI.inc.css
+@@ -1669,7 +1669,7 @@
+ 
+ :root[lwt-popup-brighttext] .subviewradio > .radio-check[selected] {
+   background-color: transparent;
+-  border: 4px solid #00ddff;
++  border: 4px solid #0a84ff;
+ }
+ 
+ #PanelUI-panic-explanations {
+--- a/browser/extensions/webcompat/about-compat/aboutCompat.css
++++ b/browser/extensions/webcompat/about-compat/aboutCompat.css
+@@ -47,7 +47,7 @@
+       --text-color: #f9f9fa;
+       --border-color: rgba(255, 255, 255, 0.15);
+       --button-background-color: rgba(0, 0, 0, 0.15);
+-      --selected-tab-text-color: #00ddff;
++      --selected-tab-text-color: #0a84ff;
+     }
+   }
+ 
+--- a/toolkit/themes/shared/in-content/common.inc.css
++++ b/toolkit/themes/shared/in-content/common.inc.css
+@@ -135,7 +135,7 @@
+     --in-content-icon-color: rgb(251,251,254);
+ 
+     --in-content-primary-button-text-color: rgb(43,42,51);
+-    --in-content-primary-button-background: rgb(0,221,255);
++    --in-content-primary-button-background: rgb(53,132,228);
+     --in-content-primary-button-background-hover: rgb(128,235,255);
+     --in-content-primary-button-background-active: rgb(170,242,255);
+ 
+--- a/browser/themes/shared/toolbarbutton-icons.inc.css
++++ b/browser/themes/shared/toolbarbutton-icons.inc.css
+@@ -13,7 +13,7 @@
+ 
+ :root[lwt-popup-brighttext] panel,
+ toolbar[brighttext]:-moz-lwtheme {
+-  --toolbarbutton-icon-fill-attention: var(--lwt-toolbarbutton-icon-fill-attention, rgb(0,221,255));
++  --toolbarbutton-icon-fill-attention: var(--lwt-toolbarbutton-icon-fill-attention, rgb(53,132,228));
+ }
+ 
+ .toolbarbutton-animatable-box,
+--- a/browser/themes/windows/places/organizer.css
++++ b/browser/themes/windows/places/organizer.css
+@@ -64,7 +64,7 @@
+ 
+       --organizer-hover-background: rgb(82,82,94);
+       --organizer-selected-background: rgb(91,91,102);
+-      --organizer-outline-color: rgb(0,221,255);
++      --organizer-outline-color: rgb(53,132,228);
+ 
+       --organizer-border-color: rgba(249,249,250,.1);
+ 
+--- a/browser/themes/shared/controlcenter/panel.inc.css
++++ b/browser/themes/shared/controlcenter/panel.inc.css
+@@ -1132,7 +1132,7 @@
+ 
+ :root[lwt-popup-brighttext] .protections-popup-shim-allow-hint-icon,
+ :root[lwt-popup-brighttext] .protections-popup-list-host-shim-allow-indicator {
+-  fill: #80EBFF;
++  fill: #37ADFF;
+ }
+ 
+ .protections-popup-shim-allow-hint-icon {
