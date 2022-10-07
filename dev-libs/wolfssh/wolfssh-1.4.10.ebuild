@@ -23,7 +23,7 @@ src_prepare() {
 
 src_configure() {
 	econf \
-		--with-wolfssl=/usr/share
+		--with-wolfssl=/usr/
 		$(use_enable cpu_flags_x86_aes aesni) \
 		$(use_enable keygen) \
 		$(use_enable debug) \
