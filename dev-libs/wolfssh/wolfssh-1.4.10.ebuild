@@ -28,6 +28,5 @@ src_configure() {
 		$(use_enable keygen) \
 		$(use_enable debug) \
 		$(use_enable ssh) \
-		--enable-distro \
 		--enable-writedup # Needed for RPCS3
 }
