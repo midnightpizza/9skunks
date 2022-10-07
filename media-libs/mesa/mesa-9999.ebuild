@@ -185,12 +185,12 @@ RDEPEND="${RDEPEND}
 unset {LLVM,CLANG}_DEPSTR{,_AMDGPU}
 
 DEPEND="${RDEPEND}
+	video_cards_d3d12? ( dev-util/directx-headers[${MULTILIB_USEDEP}] )
 	valgrind? ( dev-util/valgrind )
 	wayland? ( >=dev-libs/wayland-protocols-1.24 )
 	X? (
 		x11-libs/libXrandr[${MULTILIB_USEDEP}]
 		x11-base/xorg-proto
-		dev-util/glslang
 	)
 "
 BDEPEND="
@@ -202,6 +202,8 @@ BDEPEND="
 	sys-devel/flex
 	virtual/pkgconfig
 	$(python_gen_any_dep ">=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]")
+	vulkan? ( video_cards_radeonsi? ( dev-util/glslang ) )
+	vulkan-overlay? ( dev-util/glslang )
 	wayland? ( dev-util/wayland-scanner )
 "
 
@@ -233,11 +235,12 @@ llvm_check_deps() {
 
 pkg_pretend() {
 	if use vulkan; then
-		if ! use video_cards_freedreno &&
+		if ! use video_cards_d3d12 &&
+		   ! use video_cards_freedreno &&
 		   ! use video_cards_intel &&
 		   ! use video_cards_radeonsi &&
 		   ! use video_cards_v3d; then
-			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain freedreno, intel, radeonsi, or v3d"
+			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain d3d12, freedreno, intel, radeonsi, or v3d"
 		fi
 	fi
 
@@ -249,19 +252,21 @@ pkg_pretend() {
 	fi
 
 	if use vaapi; then
-		if ! use video_cards_r600 &&
+		if ! use video_cards_d3d12 &&
+		   ! use video_cards_r600 &&
 		   ! use video_cards_radeonsi &&
 		   ! use video_cards_nouveau; then
-			ewarn "Ignoring USE=vaapi      since VIDEO_CARDS does not contain r600, radeonsi, or nouveau"
+			ewarn "Ignoring USE=vaapi      since VIDEO_CARDS does not contain d3d12, r600, radeonsi, or nouveau"
 		fi
 	fi
 
 	if use vdpau; then
-		if ! use video_cards_r300 &&
+		if ! use video_cards_d3d12 &&
+		   ! use video_cards_r300 &&
 		   ! use video_cards_r600 &&
 		   ! use video_cards_radeonsi &&
 		   ! use video_cards_nouveau; then
-			ewarn "Ignoring USE=vdpau      since VIDEO_CARDS does not contain r300, r600, radeonsi, or nouveau"
+			ewarn "Ignoring USE=vdpau      since VIDEO_CARDS does not contain d3d12, r300, r600, radeonsi, or nouveau"
 		fi
 	fi
 
@@ -270,13 +275,6 @@ pkg_pretend() {
 		   ! use video_cards_nouveau &&
 		   ! use video_cards_vmware; then
 			ewarn "Ignoring USE=xa         since VIDEO_CARDS does not contain freedreno, nouveau, or vmware"
-		fi
-	fi
-
-	if use xvmc; then
-		if ! use video_cards_r600 &&
-		   ! use video_cards_nouveau; then
-			ewarn "Ignoring USE=xvmc       since VIDEO_CARDS does not contain r600 or nouveau"
 		fi
 	fi
 
@@ -339,7 +337,8 @@ multilib_src_configure() {
 		emesonargs+=(-Dgallium-nine=false)
 	fi
 
-	if use video_cards_r600 ||
+	if use video_cards_d3d12 ||
+	   use video_cards_r600 ||
 	   use video_cards_radeonsi ||
 	   use video_cards_nouveau; then
 		emesonargs+=($(meson_feature vaapi gallium-va))
@@ -348,7 +347,12 @@ multilib_src_configure() {
 		emesonargs+=(-Dgallium-va=disabled)
 	fi
 
-	if use video_cards_r300 ||
+	if use video_cards_d3d12; then
+		emesonargs+=($(meson_feature vaapi gallium-d3d12-video))
+	fi
+
+	if use video_cards_d3d12 ||
+	   use video_cards_r300 ||
 	   use video_cards_r600 ||
 	   use video_cards_radeonsi ||
 	   use video_cards_nouveau; then
@@ -365,13 +369,6 @@ multilib_src_configure() {
 		emesonargs+=(-Dgallium-xa=disabled)
 	fi
 
-	if use video_cards_r600 ||
-	   use video_cards_nouveau; then
-		emesonargs+=($(meson_feature xvmc gallium-xvmc))
-	else
-		emesonargs+=(-Dgallium-xvmc=disabled)
-	fi
-
 	if use video_cards_freedreno ||
 	   use video_cards_lima ||
 	   use video_cards_panfrost ||
@@ -385,6 +382,7 @@ multilib_src_configure() {
 	gallium_enable video_cards_freedreno freedreno
 	gallium_enable video_cards_intel crocus i915 iris
 	gallium_enable video_cards_lima lima
+	gallium_enable video_cards_d3d12 d3d12
 	gallium_enable video_cards_nouveau nouveau
 	gallium_enable video_cards_panfrost panfrost
 	gallium_enable video_cards_v3d v3d
@@ -410,6 +408,7 @@ multilib_src_configure() {
 	if use vulkan; then
 		vulkan_enable video_cards_freedreno freedreno
 		vulkan_enable video_cards_intel intel
+		vulkan_enable video_cards_d3d12 microsoft-experimental
 		vulkan_enable video_cards_radeonsi amd
 		vulkan_enable video_cards_v3d broadcom
 	fi
