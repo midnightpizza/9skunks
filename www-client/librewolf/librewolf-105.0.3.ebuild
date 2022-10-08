@@ -14,10 +14,6 @@ WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
 
-# Librewolf version (please rev-bump if changed)
-# Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-1"
-
 MOZ_ESR=
 
 MOZ_PV=${PV}
@@ -43,20 +39,19 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs \
-	virtualx xdg
+	virtualx xdg librewolf-r2
 
-# MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-#
-# if [[ ${PV} == *_rc* ]] ; then
-# 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
-# fi
-MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
+MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
+
+if [[ ${PV} == *_rc* ]] ; then
+	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
+fi
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,polynomial-c,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
+SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="LibreWolf Web Browser"
@@ -65,7 +60,6 @@ HOMEPAGE="https://librewolf-community.gitlab.io/"
 KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 
 SLOT="rapid"
-SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
@@ -78,16 +72,13 @@ IUSE+=" geckodriver +gmp-autoupdate screencast +X"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
+	wayland? ( dbus )
 	wifi? ( dbus )"
 
 # Firefox-only REQUIRED_USE flags
 REQUIRED_USE+=" || ( X wayland )"
 REQUIRED_USE+=" screencast? ( wayland )"
 
-FF_ONLY_DEPEND="!www-client/firefox:0
-	!www-client/firefox:esr
-	screencast? ( media-video/pipewire:= )
-	selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
 	app-arch/zip
@@ -103,7 +94,8 @@ BDEPEND="${PYTHON_DEPS}
 		)
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )"
-COMMON_DEPEND="${FF_ONLY_DEPEND}
+
+COMMON_DEPEND="
 	dev-libs/atk
 	dev-libs/expat
 	dev-libs/glib:2
@@ -192,7 +184,7 @@ DEPEND="${COMMON_DEPEND}
 		x11-libs/libSM
 	)"
 
-S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
+S="${WORKDIR}/firefox-${PV%_*}"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -580,6 +572,8 @@ src_unpack() {
 			unpack ${_src_file}
 		fi
 	done
+
+	librewolf-r2_src_unpack
 }
 
 src_prepare() {
@@ -1003,6 +997,8 @@ src_configure() {
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
 
+	librewolf-r2_src_configure
+
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
 	einfo "Build CFLAGS:\t\t${CFLAGS:-no value set}"
@@ -1043,6 +1039,12 @@ src_compile() {
 		gnome2_environment_reset
 
 		addpredict /root
+
+		if ! use X; then
+			virtx_cmd=virtwl
+		else
+			virtx_cmd=virtx
+		fi
 	fi
 
 	if ! use X; then
@@ -1066,8 +1068,8 @@ src_install() {
 	## LibreWolf
 	# For some reason 'local-settings.js' doesn't get properly packaged.
 	# Install it manually
-	insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
-	doins "${S}/lw/local-settings.js"
+	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	# doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
@@ -1197,6 +1199,8 @@ src_install() {
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
 		"${ED}/usr/bin/${PN}" \
 		|| die
+
+	librewolf-r2_src_install
 }
 
 pkg_preinst() {
