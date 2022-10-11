@@ -4,7 +4,7 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="69"
+K_GENPATCHES_VER="76"
 MANJARO_COMMIT="80f5ae7a81187163755f94a62bf59f333f42b192"
 RESTRICT="MIRROR"
 
@@ -39,8 +39,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 0007-nuumio-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0008-arm64-dts-rockchip-Add-Firefly-Station-p1-support.patch
 	-> 0008-arm64-dts-rockchip-Add-Firefly-Station-p1-support-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0009-typec-displayport-some-devices-have-pin-assignments-reversed.patch
-	-> 0009-typec-displayport-some-devices-have-pin-assignments-reversed-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0010-usb-typec-add-extcon-to-tcpm.patch
 	-> 0010-usb-typec-add-extcon-to-tcpm-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/0011-arm64-rockchip-add-DP-ALT-rockpro64.patch
