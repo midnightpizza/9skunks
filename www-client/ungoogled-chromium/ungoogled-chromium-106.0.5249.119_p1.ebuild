@@ -20,7 +20,7 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
-PATCHSET="1"
+PATCHSET="3"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-UGC_COMMIT_ID="618840e848e18f2dc25a44a31b4efe95315a2c99"
+#UGC_COMMIT_ID="7ddd49f013fad74ea71228f7a4cfebda9289028f"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -118,7 +118,7 @@ COMMON_SNAPSHOT_DEPEND="
 		)
 		sys-apps/pciutils:=
 		kerberos? ( virtual/krb5 )
-		vaapi? ( >=x11-libs/libva-2.7:=[X?,wayland?] )
+		vaapi? ( >x11-libs/libva:=[X?,wayland?] )
 		X? (
 			x11-libs/libX11:=
 			x11-libs/libXext:=
@@ -150,9 +150,10 @@ COMMON_DEPEND="
 	sys-libs/zlib:=[minizip]
 	!headless? (
 		X? ( ${COMMON_X_DEPEND} )
-		>=app-accessibility/at-spi2-atk-2.26:2
-		>=app-accessibility/at-spi2-core-2.26:2
-		>=dev-libs/atk-2.26
+		|| (
+			>=app-accessibility/at-spi2-core-2.46.0:2
+			( app-accessibility/at-spi2-atk dev-libs/atk )
+		)
 		media-libs/mesa:=[X?,wayland?]
 		cups? ( >=net-print/cups-1.3.11:= )
 		virtual/udev
@@ -238,7 +239,7 @@ in /etc/chromium/default.
 S="${WORKDIR}/chromium-${PV/_*}"
 
 python_check_deps() {
-	has_version -b "dev-python/setuptools[${PYTHON_USEDEP}]"
+	python_has_version "dev-python/setuptools[${PYTHON_USEDEP}]"
 }
 
 pre_build_checks() {
@@ -326,6 +327,7 @@ src_prepare() {
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
 		"${FILESDIR}/chromium-105-swiftshader-no-wayland.patch"
 		"${FILESDIR}/chromium-106-python3_11.patch"
+		"${FILESDIR}/chromium-106-revert-GlobalMediaControlsCastStartStop.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
@@ -764,21 +766,15 @@ src_configure() {
 			CXX="${CBUILD}-clang++ -target ${CHOST} --sysroot ${ESYSROOT}"
 			BUILD_CC=${CBUILD}-clang
 			BUILD_CXX=${CBUILD}-clang++
-			BUILD_AR=llvm-ar
-			BUILD_NM=llvm-nm
 		else
 			CC=${CHOST}-clang
 			CXX=${CHOST}-clang++
-			AR=llvm-ar #thinlto fails otherwise
-			NM=llvm-nm #just in case
 		fi
 		strip-unsupported-flags
 	elif ! use clang && ! tc-is-gcc ; then
 		einfo "Enforcing the use of gcc due to USE=-clang ..."
 		CC=${CHOST}-gcc
 		CXX=${CHOST}-g++
-		AR=gcc-ar #just in case
-		NM=gcc-nm #just in case
 		strip-unsupported-flags
 	fi
 
@@ -786,6 +782,22 @@ src_configure() {
 		myconf_gn+=" is_clang=true clang_use_chrome_plugins=false"
 	else
 		myconf_gn+=" is_clang=false"
+	fi
+
+	# Force lld for lto or pgo builds only, otherwise disable, bug 641556
+	if use thinlto || use pgo; then
+		myconf_gn+=" use_lld=true"
+	else
+		myconf_gn+=" use_lld=false"
+	fi
+
+	if use thinlto || use pgo; then
+		AR=llvm-ar
+		NM=llvm-nm
+		if tc-is-cross-compiler; then
+			BUILD_AR=llvm-ar
+			BUILD_NM=llvm-nm
+		fi
 	fi
 
 	# Define a custom toolchain for GN
@@ -909,8 +921,6 @@ src_configure() {
 		myconf_gn+=" chrome_pgo_phase=0"
 	fi
 
-	myconf_gn+=" use_thin_lto=$(usex thinlto true false)"
-	myconf_gn+=" thin_lto_enable_optimizations=$(usex optimize-thinlto true false)"
 	myconf_gn+=" optimize_webui=$(usex optimize-webui true false)"
 	myconf_gn+=" use_system_freetype=$(usex system-harfbuzz true false)"
 	myconf_gn+=" use_system_libopenjpeg2=$(usex system-openjpeg true false)"
@@ -951,13 +961,6 @@ src_configure() {
 	# Trying to use gold results in linker crash.
 	myconf_gn+=" use_gold=false use_sysroot=false use_custom_libcxx=false"
 
-	if use clang; then
-	myconf_gn+=" use_lld=true" #x86 fails with gnu ld
-	else
-	# Disable forced lld, bug 641556
-	myconf_gn+=" use_lld=false"
-	fi
-
 	# Disable pseudolocales, only used for testing
 	myconf_gn+=" enable_pseudolocales=false"
 
@@ -980,9 +983,9 @@ src_configure() {
 			filter-flags "-g*"
 		fi
 
-		# Prevent libvpx build failures. Bug 530248, 544702, 546984.
+		# Prevent libvpx/xnnpack build failures. Bug 530248, 544702, 546984, 853646.
 		if [[ ${myarch} == amd64 || ${myarch} == x86 ]]; then
-			filter-flags -mno-mmx -mno-sse2 -mno-ssse3 -mno-sse4.1 -mno-avx -mno-avx2 -mno-fma -mno-fma4
+			filter-flags -mno-mmx -mno-sse2 -mno-ssse3 -mno-sse4.1 -mno-avx -mno-avx2 -mno-fma -mno-fma4 -mno-xop -mno-sse4a
 		fi
 	fi
 
@@ -1018,7 +1021,6 @@ src_configure() {
 			build/config/compiler/BUILD.gn || die
 
 		append-ldflags "-Wl,--thinlto-jobs=$(makeopts_jobs)"
-		myconf_gn+=" use_lld=true"
 	fi
 
 	# Make sure that -Werror doesn't get added to CFLAGS by the build system.
@@ -1029,6 +1031,7 @@ src_configure() {
 	# Disable fatal linker warnings, bug 506268.
 	myconf_gn+=" fatal_linker_warnings=false"
 
+	# Disable external code space for V8 for ppc64. It is disabled for ppc64
 	# by default, but cross-compiling on amd64 enables it again.
 	if tc-is-cross-compiler; then
 		if ! use amd64 && ! use arm64; then
@@ -1102,12 +1105,25 @@ src_configure() {
 
 	# Enable official builds
 	myconf_gn+=" is_official_build=$(usex official true false)"
+	myconf_gn+=" use_thin_lto=$(usex thinlto true false)"
+	myconf_gn+=" thin_lto_enable_optimizations=$(usex optimize-thinlto true false)"
 	if use official; then
 		# Allow building against system libraries in official builds
 		sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 			tools/generate_shim_headers/generate_shim_headers.py || die
 		# Don't add symbols to build
 		myconf_gn+=" symbol_level=0"
+	fi
+
+	# user CXXFLAGS might overwrite -march=armv8-a+crc+crypto, bug #851639
+	if use arm64 && tc-is-gcc; then
+		sed -i '/^#if HAVE_ARM64_CRC32C/a #pragma GCC target ("+crc+crypto")' \
+			third_party/crc32c/src/src/crc32c_arm64.cc || die
+	fi
+
+	# skipping typecheck is only supported on amd64, bug #876157
+	if ! use amd64; then
+		myconf_gn+=" devtools_skip_typecheck=false"
 	fi
 
 	# Facilitate deterministic builds (taken from build/config/compiler/BUILD.gn)
@@ -1188,7 +1204,7 @@ src_compile() {
 		chrome/installer/linux/common/desktop.template > \
 		out/Release/chromium-browser-chromium.desktop || die
 
-	## Build vk_swiftshader_icd.json; bug #827861
+	# Build vk_swiftshader_icd.json; bug #827861
 	#sed -e 's|${ICD_LIBRARY_PATH}|./libvk_swiftshader.so|g' \
 	#	third_party/swiftshader/src/Vulkan/vk_swiftshader_icd.json.tmpl > \
 	#	out/Release/vk_swiftshader_icd.json || die
@@ -1322,7 +1338,7 @@ pkg_postinst() {
 		fi
 		if use gtk4; then
 			elog "Chromium prefers GTK3 over GTK4 at runtime. To override this"
-			elog "behavior you need to pass --gtk-version=4, e.g. by adding it"
+			elog "behaviour you need to pass --gtk-version=4, e.g. by adding it"
 			elog "to CHROMIUM_FLAGS in /etc/chromium/default."
 		fi
 		if use widevine; then
