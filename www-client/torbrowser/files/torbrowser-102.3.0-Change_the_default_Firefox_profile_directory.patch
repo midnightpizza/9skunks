@@ -1,4 +1,4 @@
-From 447cd97ce250b58b9abe97e96e8c39940618c528 Mon Sep 17 00:00:00 2001
+From a053f9cc3072420c1e3b54e829a722f925f06f11 Mon Sep 17 00:00:00 2001
 From: Poncho <poncho@spahan.ch>
 Date: Fri, 15 Jul 2022 18:30:50 +0200
 Subject: [PATCH 2/2] Revert "Bug 9173: Change the default Firefox profile
@@ -14,11 +14,11 @@ This reverts commit 2c91b6ec30176d11de79c24533df8b05af6f07da.
  5 files changed, 79 insertions(+), 106 deletions(-)
 
 diff --git a/moz.configure b/moz.configure
-index ecac14e9396a..0cd28fd02681 100755
+index 411a2ebbfbeb..ebb0ed0daacd 100755
 --- a/moz.configure
 +++ b/moz.configure
-@@ -1117,25 +1117,6 @@ set_config("MOZ_SYSTEM_ZLIB", True, when="--with-system-zlib")
- add_old_configure_assignment("MOZ_SYSTEM_ZLIB", True, when="--with-system-zlib")
+@@ -1017,25 +1017,6 @@ set_config("ZLIB_IN_MOZGLUE", zlib_in_mozglue)
+ set_define("ZLIB_IN_MOZGLUE", zlib_in_mozglue)
  
  
 -option(
@@ -44,10 +44,10 @@ index ecac14e9396a..0cd28fd02681 100755
  
  option(
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 669c32acec3d..1b60666e0a44 100644
+index 468f043386ad..38100e13bdb7 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
-@@ -2465,19 +2465,17 @@ static ReturnAbortOnError ProfileErrorDialog(nsIFile* aProfileDir,
+@@ -2874,19 +2874,17 @@ static ReturnAbortOnError ProfileErrorDialog(nsIFile* aProfileDir,
                                               nsIProfileLock** aResult) {
    nsresult rv;
  
@@ -73,10 +73,10 @@ index 669c32acec3d..1b60666e0a44 100644
    rv = xpcom.SetWindowCreator(aNative);
    NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 diff --git a/toolkit/xre/nsXREDirProvider.cpp b/toolkit/xre/nsXREDirProvider.cpp
-index 2ee3577819bf..1e34bde2ea9e 100644
+index 7f5e3a4c498e..c9c97f850cf5 100644
 --- a/toolkit/xre/nsXREDirProvider.cpp
 +++ b/toolkit/xre/nsXREDirProvider.cpp
-@@ -255,6 +255,9 @@ nsresult nsXREDirProvider::GetUserProfilesRootDir(nsIFile** aResult) {
+@@ -234,6 +234,9 @@ nsresult nsXREDirProvider::GetUserProfilesRootDir(nsIFile** aResult) {
    nsresult rv = GetUserDataDirectory(getter_AddRefs(file), false);
  
    if (NS_SUCCEEDED(rv)) {
@@ -86,7 +86,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
      // We must create the profile directory here if it does not exist.
      nsresult tmp = EnsureDirectoryExists(file);
      if (NS_FAILED(tmp)) {
-@@ -270,6 +273,9 @@ nsresult nsXREDirProvider::GetUserProfilesLocalDir(nsIFile** aResult) {
+@@ -249,6 +252,9 @@ nsresult nsXREDirProvider::GetUserProfilesLocalDir(nsIFile** aResult) {
    nsresult rv = GetUserDataDirectory(getter_AddRefs(file), true);
  
    if (NS_SUCCEEDED(rv)) {
@@ -96,7 +96,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
      // We must create the profile directory here if it does not exist.
      nsresult tmp = EnsureDirectoryExists(file);
      if (NS_FAILED(tmp)) {
-@@ -1397,7 +1403,6 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
+@@ -1354,7 +1360,6 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
                                                      bool aLocal) {
    // Copied from nsAppFileLocationProvider (more or less)
    nsresult rv;
@@ -104,7 +104,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    nsCOMPtr<nsIFile> localDir;
  
    if (aLocal && gDataDirHomeLocal) {
-@@ -1407,21 +1412,7 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
+@@ -1364,21 +1369,7 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
      return gDataDirHome->Clone(aFile);
    }
  
@@ -127,7 +127,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    FSRef fsRef;
    OSType folderType;
    if (aLocal) {
-@@ -1595,25 +1586,6 @@ nsresult nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal) {
+@@ -1521,25 +1512,6 @@ nsresult nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal) {
    return NS_OK;
  }
  
@@ -153,7 +153,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
  nsresult nsXREDirProvider::EnsureDirectoryExists(nsIFile* aDirectory) {
    nsresult rv = aDirectory->Create(nsIFile::DIRECTORY_TYPE, 0700);
  
-@@ -1696,8 +1668,13 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
+@@ -1591,8 +1563,13 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
    }
  
    nsAutoCString profile;
@@ -167,7 +167,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    }
  
    nsresult rv = NS_OK;
-@@ -1705,12 +1682,23 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
+@@ -1600,12 +1577,23 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
  #if defined(XP_MACOSX)
    if (!profile.IsEmpty()) {
      rv = AppendProfileString(aFile, profile.get());
@@ -191,7 +191,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    }
    NS_ENSURE_SUCCESS(rv, rv);
  
-@@ -1722,6 +1710,11 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
+@@ -1617,6 +1605,11 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
    rv = aFile->AppendNative(nsDependentCString("mozilla"));
    NS_ENSURE_SUCCESS(rv, rv);
  #elif defined(XP_UNIX)
@@ -203,7 +203,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    if (!profile.IsEmpty()) {
      // Skip any leading path characters
      const char* profileStart = profile.get();
-@@ -1729,14 +1722,30 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
+@@ -1624,14 +1617,30 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
  
      // On the off chance that someone wanted their folder to be hidden don't
      // let it become ".."
@@ -238,7 +238,7 @@ index 2ee3577819bf..1e34bde2ea9e 100644
    NS_ENSURE_SUCCESS(rv, rv);
  
 diff --git a/toolkit/xre/nsXREDirProvider.h b/toolkit/xre/nsXREDirProvider.h
-index a76b087d785a..e28a4fef5bc6 100644
+index a9d017d18e0f..40cd9c8eb06a 100644
 --- a/toolkit/xre/nsXREDirProvider.h
 +++ b/toolkit/xre/nsXREDirProvider.h
 @@ -109,14 +109,6 @@ class nsXREDirProvider final : public nsIDirectoryServiceProvider2,
@@ -353,5 +353,5 @@ index 60b1775eda97..ef974f99048f 100644
  
    return rv;
 -- 
-2.35.1
+2.37.3
 

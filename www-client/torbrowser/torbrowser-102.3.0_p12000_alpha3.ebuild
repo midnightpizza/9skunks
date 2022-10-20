@@ -1,13 +1,13 @@
 # Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI="8"
+EAPI=8
 
-FIREFOX_PATCHSET="firefox-91esr-patches-10j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-03j.tar.xz"
 
-LLVM_MAX_SLOT=14
+LLVM_MAX_SLOT=15
 
-PYTHON_COMPAT=( python3_{8..10} )
+PYTHON_COMPAT=( python3_{8..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -15,23 +15,22 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream mozilla version, used by mozlinguas
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.5#n4
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=maint-11.5#n11
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=maint-11.5#n2
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/config?h=maint-11.5#n80
-TOR_PV="11.5.1"
-TOR_TAG="11.5-1-build1"
-TORLAUNCHER_VERSION="0.2.37"
-NOSCRIPT_VERSION="11.4.6"
+# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=tbb-12.0a3-build1#n11
+# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-launcher/config?h=tbb-12.0a3-build1#n2
+# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/config?h=tbb-12.0a3-build1#n86
+TOR_PV="12.0a3"
+TOR_TAG="12.0-1-build2"
+TORLAUNCHER_VERSION="0.2.39"
+NOSCRIPT_VERSION="11.4.11"
 
-inherit autotools check-reqs desktop flag-o-matic llvm \
-	multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
+inherit autotools check-reqs desktop flag-o-matic linux-info \
+	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
 
 TOR_SRC_BASE_URI="https://dist.torproject.org/torbrowser/${TOR_PV}"
 TOR_SRC_ARCHIVE_URI="https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_PV}"
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,polynomial-c,whissi}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
 SRC_URI="
@@ -53,16 +52,16 @@ SLOT="0"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+clang dbus hardened"
 IUSE+=" pulseaudio"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
 IUSE+=" wayland"
 
 BDEPEND="${PYTHON_DEPS}
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.24.0
-	>=net-libs/nodejs-10.23.1
+	>=dev-util/cbindgen-0.24.3
+	net-libs/nodejs
 	virtual/pkgconfig
-	>=virtual/rust-1.58.1
+	virtual/rust
 	|| (
 		(
 			sys-devel/clang
@@ -72,54 +71,63 @@ BDEPEND="${PYTHON_DEPS}
 			)
 		)
 	)
-	amd64? ( dev-lang/nasm )
-	x86? ( dev-lang/nasm )"
+	dev-lang/nasm"
 
 COMMON_DEPEND="
-	>=dev-libs/nss-3.70
-	>=dev-libs/nspr-4.32
-	dev-libs/atk
+	|| (
+		>=app-accessibility/at-spi2-core-2.46.0:2
+		dev-libs/atk
+	)
 	dev-libs/expat
-	>=x11-libs/cairo-1.10[X]
-	>=x11-libs/gtk+-3.4.0:3[X]
-	x11-libs/gdk-pixbuf
-	>=x11-libs/pango-1.22.0
-	>=media-libs/mesa-10.2:*
+	dev-libs/glib:2
+	dev-libs/libffi:=
+	>=dev-libs/nss-3.79.1
+	>=dev-libs/nspr-4.34
+	media-libs/alsa-lib
 	media-libs/fontconfig
-	>=media-libs/freetype-2.10.4
-	kernel_linux? ( !pulseaudio? ( media-libs/alsa-lib ) )
-	virtual/freedesktop-icon-theme
-	>=x11-libs/pixman-0.19.2
-	>=dev-libs/glib-2.26:2
-	>=sys-libs/zlib-1.2.3
-	>=dev-libs/libffi-3.0.10:=
+	media-libs/freetype
+	media-libs/mesa
 	media-video/ffmpeg
+	sys-libs/zlib
+	virtual/freedesktop-icon-theme
+	virtual/opengl
+	x11-libs/cairo[X]
+	x11-libs/gdk-pixbuf
+	x11-libs/gtk+:3[X]
 	x11-libs/libX11
-	x11-libs/libxcb:=
 	x11-libs/libXcomposite
 	x11-libs/libXdamage
 	x11-libs/libXext
 	x11-libs/libXfixes
-	x11-libs/libXrender
-	x11-libs/libXt
+	x11-libs/libXrandr
+	x11-libs/libXtst
+	x11-libs/libxcb:=
+	x11-libs/libxkbcommon[X]
+	x11-libs/pango
+	x11-libs/pixman
 	dbus? (
 		sys-apps/dbus
 		dev-libs/dbus-glib
 	)
 	system-av1? (
-		>=media-libs/dav1d-0.8.1:=
+		>=media-libs/dav1d-1.0.0:=
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
 		>=media-gfx/graphite2-1.3.13
 	)
-	system-icu? ( >=dev-libs/icu-69.1:= )
+	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
-	system-webp? ( >=media-libs/libwebp-1.1.0:0= )"
+	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
+	wayland? (
+		x11-libs/gtk+:3[wayland]
+		x11-libs/libdrm
+		x11-libs/libxkbcommon[wayland]
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	pulseaudio? (
@@ -137,9 +145,7 @@ DEPEND="${COMMON_DEPEND}
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
-	)
-	wayland? ( >=x11-libs/gtk+-3.11:3[wayland] )
-	virtual/opengl"
+	)"
 
 S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
 
@@ -302,6 +308,10 @@ pkg_setup() {
 
 	# Ensure we use C locale when building, bug #746215
 	export LC_ALL=C
+
+	CONFIG_CHECK="~SECCOMP"
+	WARNING_SECCOMP="CONFIG_SECCOMP not set! This system will be unable to play DRM-protected content."
+	linux-info_pkg_setup
 }
 
 src_unpack() {
@@ -325,7 +335,7 @@ src_unpack() {
 				cp "${DISTDIR}/${a}" "${destdir}" || die
 				;;
 
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n35
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n33
 			"tor-browser-linux64-${TOR_PV}_en-US.tar.xz")
 				local destdir="${WORKDIR}"/profile
 				echo ">>> Unpacking ${a} to ${destdir}"
@@ -344,19 +354,11 @@ src_unpack() {
 }
 
 src_prepare() {
-	if use system-av1 && has_version "<media-libs/dav1d-1.0.0"; then
-		rm -v "${WORKDIR}"/firefox-patches/0033-bgo-835788-dav1d-1.0.0-support.patch || die
-		elog "<media-libs/dav1d-1.0.0 detected, removing 1.0.0 compat patch."
-	elif ! use system-av1; then
-		rm -v "${WORKDIR}"/firefox-patches/0033-bgo-835788-dav1d-1.0.0-support.patch || die
-		elog "-system-av1 USE flag detected, removing 1.0.0 compat patch."
-	fi
-
 	eapply "${WORKDIR}/firefox-patches"
 
 	# Revert "Change the default Firefox profile directory to be TBB-relative"
-	eapply "${FILESDIR}"/${PN}-91.11.0-Do_not_store_data_in_the_app_bundle.patch
-	eapply "${FILESDIR}"/${PN}-91.11.0-Change_the_default_Firefox_profile_directory.patch
+	eapply "${FILESDIR}"/${PN}-102.3.0-Do_not_store_data_in_the_app_bundle.patch
+	eapply "${FILESDIR}"/${PN}-102.3.0-Change_the_default_Firefox_profile_directory.patch
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -390,9 +392,6 @@ src_prepare() {
 	einfo "Removing pre-built binaries ..."
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
-	# Clearing checksums where we have applied patches
-	moz_clear_vendor_checksums target-lexicon-0.9.0
-
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
 	mkdir -p "${BUILD_DIR}" || die
@@ -414,6 +413,7 @@ src_configure() {
 		einfo "Enforcing the use of clang due to USE=clang ..."
 		have_switched_compiler=yes
 		AR=llvm-ar
+		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -467,9 +467,13 @@ src_configure() {
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
 		--disable-crashreporter \
+		--disable-gpsd \
 		--disable-install-strip \
+		--disable-parental-controls \
 		--disable-strip \
 		--disable-updater \
+		--enable-negotiateauth \
+		--enable-new-pass-manager \
 		--enable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
@@ -479,6 +483,7 @@ src_configure() {
 		--prefix="${EPREFIX}/usr" \
 		--target="${CHOST}" \
 		--without-ccache \
+		--without-wasm-sandboxed-libraries \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
 		--with-system-nspr \
@@ -486,8 +491,8 @@ src_configure() {
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
 		--with-unsigned-addon-scopes=app,system \
-		--x-includes="${SYSROOT}${EPREFIX}/usr/include" \
-		--x-libraries="${SYSROOT}${EPREFIX}/usr/$(get_libdir)"
+		--x-includes="${ESYSROOT}/usr/include" \
+		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
 
 	if ! use x86 ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
@@ -498,12 +503,13 @@ src_configure() {
 	mozconfig_use_with system-harfbuzz system-graphite2
 	mozconfig_use_with system-icu
 	mozconfig_use_with system-jpeg
-	mozconfig_use_with system-libevent system-libevent "${SYSROOT}${EPREFIX}/usr"
+	mozconfig_use_with system-libevent
 	mozconfig_use_with system-libvpx
 	mozconfig_use_with system-png
 	mozconfig_use_with system-webp
 
 	mozconfig_use_enable dbus
+	mozconfig_add_options_ac ''  --disable-libproxy
 
 	mozconfig_add_options_ac '' --disable-eme
 
@@ -514,34 +520,30 @@ src_configure() {
 		append-ldflags "-Wl,-z,relro -Wl,-z,now"
 	fi
 
-	mozconfig_add_options_ac '' --disable-jack
+	local myaudiobackends=""
+	use pulseaudio && myaudiobackends+="pulseaudio,"
+	! use pulseaudio && myaudiobackends+="alsa,"
 
-	mozconfig_use_enable pulseaudio
-	# force the deprecated alsa sound code if pulseaudio is disabled
-	if use kernel_linux && ! use pulseaudio ; then
-		mozconfig_add_options_ac '-pulseaudio' --enable-alsa
-	fi
-
-	mozconfig_add_options_ac '' --disable-sndio
+	mozconfig_add_options_ac '--enable-audio-backends' --enable-audio-backends="${myaudiobackends::-1}"
 
 	mozconfig_add_options_ac '' --disable-necko-wifi
 
 	if use wayland ; then
-		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
+		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
 	else
-		mozconfig_add_options_ac '' --enable-default-toolkit=cairo-gtk3
+		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
 	# Rename the binary and set the profile location
 	mozconfig_add_options_ac 'torbrowser' --with-app-name=torbrowser
 	mozconfig_add_options_ac 'torbrowser' --with-app-basename=torbrowser
 
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/mozconfig-linux-x86_64?h=maint-11.0
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/build?h=maint-11.5#n114
+	# see https://gitweb.torproject.org/tor-browser.git/tree/browser/config/mozconfigs/base-browser?h=tor-browser-102.3.0esr-12.0-1
+	# see https://gitweb.torproject.org/tor-browser.git/tree/browser/config/mozconfigs/tor-browser?h=tor-browser-102.3.0esr-12.0-1
+	# see https://gitweb.torproject.org/tor-browser.git/tree/mozconfig-linux-x86_64-dev?h=tor-browser-102.3.0esr-12.0-1
 	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
 	mozconfig_add_options_ac 'torbrowser' \
 		--enable-optimize \
 		--enable-official-branding \
-		--enable-default-toolkit=cairo-gtk3 \
 		--disable-strip \
 		--disable-install-strip \
 		--disable-tests \
@@ -557,7 +559,9 @@ src_configure() {
 		--enable-bundled-fonts \
 		--with-branding=browser/branding/official \
 		--disable-tor-browser-update \
-		--enable-tor-launcher
+		--enable-tor-launcher \
+		--disable-system-policies \
+		--enable-verify-mar
 
 	# Avoid auto-magic on linker
 	if use clang ; then
@@ -570,15 +574,7 @@ src_configure() {
 	# LTO flag was handled via configure
 	filter-flags '-flto*'
 
-	if is-flag '-g*' ; then
-		if use clang ; then
-			mozconfig_add_options_ac 'from CFLAGS' --enable-debug-symbols=$(get-flag '-g*')
-		else
-			mozconfig_add_options_ac 'from CFLAGS' --enable-debug-symbols
-		fi
-	else
-		mozconfig_add_options_ac 'Gentoo default' --disable-debug-symbols
-	fi
+	mozconfig_add_options_ac 'Gentoo default' --disable-debug-symbols
 
 	if is-flag '-O0' ; then
 		mozconfig_add_options_ac "from CFLAGS" --enable-optimize=-O0
@@ -638,8 +634,13 @@ src_configure() {
 	export MOZ_MAKE_FLAGS="${MAKEOPTS}"
 
 	# Use system's Python environment
-	export MACH_USE_SYSTEM_PYTHON=1
-	export PIP_NO_CACHE_DIR=off
+	PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
+
+	if use system-python-libs; then
+		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="system"
+	else
+		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="none"
+	fi
 
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
@@ -712,26 +713,27 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	# https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n48
+	# https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n48
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
 	newins "${WORKDIR}"/noscript-${NOSCRIPT_VERSION}.xpi {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
 
+	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
 	insinto "${PREFS_DIR}"
 
-	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n151
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/build?h=maint-11.5#n187
+	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n172
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n210
 	newins - 000-tor-browser.js <<-EOF
 		pref("extensions.torlauncher.prompt_for_locale", "false");
 		pref("intl.locale.requested", "en-US");
 	EOF
 
-	# Set dictionary path to use system hunspell
-	newins - gentoo-prefs.js <<-EOF
-		pref("spellchecker.dictionary_path", "${EPREFIX}/usr/share/myspell");
-	EOF
-
 	local GENTOO_PREFS="${ED}${PREFS_DIR}/gentoo-prefs.js"
+
+	# Set dictionary path to use system hunspell
+	cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set spellchecker.dictionary_path pref"
+	pref("spellchecker.dictionary_path",       "${EPREFIX}/usr/share/myspell");
+	EOF
 
 	# Force the graphite pref if USE=system-harfbuzz is enabled, since the pref cannot disable it
 	if use system-harfbuzz ; then
@@ -755,12 +757,12 @@ src_install() {
 		newicon -s ${size} "${icon}" ${PN}.png
 	done
 
-	# Install menus
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/RelativeLink/start-tor-browser.desktop
+	# Install menu
+	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/RelativeLink/start-browser.desktop?h=tbb-12.0a3-build1
 	domenu "${FILESDIR}"/torbrowser.desktop
 
 	# Install wrapper
-	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/tor-browser/RelativeLink/start-tor-browser
+	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/RelativeLink/start-browser?h=tbb-12.0a3-build1
 	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/lib/anon-ws-disable-stacked-tor/torbrowser.sh
 	rm "${ED}"/usr/bin/torbrowser || die # symlink to /usr/lib64/torbrowser/torbrowser
 

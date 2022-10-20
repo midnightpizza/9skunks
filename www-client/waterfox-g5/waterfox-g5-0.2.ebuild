@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-102esr-patches-03j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-04j.tar.xz"
 
 LLVM_MAX_SLOT=15
 PYTHON_COMPAT=( python3_{7,8,9,10} )

@@ -1,4 +1,4 @@
-From 8e769abe3dc8a4e40fe094c92f3e4c5285ad17c2 Mon Sep 17 00:00:00 2001
+From 7d611bf1248aec2735148c684edfe7932691e345 Mon Sep 17 00:00:00 2001
 From: Poncho <poncho@spahan.ch>
 Date: Fri, 15 Jul 2022 18:25:27 +0200
 Subject: [PATCH 1/2] Revert "Bug 13252: Do not store data in the app bundle"
@@ -17,10 +17,10 @@ This reverts commit a90841e1e0d8fc073dd9b60d7331aa37ad4bdf61.
  delete mode 100644 xpcom/io/TorFileUtils.h
 
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 880d87c2be80..669c32acec3d 100644
+index c5e285c7e746..468f043386ad 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
-@@ -2688,21 +2688,6 @@ static ReturnAbortOnError ShowProfileManager(
+@@ -3097,21 +3097,6 @@ static ReturnAbortOnError ShowProfileManager(
    return LaunchChild(false, true);
  }
  
@@ -42,7 +42,7 @@ index 880d87c2be80..669c32acec3d 100644
  static bool gDoMigration = false;
  static bool gDoProfileReset = false;
  static nsCOMPtr<nsIToolkitProfile> gResetOldProfile;
-@@ -3757,14 +3742,6 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
+@@ -4158,14 +4143,6 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
    if (PR_GetEnv("XRE_MAIN_BREAK")) NS_BREAK();
  #endif
  
@@ -54,10 +54,10 @@ index 880d87c2be80..669c32acec3d 100644
 -  }
 -#endif
 -
-   IncreaseDescriptorLimits();
+   mozilla::startup::IncreaseDescriptorLimits();
  
  #ifdef USE_GLX_TEST
-@@ -4611,34 +4588,7 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
+@@ -5087,34 +5064,7 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
    }
  #endif
  
@@ -92,7 +92,7 @@ index 880d87c2be80..669c32acec3d 100644
    if (rv == NS_ERROR_FILE_ACCESS_DENIED) {
      PR_fprintf(PR_STDERR,
                 "Error: Access was denied while trying to open files in "
-@@ -4747,6 +4697,12 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
+@@ -5225,6 +5175,12 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
  #  ifdef TOR_BROWSER_UPDATE
      nsAutoCString compatVersion(TOR_BROWSER_VERSION_QUOTED);
  #  endif
@@ -106,7 +106,7 @@ index 880d87c2be80..669c32acec3d 100644
                     gRestartArgv,
  #  ifdef TOR_BROWSER_UPDATE
 diff --git a/toolkit/xre/nsXREDirProvider.cpp b/toolkit/xre/nsXREDirProvider.cpp
-index 7023ab09ef2b..2ee3577819bf 100644
+index 13a5878df8ed..7f5e3a4c498e 100644
 --- a/toolkit/xre/nsXREDirProvider.cpp
 +++ b/toolkit/xre/nsXREDirProvider.cpp
 @@ -56,8 +56,6 @@
@@ -118,7 +118,7 @@ index 7023ab09ef2b..2ee3577819bf 100644
  #include <stdlib.h>
  
  #ifdef XP_WIN
-@@ -1409,13 +1407,7 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
+@@ -1366,13 +1364,7 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
      return gDataDirHome->Clone(aFile);
    }
  
@@ -133,7 +133,7 @@ index 7023ab09ef2b..2ee3577819bf 100644
    RefPtr<nsXREDirProvider> singleton = GetSingleton();
    if (!singleton) {
      return NS_ERROR_OUT_OF_MEMORY;
-@@ -1425,7 +1417,6 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
+@@ -1382,7 +1374,6 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
    nsAutoCString profileDir(RELATIVE_PROFILE_DIRECTORY);
    rv = localDir->SetRelativePath(localDir.get(), profileDir);
    NS_ENSURE_SUCCESS(rv, rv);
@@ -141,7 +141,7 @@ index 7023ab09ef2b..2ee3577819bf 100644
    if (aLocal) {
      rv = localDir->AppendNative("Caches"_ns);
      NS_ENSURE_SUCCESS(rv, rv);
-@@ -1604,18 +1595,6 @@ nsresult nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal) {
+@@ -1530,18 +1521,6 @@ nsresult nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal) {
    return NS_OK;
  }
  
@@ -161,7 +161,7 @@ index 7023ab09ef2b..2ee3577819bf 100644
    bool persistent = false;
    nsCOMPtr<nsIFile> file, appRootDir;
 diff --git a/toolkit/xre/nsXREDirProvider.h b/toolkit/xre/nsXREDirProvider.h
-index 2e6e3339ed15..a76b087d785a 100644
+index f7270905aded..a9d017d18e0f 100644
 --- a/toolkit/xre/nsXREDirProvider.h
 +++ b/toolkit/xre/nsXREDirProvider.h
 @@ -109,12 +109,6 @@ class nsXREDirProvider final : public nsIDirectoryServiceProvider2,
@@ -318,7 +318,7 @@ index 22cae5a660f4..000000000000
 -
 -#endif  // !TorFileUtils_h__
 diff --git a/xpcom/io/moz.build b/xpcom/io/moz.build
-index af7b5be04f6e..d28c426e7bd7 100644
+index 152f691ae02b..a6bcba45515a 100644
 --- a/xpcom/io/moz.build
 +++ b/xpcom/io/moz.build
 @@ -86,7 +86,6 @@ EXPORTS += [
@@ -329,7 +329,7 @@ index af7b5be04f6e..d28c426e7bd7 100644
  ]
  
  EXPORTS.mozilla += [
-@@ -138,10 +137,6 @@ UNIFIED_SOURCES += [
+@@ -137,10 +136,6 @@ UNIFIED_SOURCES += [
      "SpecialSystemDirectory.cpp",
  ]
  
@@ -383,5 +383,5 @@ index 85ce71c5016c..60b1775eda97 100644
    if (aLocal) {
      rv = localDir->AppendNative("Caches"_ns);
 -- 
-2.35.1
+2.37.3
 
