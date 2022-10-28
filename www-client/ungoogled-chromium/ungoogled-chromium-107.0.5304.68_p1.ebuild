@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-PYTHON_COMPAT=( python3_{7,8,9,10} )
+PYTHON_COMPAT=( python3_{7,8,9,10,11} )
 PYTHON_REQ_USE="xml(+)"
 
 CHROMIUM_LANGS="af am ar bg bn ca cs da de el en-GB es es-419 et fa fi fil fr gu he
@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-UGC_COMMIT_ID="2de108746478093e5c49c4e5d561beb7fec7fce9"
+#UGC_COMMIT_ID="2413f21ae14158ee80a2c783c4477e9eb52880bc"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -154,10 +154,7 @@ COMMON_DEPEND="
 	sys-libs/zlib:=[minizip]
 	!headless? (
 		X? ( ${COMMON_X_DEPEND} )
-		|| (
-			>=app-accessibility/at-spi2-core-2.46.0:2
-			( app-accessibility/at-spi2-atk dev-libs/atk )
-		)
+		app-accessibility/at-spi2-core
 		media-libs/mesa:=[X?,wayland?]
 		cups? ( >=net-print/cups-1.3.11:= )
 		virtual/udev
