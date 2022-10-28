@@ -31,9 +31,9 @@ RDEPEND="virtual/opengl
 		app-accessibility/espeak
 		media-libs/libvorbis
 		dev-libs/nspr
-		media-libs/libpng:0
+		media-libs/libpng
 		media-libs/openal
-		dev-lang/spidermonkey:0
+		dev-lang/spidermonkey
 		sys-libs/zlib[minizip]"
 
 DEPEND="${RDEPEND}
