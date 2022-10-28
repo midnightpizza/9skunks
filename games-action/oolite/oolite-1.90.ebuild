@@ -28,7 +28,7 @@ RDEPEND="virtual/opengl
 		gnustep-base/gnustep-gui
 		media-libs/sdl-mixer
 		media-libs/sdl-image
-		app-accessibility/espeak
+		app-accessibility/espeak-ng
 		media-libs/libvorbis
 		dev-libs/nspr
 		media-libs/libpng
