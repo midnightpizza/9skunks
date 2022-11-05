@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-PYTHON_COMPAT=( python3_{7,8,9,10} )
+PYTHON_COMPAT=( python3_{7,8,9,10,11} )
 PYTHON_REQ_USE="xml(+)"
 
 CHROMIUM_LANGS="af am ar bg bn ca cs da de el en-GB es es-419 et fa fi fil fr gu he
@@ -20,7 +20,7 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
-PATCHSET="3"
+PATCHSET="1"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
@@ -28,8 +28,8 @@ SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chro
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~x86"
-IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio screencast selinux suid +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
+KEYWORDS="amd64 arm64 ~x86"
+IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio qt5 screencast selinux suid +system-av1 +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="7ddd49f013fad74ea71228f7a4cfebda9289028f"
+#UGC_COMMIT_ID="3623e4ea66ea0d21059cefd9d960dbf5d5e4406f"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -105,6 +105,10 @@ COMMON_SNAPSHOT_DEPEND="
 	>=media-libs/libwebp-0.4.0:=
 	media-libs/mesa:=[gbm(+)]
 	>=media-libs/openh264-1.6.0:=
+	system-av1? (
+		>=media-libs/dav1d-1.0.0:=
+		>=media-libs/libaom-3.4.0:=
+	)
 	sys-libs/zlib:=
 	x11-libs/libdrm:=
 	!headless? (
@@ -150,16 +154,17 @@ COMMON_DEPEND="
 	sys-libs/zlib:=[minizip]
 	!headless? (
 		X? ( ${COMMON_X_DEPEND} )
-		|| (
-			>=app-accessibility/at-spi2-core-2.46.0:2
-			( app-accessibility/at-spi2-atk dev-libs/atk )
-		)
+		app-accessibility/at-spi2-core
 		media-libs/mesa:=[X?,wayland?]
 		cups? ( >=net-print/cups-1.3.11:= )
 		virtual/udev
 		x11-libs/cairo:=
 		x11-libs/gdk-pixbuf:2
 		x11-libs/pango:=
+		qt5? (
+			dev-qt/qtcore:5
+			dev-qt/qtwidgets:5
+		)
 	)
 "
 RDEPEND="${COMMON_DEPEND}
@@ -326,8 +331,8 @@ src_prepare() {
 		"${FILESDIR}/chromium-98-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
 		"${FILESDIR}/chromium-105-swiftshader-no-wayland.patch"
-		"${FILESDIR}/chromium-106-python3_11.patch"
 		"${FILESDIR}/chromium-106-revert-GlobalMediaControlsCastStartStop.patch"
+		"${FILESDIR}/chromium-107-system-zlib.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
@@ -501,7 +506,6 @@ src_prepare() {
 		third_party/crashpad/crashpad/third_party/zlib
 		third_party/crc32c
 		third_party/cros_system_api
-		third_party/dav1d
 		third_party/dawn
 		third_party/dawn/third_party/gn/webgpu-cts
 		third_party/dawn/third_party/khronos
@@ -559,10 +563,6 @@ src_prepare() {
 		third_party/khronos
 		third_party/leveldatabase
 		third_party/libaddressinput
-		third_party/libaom
-		third_party/libaom/source/libaom/third_party/fastfeat
-		third_party/libaom/source/libaom/third_party/vector
-		third_party/libaom/source/libaom/third_party/x86inc
 		third_party/libavif
 	)
 	use system-libevent || keeplibs+=(
@@ -612,7 +612,7 @@ src_prepare() {
 		third_party/nearby
 		third_party/neon_2_sse
 		third_party/node
-		third_party/node/node_modules/polymer-bundler/lib/third_party/UglifyJS2
+		third_party/omnibox_proto
 		third_party/one_euro_filter
 		third_party/openscreen
 		third_party/openscreen/src/third_party/mozilla
@@ -650,9 +650,7 @@ src_prepare() {
 		third_party/shell-encryption
 		third_party/simplejson
 		third_party/skia
-		third_party/skia/include/third_party/skcms
 		third_party/skia/include/third_party/vulkan
-		third_party/skia/third_party/skcms
 		third_party/skia/third_party/vulkan
 		third_party/smhasher
 	)
@@ -703,6 +701,7 @@ src_prepare() {
 		v8/third_party/inspector_protocol
 		v8/third_party/v8
 
+		# gyp -> gn leftovers
 		third_party/speech-dispatcher
 		third_party/usb_ids
 		third_party/xdg-utils
@@ -715,6 +714,15 @@ src_prepare() {
 	fi
 	if ! use system-png; then
 		keeplibs+=( third_party/libpng )
+	fi
+	if ! use system-av1; then
+		keep_libs+=(
+			third_party/dav1d
+			third_party/libaom
+			third_party/libaom/source/libaom/third_party/fastfeat
+			third_party/libaom/source/libaom/third_party/vector
+			third_party/libaom/source/libaom/third_party/x86inc
+		)
 	fi
 	if use system-harfbuzz; then
 		keeplibs+=( third_party/harfbuzz-ng/utils )
@@ -856,6 +864,9 @@ src_configure() {
 	if use system-png; then
 		gn_system_libraries+=( libpng )
 		myconf_gn+=" use_system_libpng=true"
+	fi
+	if use system-av1; then
+		gn_system_libraries+=( dav1d libaom )
 	fi
 	if use system-libusb; then
 		gn_system_libraries+=( libusb )
@@ -1081,7 +1092,7 @@ src_configure() {
 	myconf_gn+=" ozone_platform_headless=true"
 	if use headless; then
 		myconf_gn+=" ozone_platform=\"headless\""
-		myconf_gn+=" use_xkbcommon=false use_gtk=false"
+		myconf_gn+=" use_xkbcommon=false use_gtk=false use_qt=false"
 		myconf_gn+=" use_glib=false use_gio=false"
 		myconf_gn+=" use_pangocairo=false use_alsa=false"
 		myconf_gn+=" use_libpci=false use_udev=false"
@@ -1091,10 +1102,14 @@ src_configure() {
 		myconf_gn+=" use_system_libdrm=true"
 		myconf_gn+=" use_system_minigbm=true"
 		myconf_gn+=" use_xkbcommon=true"
+		myconf_gn+=" use_qt=$(usex qt5 true false)"
 		myconf_gn+=" ozone_platform_x11=$(usex X true false)"
 		myconf_gn+=" ozone_platform_wayland=$(usex wayland true false)"
 		myconf_gn+=" ozone_platform=$(usex wayland \"wayland\" \"x11\")"
-		use wayland && myconf_gn+=" use_system_wayland_scanner=true"
+		if use wayland; then
+			myconf_gn+=" use_system_libwayland_server=true"
+			myconf_gn+=" use_system_wayland_scanner=true"
+		fi
 	fi
 
 	# Results in undefined references in chrome linking, may require CFI to work
