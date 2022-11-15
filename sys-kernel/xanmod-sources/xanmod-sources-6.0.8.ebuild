@@ -30,6 +30,7 @@ UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 
 # excluding CPU optimizations patches, since it's included in XanMod too
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
+UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2910_bfp-mark-get-entry-ip-as--maybe-unused.patch"
 
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *cifs-fix-minor-compile-warning.patch"
 
