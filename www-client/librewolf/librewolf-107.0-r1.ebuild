@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-105-patches-05j.tar.xz"
+FIREFOX_PATCHSET="firefox-107-patches-01j.tar.xz"
 
 LLVM_MAX_SLOT=15
 
@@ -102,14 +102,27 @@ BDEPEND="${PYTHON_DEPS}
 			pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
 		)
 	amd64? ( >=dev-lang/nasm-2.14 )
-	x86? ( >=dev-lang/nasm-2.14 )"
+	x86? ( >=dev-lang/nasm-2.14 )
+	pgo? (
+		X? (
+			x11-base/xorg-server[xvfb]
+			x11-apps/xhost
+		)
+		wayland? (
+			>=gui-libs/wlroots-0.15.1-r1[tinywl]
+			x11-misc/xkeyboard-config
+		)
+	)"
 COMMON_DEPEND="${FF_ONLY_DEPEND}
-	dev-libs/atk
+	|| (
+		>=app-accessibility/at-spi2-core-2.46.0:2
+		dev-libs/atk
+	)
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.82
-	>=dev-libs/nspr-4.34.1
+	>=dev-libs/nss-3.83
+	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
 	media-libs/freetype
@@ -623,6 +636,7 @@ src_prepare() {
 	moz_clear_vendor_checksums audioipc
 	moz_clear_vendor_checksums audioipc-client
 	moz_clear_vendor_checksums audioipc-server
+	moz_clear_vendor_checksums bindgen
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -1043,6 +1057,12 @@ src_compile() {
 		gnome2_environment_reset
 
 		addpredict /root
+
+		if ! use X; then
+			virtx_cmd=virtwl
+		else
+			virtx_cmd=virtx
+		fi
 	fi
 
 	if ! use X; then
