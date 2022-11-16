@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="3623e4ea66ea0d21059cefd9d960dbf5d5e4406f"
+#UGC_COMMIT_ID="c952723a54ed46a692730755a8d3d888f0c41028"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -248,19 +248,6 @@ python_check_deps() {
 }
 
 pre_build_checks() {
-	if [[ ${MERGE_TYPE} != binary ]]; then
-		local -x CPP="$(tc-getCXX) -E"
-		if tc-is-gcc && ! ver_test "$(gcc-version)" -ge 9.2; then
-			[[ -z "${NODIE}" ]] && die "At least gcc 9.2 is required"
-		fi
-		if use clang || tc-is-clang; then
-			tc-is-cross-compiler && CPP=${CBUILD}-clang++ || CPP=${CHOST}-clang++
-			CPP+=" -E"
-			if ! ver_test "$(clang-major-version)" -ge 12; then
-				[[ -z "${NODIE}" ]] && die "At least clang 12 is required"
-			fi
-		fi
-	fi
 
 	# Check build requirements, bug #541816 and bug #471810 .
 	CHECKREQS_MEMORY="4G"
