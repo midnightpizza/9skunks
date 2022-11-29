@@ -9,7 +9,7 @@ CHROMIUM_LANGS="af am ar bg bn ca cs da de el en-GB es es-419 et fa fi fil fr gu
 	hi hr hu id it ja kn ko lt lv ml mr ms nb nl pl pt-BR pt-PT ro ru sk sl sr
 	sv sw ta te th tr uk ur vi zh-CN zh-TW"
 
-inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-any-r1 readme.gentoo-r1 toolchain-funcs xdg-utils
+inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-any-r1 qmake-utils readme.gentoo-r1 toolchain-funcs xdg-utils
 
 # Use following environment variables to customise the build
 # EXTRA_GN — pass extra options to gn
@@ -20,7 +20,7 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
-PATCHSET="1"
+PATCHSET="2"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
@@ -44,7 +44,7 @@ REQUIRED_USE="
 	!headless ( || ( X wayland ) )
 "
 
-#UGC_COMMIT_ID="c952723a54ed46a692730755a8d3d888f0c41028"
+UGC_COMMIT_ID="9a0918d2f47f7522d1d6fe1656bfb8d7967a323f"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -173,6 +173,7 @@ RDEPEND="${COMMON_DEPEND}
 			x11-libs/gtk+:3[X?,wayland?]
 			gui-libs/gtk:4[X?,wayland?]
 		)
+		qt5? ( dev-qt/qtgui:5[X?,wayland?] )
 		x11-misc/xdg-utils
 	)
 	virtual/ttf-fonts
@@ -312,14 +313,15 @@ src_prepare() {
 		sed -i '/default_stack_frames/Q' ${WORKDIR}/patches/chromium-*-compiler.patch || die
 	fi
 
+	rm "${WORKDIR}/patches/chromium-108-LabToLCH-include.patch" || die
+
 	local PATCHES=(
 		"${WORKDIR}/patches"
 		"${FILESDIR}/chromium-93-InkDropHost-crash.patch"
-		"${FILESDIR}/chromium-98-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
-		"${FILESDIR}/chromium-105-swiftshader-no-wayland.patch"
-		"${FILESDIR}/chromium-106-revert-GlobalMediaControlsCastStartStop.patch"
 		"${FILESDIR}/chromium-107-system-zlib.patch"
+		"${FILESDIR}/chromium-108-EnumTable-crash.patch"
+		"${FILESDIR}/chromium-108-revert-GlobalMediaControlsCastStartStop.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
@@ -528,7 +530,6 @@ src_prepare() {
 		third_party/fusejs
 		third_party/fxdiv
 		third_party/highway
-		third_party/libgifcodec
 		third_party/liburlpattern
 		third_party/libzip
 		third_party/gemmlowp
@@ -703,7 +704,7 @@ src_prepare() {
 		keeplibs+=( third_party/libpng )
 	fi
 	if ! use system-av1; then
-		keep_libs+=(
+		keeplibs+=(
 			third_party/dav1d
 			third_party/libaom
 			third_party/libaom/source/libaom/third_party/fastfeat
@@ -711,15 +712,11 @@ src_prepare() {
 			third_party/libaom/source/libaom/third_party/x86inc
 		)
 	fi
-	if use system-harfbuzz; then
-		keeplibs+=( third_party/harfbuzz-ng/utils )
-	else
+	if ! use system-harfbuzz; then
 		keeplibs+=( third_party/harfbuzz-ng )
 	fi
 	if use wayland && ! use headless ; then
 		keeplibs+=( third_party/wayland )
-		# only need the .gn files
-		rm -r third_party/wayland/src || die
 	fi
 	if ! use system-openh264; then
 		keeplibs+=( third_party/openh264 )
@@ -925,7 +922,7 @@ src_configure() {
 	myconf_gn+=" use_system_lcms2=true"
 	myconf_gn+=" enable_print_preview=true"
 	myconf_gn+=" enable_platform_hevc=$(usex hevc true false)"
-	myconf_gn+=" enable_platform_hevc_decoding=$(usex hevc true false)"
+	myconf_gn+=" enable_hevc_parser_and_hw_decoder=$(usex hevc true false)"
 
 	# Ungoogled flags
 	myconf_gn+=" enable_mdns=false"
@@ -1089,13 +1086,13 @@ src_configure() {
 		myconf_gn+=" use_system_libdrm=true"
 		myconf_gn+=" use_system_minigbm=true"
 		myconf_gn+=" use_xkbcommon=true"
+		use qt5 && export PATH="${PATH}:$(qt5_get_bindir)"
 		myconf_gn+=" use_qt=$(usex qt5 true false)"
 		myconf_gn+=" ozone_platform_x11=$(usex X true false)"
 		myconf_gn+=" ozone_platform_wayland=$(usex wayland true false)"
 		myconf_gn+=" ozone_platform=$(usex wayland \"wayland\" \"x11\")"
 		if use wayland; then
-			myconf_gn+=" use_system_libwayland_server=true"
-			myconf_gn+=" use_system_wayland_scanner=true"
+			myconf_gn+=" use_system_libwayland=true"
 		fi
 	fi
 
@@ -1190,6 +1187,8 @@ src_compile() {
 	pax-mark m out/Release/chrome
 
 	use enable-driver && mv out/Release/chromedriver{.unstripped,}
+
+	rm -f out/Release/locales/*.pak.info || die
 
 	# Build manpage; bug #684550
 	sed -e 's|@@PACKAGE@@|chromium-browser|g;
