@@ -25,7 +25,7 @@ SLOT="0"
 RESTRICT="!test? ( test )"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
-VIDEO_CARDS="${RADEON_CARDS} freedreno intel lima nouveau panfrost v3d vc4 virgl vivante vmware"
+VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lima nouveau panfrost v3d vc4 virgl vivante vmware"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
 done
@@ -34,7 +34,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug gles1 +gles2 +llvm
 	lm-sensors opencl osmesa +proprietary-codecs selinux
 	test unwind vaapi valgrind vdpau vulkan
-	vulkan-overlay wayland X xa xvmc zink +zstd pax_kernel libglvnd"
+	vulkan-overlay wayland +X xa zink +zstd"
 
 REQUIRED_USE="
 	d3d9?   ( || ( video_cards_intel video_cards_r300 video_cards_r600 video_cards_radeonsi video_cards_nouveau video_cards_vmware ) )
@@ -44,7 +44,6 @@ REQUIRED_USE="
 	video_cards_r300?   ( x86? ( llvm ) amd64? ( llvm ) )
 	video_cards_radeonsi?   ( llvm )
 	xa? ( X )
-	xvmc? ( X )
 	zink? ( vulkan )
 "
 
@@ -79,23 +78,19 @@ RDEPEND="
 				virtual/libelf:0=[${MULTILIB_USEDEP}]
 			)
 	vaapi? (
-		>=x11-libs/libva-1.7.3:=[${MULTILIB_USEDEP}]
+		>=media-libs/libva-1.7.3:=[${MULTILIB_USEDEP}]
 	)
 	vdpau? ( >=x11-libs/libvdpau-1.1:=[${MULTILIB_USEDEP}] )
-	xvmc? ( >=x11-libs/libXvMC-1.0.8:=[${MULTILIB_USEDEP}] )
 	selinux? ( sys-libs/libselinux[${MULTILIB_USEDEP}] )
-	wayland? (
-		>=dev-libs/wayland-1.18.0:=[${MULTILIB_USEDEP}]
-	)
+	wayland? ( >=dev-libs/wayland-1.18.0[${MULTILIB_USEDEP}] )
 	${LIBDRM_DEPSTRING}[video_cards_freedreno?,video_cards_intel?,video_cards_nouveau?,video_cards_vc4?,video_cards_vivante?,video_cards_vmware?,${MULTILIB_USEDEP}]
-	vulkan-overlay? ( dev-util/glslang:0=[${MULTILIB_USEDEP}] )
 	X? (
-		>=x11-libs/libX11-1.6.2:=[${MULTILIB_USEDEP}]
-		>=x11-libs/libxshmfence-1.1:=[${MULTILIB_USEDEP}]
-		>=x11-libs/libXext-1.3.2:=[${MULTILIB_USEDEP}]
-		>=x11-libs/libXxf86vm-1.1.3:=[${MULTILIB_USEDEP}]
+		>=x11-libs/libX11-1.6.2[${MULTILIB_USEDEP}]
+		>=x11-libs/libxshmfence-1.1[${MULTILIB_USEDEP}]
+		>=x11-libs/libXext-1.3.2[${MULTILIB_USEDEP}]
+		>=x11-libs/libXxf86vm-1.1.3[${MULTILIB_USEDEP}]
 		>=x11-libs/libxcb-1.13:=[${MULTILIB_USEDEP}]
-		x11-libs/libXfixes:=[${MULTILIB_USEDEP}]
+		x11-libs/libXfixes[${MULTILIB_USEDEP}]
 	)
 	zink? ( media-libs/vulkan-loader:=[${MULTILIB_USEDEP}] )
 	zstd? ( app-arch/zstd:=[${MULTILIB_USEDEP}] )
@@ -117,9 +112,10 @@ RDEPEND="${RDEPEND}
 # 1. List all the working slots (with min versions) in ||, newest first.
 # 2. Update the := to specify *max* version, e.g. < 10.
 # 3. Specify LLVM_MAX_SLOT, e.g. 9.
-LLVM_MAX_SLOT="15"
+LLVM_MAX_SLOT="16"
 LLVM_DEPSTR="
 	|| (
+		sys-devel/llvm:16[${MULTILIB_USEDEP}]
 		sys-devel/llvm:15[${MULTILIB_USEDEP}]
 		sys-devel/llvm:14[${MULTILIB_USEDEP}]
 		sys-devel/llvm:13[${MULTILIB_USEDEP}]
