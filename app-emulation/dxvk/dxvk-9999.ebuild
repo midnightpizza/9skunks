@@ -9,21 +9,36 @@ inherit flag-o-matic meson-multilib
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/doitsujin/dxvk.git"
+	EGIT_SUBMODULES=(
+		# picky about headers and is cross-compiled making -I/usr/include troublesome
+		include/{spirv,vulkan}
+		subprojects/libdisplay-info
+	)
 else
-	SRC_URI="https://github.com/doitsujin/dxvk/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+	HASH_SPIRV=0bcc624926a25a2a273d07877fd25a6ff5ba1cfb
+	HASH_VULKAN=98f440ce6868c94f5ec6e198cc1adda4760e8849
+	SRC_URI="
+		https://github.com/doitsujin/dxvk/archive/refs/tags/v${PV}.tar.gz
+			-> ${P}.tar.gz
+		https://github.com/KhronosGroup/SPIRV-Headers/archive/${HASH_SPIRV}.tar.gz
+			-> ${PN}-spirv-headers-${HASH_SPIRV::10}.tar.gz
+		https://github.com/KhronosGroup/Vulkan-Headers/archive/${HASH_VULKAN}.tar.gz
+			-> ${PN}-vulkan-headers-${HASH_VULKAN::10}.tar.gz"
 	KEYWORDS="-* ~amd64 ~x86"
 fi
+# setup_dxvk.sh is no longer provided, fetch old until a better solution
+SRC_URI+=" https://raw.githubusercontent.com/doitsujin/dxvk/cd21cd7fa3b0df3e0819e21ca700b7627a838d69/setup_dxvk.sh"
 
 DESCRIPTION="Vulkan-based implementation of D3D9, D3D10 and D3D11 for Linux / Wine"
 HOMEPAGE="https://github.com/doitsujin/dxvk/"
 
-LICENSE="ZLIB"
+LICENSE="ZLIB Apache-2.0 MIT"
 SLOT="0"
 IUSE="+abi_x86_32 crossdev-mingw +d3d9 +d3d10 +d3d11 debug +dxgi"
 REQUIRED_USE="
 	|| ( d3d9 d3d10 d3d11 dxgi )
 	d3d10? ( d3d11 )
-	dxgi? ( d3d11 )"
+	d3d11? ( dxgi )"
 
 BDEPEND="
 	dev-util/glslang
@@ -51,9 +66,16 @@ pkg_pretend() {
 }
 
 src_prepare() {
+	if [[ ${PV} != 9999 ]]; then
+		rmdir include/{spirv,vulkan} || die
+		mv ../SPIRV-Headers-${HASH_SPIRV} include/spirv || die
+		mv ../Vulkan-Headers-${HASH_VULKAN} include/vulkan || die
+	fi
+
 	default
 
-	sed -i "/^basedir=/s|=.*|=${EPREFIX}/usr/lib/${PN}|" setup_dxvk.sh || die
+	sed "/^basedir=/s|=.*|=${EPREFIX}/usr/lib/${PN}|" \
+		"${DISTDIR}"/setup_dxvk.sh > setup_dxvk.sh || die
 }
 
 src_configure() {
@@ -66,7 +88,10 @@ src_configure() {
 	if [[ ${CHOST} != *-mingw* ]]; then
 		if [[ ! -v MINGW_BYPASS ]]; then
 			unset AR CC CXX RC STRIP
+			filter-flags '-fstack-clash-protection' #758914
+			filter-flags '-fstack-protector*' #870136
 			filter-flags '-fuse-ld=*'
+			filter-flags '-mfunction-return=thunk*' #878849
 		fi
 
 		CHOST_amd64=x86_64-w64-mingw32
@@ -115,6 +140,8 @@ pkg_postinst() {
 		elog "	WINEPREFIX=/path/to/prefix setup_dxvk.sh install --symlink"
 		elog
 		elog "See ${EROOT}/usr/share/doc/${PF}/README.md* for details."
+		elog "Note: setup_dxvk.sh is unofficially temporarily provided as it was"
+		elog "removed upstream, handling may change in the future."
 	elif [[ -v DXVK_HAD_OVERLAY ]]; then
 		# temporary warning until this version is more widely used
 		elog "Gentoo's main repo ebuild for ${PN} uses different paths than most overlays."
@@ -127,10 +154,12 @@ pkg_postinst() {
 		elog "it. See ${EROOT}/usr/share/doc/${PF}/README.md* for handling configs."
 	fi
 
-	# don't try to keep wine-*[vulkan] in RDEPEND, but still give a warning
-	local wine
-	for wine in app-emulation/wine-{vanilla,staging}; do
-		has_version ${wine} && ! has_version ${wine}[vulkan] &&
-			ewarn "${wine} was not built with USE=vulkan, ${PN} will not be usable with it"
-	done
+	if [[ ! ${REPLACING_VERSIONS##* } ]] ||
+		ver_test ${REPLACING_VERSIONS##* } -lt 2.0
+	then
+		elog
+		elog ">=${PN}-2.0 requires drivers and Wine to support vulkan-1.3, meaning:"
+		elog ">=wine-*-7.1 (or >=wine-proton-7.0), and >=mesa-22.0 (or >=nvidia-drivers-510)"
+		elog "For details, see: https://github.com/doitsujin/dxvk/wiki/Driver-support"
+	fi
 }
