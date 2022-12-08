@@ -42,9 +42,10 @@ REQUIRED_USE="
 	x86? ( !thinlto !widevine )
 	screencast? ( wayland )
 	!headless ( || ( X wayland ) )
+	!proprietary-codecs? ( !hevc )
 "
 
-UGC_COMMIT_ID="9a0918d2f47f7522d1d6fe1656bfb8d7967a323f"
+UGC_COMMIT_ID="ed197653e99b95ff69f04c59b90198c118248f81"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -286,7 +287,7 @@ pkg_pretend() {
 	pre_build_checks
 
 	if use headless; then
-		local headless_unused_flags=("cups" "kerberos" "pulseaudio" "vaapi" "wayland")
+		local headless_unused_flags=("cups" "kerberos" "pulseaudio" "qt5" "vaapi" "wayland")
 		for myiuse in ${headless_unused_flags[@]}; do
 			use ${myiuse} && ewarn "Ignoring USE=${myiuse} since USE=headless is set."
 		done
@@ -926,7 +927,7 @@ src_configure() {
 
 	# Ungoogled flags
 	myconf_gn+=" enable_mdns=false"
-	myconf_gn+=" enable_mse_mpeg2ts_stream_parser=true"
+	myconf_gn+=" enable_mse_mpeg2ts_stream_parser=$(usex proprietary-codecs true false)"
 	myconf_gn+=" enable_reading_list=false"
 	myconf_gn+=" enable_remoting=false"
 	myconf_gn+=" enable_reporting=false"
