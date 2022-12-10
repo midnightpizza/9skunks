@@ -47,7 +47,7 @@ src_unpack() {
 }
 src_prepare() {
 	# Ensure unneeded deps are not bundled
-	for dep in chdr dirent glslang libretro-common libzip miniupnpc oboe patches SDL vixl xxHash; do
+	for dep in chdr dirent glslang libretro-common libzip miniupnpc oboe patches SDL xxHash; do
 		rm -rf core/deps/${dep}
 	done
 
