@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-107-patches-01j.tar.xz"
+FIREFOX_PATCHSET="firefox-108-patches-01j.tar.xz"
 
 LLVM_MAX_SLOT=15
 
@@ -13,10 +13,6 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
-
-# Librewolf version (please rev-bump if changed)
-# Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-1"
 
 MOZ_ESR=
 
@@ -43,20 +39,19 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs \
-	virtualx xdg
+	virtualx xdg librewolf-r2
 
-# MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-#
-# if [[ ${PV} == *_rc* ]] ; then
-# 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
-# fi
-MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
+MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
+
+if [[ ${PV} == *_rc* ]] ; then
+	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
+fi
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,polynomial-c,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
+SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="LibreWolf Web Browser"
@@ -65,7 +60,6 @@ HOMEPAGE="https://librewolf-community.gitlab.io/"
 KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 
 SLOT="rapid"
-SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
@@ -76,35 +70,37 @@ IUSE+=" wayland wifi"
 # Firefox-only IUSE
 IUSE+=" geckodriver +gmp-autoupdate screencast +X"
 
-REQUIRED_USE="debug? ( !system-av1 )
+REQUIRED_USE="|| ( X wayland )
+	debug? ( !system-av1 )
 	pgo? ( lto )
 	wifi? ( dbus )"
 
 # Firefox-only REQUIRED_USE flags
-REQUIRED_USE+=" || ( X wayland )"
 REQUIRED_USE+=" screencast? ( wayland )"
 
-FF_ONLY_DEPEND="!www-client/firefox:0
-	!www-client/firefox:esr
-	screencast? ( media-video/pipewire:= )
-	selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
+	|| (
+		(
+			sys-devel/clang
+			sys-devel/llvm
+			clang? (
+				sys-devel/lld
+				virtual/rust
+				pgo? ( =sys-libs/compiler-rt-sanitizers*[profile] )
+			)
+		)
+	)
 	app-arch/unzip
 	app-arch/zip
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	virtual/rust
-	sys-devel/clang
-	sys-devel/llvm
-	clang? (
-			sys-devel/lld
-			pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
-		)
+	!clang? ( virtual/rust )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
 		X? (
+			sys-devel/gettext
 			x11-base/xorg-server[xvfb]
 			x11-apps/xhost
 		)
@@ -114,14 +110,11 @@ BDEPEND="${PYTHON_DEPS}
 		)
 	)"
 COMMON_DEPEND="${FF_ONLY_DEPEND}
-	|| (
-		>=app-accessibility/at-spi2-core-2.46.0:2
-		dev-libs/atk
-	)
+	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.83
+	>=dev-libs/nss-3.85
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -153,7 +146,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	)
 	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
-	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
+	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
@@ -205,7 +198,7 @@ DEPEND="${COMMON_DEPEND}
 		x11-libs/libSM
 	)"
 
-S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
+S="${WORKDIR}/firefox-${PV%_*}"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -273,6 +266,7 @@ MOZ_LANGS+=( oc )
 MOZ_LANGS+=( sco )
 MOZ_LANGS+=( si )
 MOZ_LANGS+=( son )
+MOZ_LANGS+=( szl )
 MOZ_LANGS+=( ta )
 MOZ_LANGS+=( te )
 MOZ_LANGS+=( tl )
@@ -593,6 +587,8 @@ src_unpack() {
 			unpack ${_src_file}
 		fi
 	done
+
+	librewolf-r2_src_unpack
 }
 
 src_prepare() {
@@ -632,10 +628,7 @@ src_prepare() {
 	einfo "Removing pre-built binaries ..."
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
-	# Clearing checksums where we have applied patches
-	moz_clear_vendor_checksums audioipc
-	moz_clear_vendor_checksums audioipc-client
-	moz_clear_vendor_checksums audioipc-server
+	# Clearing crate checksums where we have applied patches
 	moz_clear_vendor_checksums bindgen
 
 	# Create build dir
@@ -659,12 +652,13 @@ src_configure() {
 	einfo "Current RUSTFLAGS:\t\t${RUSTFLAGS:-no value set}"
 
 	local have_switched_compiler=
-	if use clang && ! tc-is-clang ; then
+	if use clang; then
 		# Force clang
 		einfo "Enforcing the use of clang due to USE=clang ..."
-		have_switched_compiler=yes
+		if tc-is-gcc; then
+			have_switched_compiler=yes
+		fi
 		AR=llvm-ar
-		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -722,6 +716,7 @@ src_configure() {
 		--disable-install-strip \
 		--disable-parental-controls \
 		--disable-strip \
+		--disable-tests \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
@@ -999,7 +994,7 @@ src_configure() {
 	export MOZ_MAKE_FLAGS="${MAKEOPTS}"
 
 	# Use system's Python environment
-	PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
+	export PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
 
 	if use system-python-libs; then
 		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="system"
@@ -1016,6 +1011,8 @@ src_configure() {
 
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
+
+	librewolf-r2_src_configure
 
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
@@ -1086,8 +1083,8 @@ src_install() {
 	## LibreWolf
 	# For some reason 'local-settings.js' doesn't get properly packaged.
 	# Install it manually
-	insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
-	doins "${S}/lw/local-settings.js"
+	# insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
+	# doins "${S}/lw/local-settings.js"
 
 	# Upstream cannot ship symlink but we can (bmo#658850)
 	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
@@ -1217,6 +1214,8 @@ src_install() {
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
 		"${ED}/usr/bin/${PN}" \
 		|| die
+
+	librewolf-r2_src_install
 }
 
 pkg_preinst() {
