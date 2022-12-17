@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-102esr-patches-06j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-07j.tar.xz"
 
 LLVM_MAX_SLOT=16
 
@@ -15,11 +15,13 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream mozilla version, used by mozlinguas
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/firefox/config?h=tbb-12.0a5-build1#n13
-# and https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/config?h=tbb-12.0a5-build1#n100
-TOR_PV="12.0a5"
-TOR_TAG="12.0-1-build4"
+# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/firefox/config#L15
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/config#L104
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
+TOR_PV="12.0.1"
+TOR_TAG="12.0-1-build2"
 NOSCRIPT_VERSION="11.4.13"
+CHANGELOG_TAG="12.0.1-build1"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
@@ -35,6 +37,7 @@ SRC_URI="
 	${TOR_SRC_BASE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
 	${TOR_SRC_ARCHIVE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
 	https://addons.mozilla.org/firefox/downloads/file/3954910/noscript-${NOSCRIPT_VERSION}.xpi
+	https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/tbb-${CHANGELOG_TAG}/projects/browser/Bundle-Data/Docs/ChangeLog.txt -> ${P}-ChangeLog.txt
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="Private browsing without tracking, surveillance, or censorship"
@@ -50,7 +53,6 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" wayland"
 
 BDEPEND="${PYTHON_DEPS}
-
 	|| (
 		(
 			sys-devel/clang
@@ -70,14 +72,11 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-lang/nasm-2.14"
 
 COMMON_DEPEND="
-	|| (
-		>=app-accessibility/at-spi2-core-2.46.0:2
-		dev-libs/atk
-	)
+	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.79.1
+	>=dev-libs/nss-3.79.2
 	>=dev-libs/nspr-4.34
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -102,16 +101,16 @@ COMMON_DEPEND="
 	x11-libs/pango
 	x11-libs/pixman
 	dbus? (
-		sys-apps/dbus
 		dev-libs/dbus-glib
+		sys-apps/dbus
 	)
 	system-av1? (
 		>=media-libs/dav1d-1.0.0:=
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
-		>=media-libs/harfbuzz-2.8.1:0=
 		>=media-gfx/graphite2-1.3.13
+		>=media-libs/harfbuzz-2.8.1:0=
 	)
 	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
@@ -152,8 +151,13 @@ llvm_check_deps() {
 	fi
 
 	if use clang ; then
-		if ! has_version -b "=sys-devel/lld-${LLVM_SLOT}*" ; then
-			einfo "=sys-devel/lld-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+		if ! has_version -b "sys-devel/lld:${LLVM_SLOT}" ; then
+			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			return 1
+		fi
+
+		if ! has_version -b "virtual/rust:0/llvm-${LLVM_SLOT}" ; then
+			einfo "virtual/rust:0/llvm-${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
 	fi
@@ -308,26 +312,6 @@ pkg_setup() {
 	CONFIG_CHECK="~SECCOMP"
 	WARNING_SECCOMP="CONFIG_SECCOMP not set! This system will be unable to play DRM-protected content."
 	linux-info_pkg_setup
-}
-
-src_unpack() {
-	for a in ${A} ; do
-		case "${a}" in
-			"src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz")
-				unpack "${a}"
-				;;
-
-			"noscript-${NOSCRIPT_VERSION}.xpi")
-				local destdir="${WORKDIR}"
-				echo ">>> Copying ${a} to ${destdir}"
-				cp "${DISTDIR}/${a}" "${destdir}" || die
-				;;
-
-			*)
-				unpack "${a}"
-				;;
-		esac
-	done
 }
 
 src_prepare() {
@@ -519,9 +503,10 @@ src_configure() {
 	mozconfig_add_options_ac 'torbrowser' --with-app-name=torbrowser
 	mozconfig_add_options_ac 'torbrowser' --with-app-basename=torbrowser
 
-	# see https://gitweb.torproject.org/tor-browser.git/tree/browser/config/mozconfigs/base-browser?h=tor-browser-102.3.0esr-12.0-1
-	# see https://gitweb.torproject.org/tor-browser.git/tree/browser/config/mozconfigs/tor-browser?h=tor-browser-102.3.0esr-12.0-1
-	# see https://gitweb.torproject.org/tor-browser.git/tree/mozconfig-linux-x86_64-dev?h=tor-browser-102.3.0esr-12.0-1
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/mozconfig-linux-x86_64
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfigs/tor-browser
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfigs/base-browser
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfig
 	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
 	mozconfig_add_options_ac 'torbrowser' \
 		--enable-optimize \
@@ -542,7 +527,9 @@ src_configure() {
 		--with-branding=browser/branding/official \
 		--disable-tor-browser-update \
 		--disable-system-policies \
-		--enable-verify-mar
+		--enable-verify-mar \
+		--disable-backgroundtasks \
+		--enable-base-browser
 
 	# Avoid auto-magic on linker
 	if use clang ; then
@@ -666,9 +653,13 @@ src_configure() {
 }
 
 src_compile() {
-	local -x GDK_BACKEND=x11
-
 	./mach build --verbose || die
+
+	# FIXME: add locale support
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/firefox/build#L172
+	export MOZ_CHROME_MULTILOCALE=""
+	./mach package-multi-locale --locales en-US $MOZ_CHROME_MULTILOCALE || die
+	AB_CD=multi ./mach build stage-package || die
 }
 
 src_install() {
@@ -689,20 +680,13 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	# https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n48
+	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/build#L59
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
-	newins "${WORKDIR}"/noscript-${NOSCRIPT_VERSION}.xpi {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
+	newins "${DISTDIR}/noscript-${NOSCRIPT_VERSION}.xpi" {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
 
 	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
 	insinto "${PREFS_DIR}"
-
-	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n172
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/build?h=tbb-12.0a3-build1#n210
-	newins - 000-tor-browser.js <<-EOF
-		pref("extensions.torlauncher.prompt_for_locale", "false");
-		pref("intl.locale.requested", "en-US");
-	EOF
 
 	local GENTOO_PREFS="${ED}${PREFS_DIR}/gentoo-prefs.js"
 
@@ -734,12 +718,12 @@ src_install() {
 	done
 
 	# Install menu
-	# see https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/RelativeLink/start-browser.desktop?h=tbb-12.0a3-build1
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/RelativeLink/start-browser.desktop
 	domenu "${FILESDIR}"/torbrowser.desktop
 
 	# Install wrapper
-	# see: https://gitweb.torproject.org/builders/tor-browser-build.git/tree/projects/browser/RelativeLink/start-browser?h=tbb-12.0a3-build1
-	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/lib/anon-ws-disable-stacked-tor/torbrowser.sh
+	# see: https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/RelativeLink/start-browser
+	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
 	rm "${ED}"/usr/bin/torbrowser || die # symlink to /usr/lib64/torbrowser/torbrowser
 
 	newbin - torbrowser <<-EOF
@@ -748,11 +732,8 @@ src_install() {
 		unset SESSION_MANAGER
 		export GSETTINGS_BACKEND=memory
 
-		export TOR_HIDE_UPDATE_CHECK_UI=1
-		export TOR_NO_DISPLAY_NETWORK_SETTINGS=1
-		export TOR_SKIP_CONTROLPORTTEST=1
 		export TOR_SKIP_LAUNCH=1
-		export TOR_USE_LEGACY_LAUNCHER=1
+		export TOR_SKIP_CONTROLPORTTEST=1
 
 		if @DEFAULT_WAYLAND@ && [[ -z \${MOZ_DISABLE_WAYLAND} ]]; then
 			if [[ -n "\${WAYLAND_DISPLAY}" ]]; then
@@ -774,11 +755,10 @@ src_install() {
 	rm "${ED}"${MOZILLA_FIVE_HOME}/torbrowser-bin || die
 	dosym torbrowser ${MOZILLA_FIVE_HOME}/torbrowser-bin
 
-	# Required in order to use plugins and even run torbrowser on hardened.
-	pax-mark m "${ED%/}"${MOZILLA_FIVE_HOME}/{torbrowser,plugin-container}
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/Bundle-Data/Docs/ChangeLog.txt
+	newdoc "${DISTDIR}/${P}-ChangeLog.txt" ChangeLog.txt
 
-	# see: https://trac.torproject.org/projects/tor/ticket/11751#comment:2
-	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/lib/anon-ws-disable-stacked-tor/torbrowser.sh
+	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
 	dodoc "${FILESDIR}/99torbrowser.example"
 	dodoc "${FILESDIR}/torrc.example"
 }
