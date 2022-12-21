@@ -1,34 +1,31 @@
-# Copyright 2020-2021 Gentoo Authors
+# Copyright 2020-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
-PYTHON_COMPAT=( python3_{6..9} )
+EAPI=8
+PYTHON_COMPAT=( python3_{8..11} )
 inherit cmake python-single-r1
 
 DESCRIPTION="A code-completion & code-comprehension server."
 HOMEPAGE="https://github.com/ycm-core/ycmd"
-CORE_VERSION=45
-SHA="f7ba6e791829c2ad0a3b77bd8e921f2b4c71d7dc"
+CORE_VERSION=47
+SHA="0e13fecefb629dfadfce948b5f350bf9d763a883"
 SRC_URI="https://github.com/ycm-core/ycmd/archive/${SHA}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~ppc64 ~x86"
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 DEPEND="dev-cpp/abseil-cpp"
 RDEPEND="
 	${DEPEND}
+	${PYTHON_DEPS}
 	$(python_gen_cond_dep 'dev-python/bottle[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/jedi[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/regex[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/waitress[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/watchdog[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
-	|| ( sys-devel/clang:11[static-analyzer]
-		sys-devel/clang:13[static-analyzer]
-		sys-devel/clang:12[static-analyzer] )
-	|| ( sys-libs/compiler-rt:11.1.0
-		sys-libs/compiler-rt:13.0.0
-		sys-libs/compiler-rt:12.0.1 )"
+	sys-devel/clang:=[static-analyzer]"
 
 S="${WORKDIR}/${PN}-${SHA}/cpp"
 

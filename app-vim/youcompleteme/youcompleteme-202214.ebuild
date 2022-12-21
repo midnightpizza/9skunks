@@ -1,27 +1,24 @@
-# Copyright 2020-2021 Gentoo Authors
+# Copyright 2020-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-PYTHON_COMPAT=( python3_{7..9} )
+PYTHON_COMPAT=( python3_{8..11} )
 inherit python-single-r1
 
 DESCRIPTION="A code-completion engine for Vim."
 HOMEPAGE="https://github.com/ycm-core/YouCompleteMe"
 LICENSE="GPL-3"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~ppc64 ~x86"
 
 SLOT="0"
-SHA="2badfc08d1e6c64403d6a5d5b42e4a3b78b4b43c"
+SHA="88efc6f6035e4c656e8791f3c3a8a4328a1634dc"
 MY_PN="YouCompleteMe"
 SRC_URI="https://github.com/ycm-core/${MY_PN}/archive/${SHA}.tar.gz -> ${P}.tar.gz"
 
-DEPEND="|| ( >=app-editors/vim-7.3 >=app-editors/gvim-7.3 )"
+DEPEND="|| ( >=app-editors/vim-7.3[python] >=app-editors/gvim-7.3[python] )"
 RDEPEND="${DEPEND}
-	|| (
-		sys-devel/clang:11
-		sys-devel/clang:12
-		sys-devel/clang:13 )
+	sys-devel/clang:=
 	$(python_gen_cond_dep 'dev-python/requests-futures[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-python/requests[${PYTHON_USEDEP}]' ${PYTHON_COMPAT[*]})
 	$(python_gen_cond_dep 'dev-util/ycmd[${PYTHON_SINGLE_USEDEP}]' ${PYTHON_COMPAT[*]})"
@@ -29,7 +26,7 @@ RDEPEND="${DEPEND}
 S="${WORKDIR}/${MY_PN}-${SHA}"
 
 src_prepare() {
-	rm -fR third_party/ python/ycm/tests/
+	rm -fR third_party/ python/ycm/tests/ || die
 	eapply -p0 "${FILESDIR}"
 	sed -e "s:@PYTHON_SITE_PACKAGES_DIR@:$(python_get_sitedir):" \
 		-i python/ycm/paths.py || die

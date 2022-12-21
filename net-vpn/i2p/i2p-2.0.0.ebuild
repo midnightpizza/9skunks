@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -7,26 +7,24 @@ inherit java-pkg-2 java-ant-2 systemd
 
 DESCRIPTION="A privacy-centric, anonymous network"
 HOMEPAGE="https://geti2p.net"
-SRC_URI="https://download.i2p2.de/releases/${PV}/i2psource_${PV}.tar.bz2"
+SRC_URI="https://files.i2p-projekt.de/${PV}/i2psource_${PV}.tar.bz2"
 
 LICENSE="Apache-2.0 Artistic BSD CC-BY-2.5 CC-BY-3.0 CC-BY-SA-3.0 EPL-1.0 GPL-2 GPL-3 LGPL-2.1 LGPL-3 MIT public-domain WTFPL-2"
 SLOT="0"
 
 # Until the deps reach other arches
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 ~arm ~x86"
 IUSE="nls test"
 RESTRICT="!test? ( test )"
 
 # dev-java/ant-core is automatically added due to java-ant-2.eclass
-CP_DEPEND="
-	dev-java/java-service-wrapper:0
-	dev-java/tomcat-servlet-api:4.0
-"
+CP_DEPEND="dev-java/java-service-wrapper:0"
 
 DEPEND="${CP_DEPEND}
 	dev-java/eclipse-ecj:*
 	nls? ( >=sys-devel/gettext-0.19 )
 	virtual/jdk:1.8
+	nls? ( >=sys-devel/gettext-0.19 )
 	test? (
 		dev-java/ant-junit4:0
 		dev-java/hamcrest-core:1.3
@@ -114,8 +112,7 @@ src_test() {
 		die "unable to save jars before tests"
 
 	# generate test classpath
-	local classpath
-	classpath="$(java-pkg_getjars --build-only junit-4,hamcrest-core-1.3,hamcrest-library-1.3,mockito)"
+	local classpath="$(java-pkg_getjars --build-only junit-4,hamcrest-core-1.3,hamcrest-library-1.3,mockito)"
 	EANT_TEST_EXTRA_ARGS="-Djavac.classpath=${classpath}" java-pkg-2_src_test
 
 	# redo work undone by testing
