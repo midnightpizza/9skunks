@@ -31,7 +31,7 @@ RDEPEND="${DEPEND}"
 multilib_src_configure() {
 	local emesonargs=(
 		-Ddefault_library=$(usex static-libs both shared)
-		-Dgl_provider=$(usex libglvnd gl glvnd)
+		-Dgl_provider=$(usex libglvnd glvnd gl)
 	)
 	meson_src_configure
 }
