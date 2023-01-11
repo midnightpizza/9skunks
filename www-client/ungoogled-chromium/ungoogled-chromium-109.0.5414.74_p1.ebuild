@@ -20,10 +20,12 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
-PATCHSET="2"
+PATCHSET="1"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
+PATCHSET_NAME_PPC64="chromium_108.0.5359.71-2raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
+	ppc64? ( https://quickbuild.io/~raptor-engineering-public/+archive/ubuntu/chromium/+files/${PATCHSET_NAME_PPC64}.tar.xz )
 "
 
 LICENSE="BSD"
@@ -45,7 +47,7 @@ REQUIRED_USE="
 	!proprietary-codecs? ( !hevc )
 "
 
-UGC_COMMIT_ID="c3831020e4b5b1bb2f2b49fb394dc43aef7ff899"
+UGC_COMMIT_ID="8d48a884504c5184a9197f9128ffae8b7f106032"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -250,6 +252,23 @@ python_check_deps() {
 }
 
 pre_build_checks() {
+	if [[ ${MERGE_TYPE} != binary ]]; then
+		# Commented due to #86
+		# local -x CPP="$(tc-getCXX) -E"
+		# if tc-is-gcc && ! ver_test "$(gcc-version)" -ge 9.2; then
+		# 	[[ -z "${NODIE}" ]] && die "At least gcc 9.2 is required"
+		# fi
+		# if use clang || tc-is-clang; then
+		# 	tc-is-cross-compiler && CPP=${CBUILD}-clang++ || CPP=${CHOST}-clang++
+		# 	CPP+=" -E"
+		# 	if ! ver_test "$(clang-major-version)" -ge 12; then
+		# 		[[ -z "${NODIE}" ]] && die "At least clang 12 is required"
+		# 	fi
+		# fi
+		if [[ ${EBUILD_PHASE_FUNC} == pkg_setup ]] && use js-type-check; then
+			"${BROOT}"/usr/bin/java -version 2>1 > /dev/null || die "Java VM not setup correctly"
+		fi
+	fi
 
 	# Check build requirements, bug #541816 and bug #471810 .
 	CHECKREQS_MEMORY="4G"
@@ -314,15 +333,25 @@ src_prepare() {
 		sed -i '/default_stack_frames/Q' ${WORKDIR}/patches/chromium-*-compiler.patch || die
 	fi
 
-	rm "${WORKDIR}/patches/chromium-108-LabToLCH-include.patch" || die
+	# some web pages are crashing
+	if use system-icu; then
+		sed -i -e \
+			"/\"TextCodecCJKEnabled\",/{n;s/ENABLED/DISABLED/;}" \
+			"third_party/blink/common/features.cc" || die
+	fi
+
+	# disable global media controls, crashes with libstdc++
+	sed -i -e \
+		"/\"GlobalMediaControlsCastStartStop\",/{n;s/ENABLED/DISABLED/;}" \
+		"third_party/blink/common/features.cc" || die
 
 	local PATCHES=(
 		"${WORKDIR}/patches"
 		"${FILESDIR}/chromium-93-InkDropHost-crash.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
-		"${FILESDIR}/chromium-107-system-zlib.patch"
 		"${FILESDIR}/chromium-108-EnumTable-crash.patch"
-		"${FILESDIR}/chromium-108-revert-GlobalMediaControlsCastStartStop.patch"
+		"${FILESDIR}/chromium-109-system-zlib.patch"
+		"${FILESDIR}/chromium-109-system-openh264.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
@@ -515,6 +544,7 @@ src_prepare() {
 		third_party/devtools-frontend/src/front_end/third_party/lodash-isequal
 		third_party/devtools-frontend/src/front_end/third_party/marked
 		third_party/devtools-frontend/src/front_end/third_party/puppeteer
+		third_party/devtools-frontend/src/front_end/third_party/puppeteer/package/lib/esm/third_party/mitt
 		third_party/devtools-frontend/src/front_end/third_party/wasmparser
 		third_party/devtools-frontend/src/test/unittests/front_end/third_party/i18n
 		third_party/devtools-frontend/src/third_party
@@ -632,10 +662,12 @@ src_prepare() {
 		third_party/protobuf/third_party/six
 		third_party/pthreadpool
 		third_party/pyjson5
+		third_party/pyyaml
 		third_party/qcms
 		third_party/rnnoise
 		third_party/s2cellid
 		third_party/securemessage
+		third_party/selenium-atoms
 		third_party/shell-encryption
 		third_party/simplejson
 		third_party/skia
@@ -655,6 +687,7 @@ src_prepare() {
 		third_party/swiftshader/third_party/subzero
 		third_party/swiftshader/third_party/SPIRV-Headers/include/spirv
 		third_party/swiftshader/third_party/SPIRV-Tools
+		third_party/tensorflow_models
 		third_party/tensorflow-text
 		third_party/tflite
 		third_party/tflite/src/third_party/eigen3
@@ -725,7 +758,7 @@ src_prepare() {
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64 ; then
+	if use arm64 || use ppc64 ; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
 	fi
 
