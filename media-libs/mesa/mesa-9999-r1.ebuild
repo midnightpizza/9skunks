@@ -198,8 +198,7 @@ BDEPEND="
 	sys-devel/flex
 	virtual/pkgconfig
 	$(python_gen_any_dep ">=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]")
-	vulkan? ( video_cards_radeonsi? ( dev-util/glslang ) )
-	vulkan-overlay? ( dev-util/glslang )
+	vulkan? ( dev-util/glslang )
 	wayland? ( dev-util/wayland-scanner )
 "
 
@@ -418,6 +417,15 @@ multilib_src_configure() {
 	use vulkan && vulkan_layers+="device-select"
 	use vulkan-overlay && vulkan_layers+=",overlay"
 	emesonargs+=(-Dvulkan-layers=${vulkan_layers#,})
+
+	# In LLVM 16, we've switched to building LLVM with EH/RTTI disabled
+	# to match upstream defaults.  Mesa requires being built the same way.
+	# https://bugs.gentoo.org/883955
+	if [[ ${LLVM_SLOT} -ge 16 ]]; then
+		emesonargs+=(
+			-Dcpp_rtti=false
+		)
+	fi
 
 	emesonargs+=(
 		$(meson_use test build-tests)
