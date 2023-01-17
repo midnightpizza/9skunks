@@ -1,13 +1,13 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-107-patches-02j.tar.xz"
+FIREFOX_PATCHSET="firefox-109-patches-01j.tar.xz"
 
 LLVM_MAX_SLOT=15
 
-PYTHON_COMPAT=( python3_{8..11} )
+PYTHON_COMPAT=( python3_{9..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -99,6 +99,7 @@ BDEPEND="${PYTHON_DEPS}
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
 		X? (
+			sys-devel/gettext
 			x11-base/xorg-server[xvfb]
 			x11-apps/xhost
 		)
@@ -112,7 +113,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.84
+	>=dev-libs/nss-3.85
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -180,18 +181,19 @@ RDEPEND="${COMMON_DEPEND}
 	openh264? ( media-libs/openh264:*[plugin] )
 	pulseaudio? (
 		|| (
-			media-sound/pulseaudio
+			media-libs/libpulse
 			>=media-sound/apulse-0.1.12-r4
 		)
 	)"
 DEPEND="${COMMON_DEPEND}
 	pulseaudio? (
 		|| (
-			media-sound/pulseaudio
+			media-libs/libpulse
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
 	)
 	X? (
+		x11-base/xorg-proto
 		x11-libs/libICE
 		x11-libs/libSM
 	)"
@@ -714,6 +716,7 @@ src_configure() {
 		--disable-install-strip \
 		--disable-parental-controls \
 		--disable-strip \
+		--disable-tests \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
