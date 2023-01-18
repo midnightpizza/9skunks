@@ -1,25 +1,29 @@
-# Copyright 2022 Liguros Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-102esr-patches-04j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-07j.tar.xz"
 
 LLVM_MAX_SLOT=15
-PYTHON_COMPAT=( python3_{7,8,9,10} )
+
+PYTHON_COMPAT=( python3_{9..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
+
 WANT_AUTOCONF="2.1"
+
 VIRTUALX_REQUIRED="pgo"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing pax-utils python-any-r1 toolchain-funcs virtualx xdg
 
-MOZ_SRC_BASE_URI="https://github.com/WaterfoxCo/Waterfox/archive/refs/tags"
+WF_SRC_BASE_URI="https://github.com/WaterfoxCo/Waterfox/archive/refs/tags"
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
 SRC_URI="
-	${MOZ_SRC_BASE_URI}/G5.${PV}.tar.gz -> ${P}.tar.gz
+	${WF_SRC_BASE_URI}/G5.${PV}.tar.gz -> ${P}.tar.gz
 	${PATCH_URIS[@]}
 "
 
@@ -33,10 +37,14 @@ RESTRICT="mirror"
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
 IUSE+=" jack libproxy lto +openh264 pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
-IUSE+=" wayland wifi geckodriver +gmp-autoupdate screencast X"
+IUSE+=" wayland wifi"
+
+# Firefox-only IUSE
+IUSE+=" geckodriver +gmp-autoupdate screencast"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
+	wayland? ( dbus )
 	wifi? ( dbus )
 	screencast? ( wayland )
 "
@@ -51,53 +59,46 @@ BDEPEND="
 	>=virtual/rust-1.51.0
 	|| (
 		(
-			sys-devel/clang:15
-			sys-devel/llvm:15
+			sys-devel/clang
+			sys-devel/llvm
 			clang? (
-				=sys-devel/lld-15*
-				pgo? ( =sys-libs/compiler-rt-sanitizers-15*[profile] )
-			)
-		)
-		(
-			sys-devel/clang:14
-			sys-devel/llvm:14
-			clang? (
-				=sys-devel/lld-14*
-				pgo? ( =sys-libs/compiler-rt-sanitizers-14*[profile] )
-			)
-		)
-		(
-			sys-devel/clang:13
-			sys-devel/llvm:13
-			clang? (
-				=sys-devel/lld-13*
-				pgo? ( =sys-libs/compiler-rt-sanitizers-13*[profile] )
+				sys-devel/lld
+				pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
 			)
 		)
 	)
-	>=dev-lang/nasm-2.15.05
-"
+	!clang? ( virtual/rust )
+	app-arch/unzip
+	app-arch/zip
+	>=dev-util/cbindgen-0.24.3
+	net-libs/nodejs
+	virtual/pkgconfig
+	amd64? ( >=dev-lang/nasm-2.14 )
+	x86? ( >=dev-lang/nasm-2.14 )"
 
 COMMON_DEPEND="
 	screencast? ( media-video/pipewire:= )
 	selinux? ( sec-policy/selinux-mozilla )
-	dev-libs/atk
+	|| (
+		>=app-accessibility/at-spi2-core-2.46.0:2
+		dev-libs/atk
+	)
 	dev-libs/expat
-	>=dev-libs/glib-2.42:2
-	>=dev-libs/libffi-3.0.10:=
-	>=dev-libs/nss-3.79.1
+	dev-libs/glib:2
+	dev-libs/libffi:=
+	>=dev-libs/nss-3.79.2
 	>=dev-libs/nspr-4.34
 	media-libs/alsa-lib
 	media-libs/fontconfig
-	>=media-libs/freetype-2.4.10
-	>=media-libs/mesa-10.2:*
+	media-libs/freetype
+	media-libs/mesa
 	media-video/ffmpeg
-	>=sys-libs/zlib-1.2.3
+	sys-libs/zlib
 	virtual/freedesktop-icon-theme
 	virtual/opengl
-	>=x11-libs/cairo-1.10[X]
+	x11-libs/cairo[X]
 	x11-libs/gdk-pixbuf
-	>=x11-libs/gtk+-3.14.0:3[X]
+	x11-libs/gtk+:3[X]
 	x11-libs/libX11
 	x11-libs/libXcomposite
 	x11-libs/libXdamage
@@ -107,11 +108,11 @@ COMMON_DEPEND="
 	x11-libs/libXtst
 	x11-libs/libxcb:=
 	x11-libs/libxkbcommon[X]
-	>=x11-libs/pango-1.22.0
-	>=x11-libs/pixman-0.36.0
+	x11-libs/pango
+	x11-libs/pixman
 	dbus? (
 		dev-libs/dbus-glib
-		>=sys-apps/dbus-0.60
+		sys-apps/dbus
 	)
 	jack? ( virtual/jack )
 	libproxy? ( net-libs/libproxy )
@@ -126,13 +127,12 @@ COMMON_DEPEND="
 	)
 	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
-	system-libevent? ( >=dev-libs/libevent-2.0:0=[threads] )
+	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	wayland? (
-		>=media-libs/libepoxy-1.5.10-r1
-		>=x11-libs/gtk+-3.11:3[wayland]
+		x11-libs/gtk+:3[wayland]
 		x11-libs/libdrm
 		x11-libs/libxkbcommon[wayland]
 	)
@@ -142,13 +142,17 @@ COMMON_DEPEND="
 			net-misc/networkmanager
 			sys-apps/dbus
 		)
-	)
-"
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
 	openh264? ( media-libs/openh264:*[plugin] )
-"
+	pulseaudio? (
+		|| (
+			media-sound/pulseaudio
+			>=media-sound/apulse-0.1.12-r4
+		)
+	)"
 
 DEPEND="
 	${COMMON_DEPEND}
@@ -161,8 +165,7 @@ DEPEND="
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
-	)
-"
+	)"
 
 S="${WORKDIR}/Waterfox-G5.${PV}"
 MOZ_L10N_SOURCEDIR="${S}/browser/locales/l10n"
@@ -379,7 +382,7 @@ pkg_setup() {
 		if use pgo || use lto || use debug ; then
 			CHECKREQS_DISK_BUILD="13500M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="6400M"
 		fi
 
 		check-reqs_pkg_setup
@@ -443,7 +446,7 @@ pkg_setup() {
 				addpredict "${nvidia_cards}"
 			fi
 
-			render_cards=$(echo -n /dev/dri/renderD12* | sed 's/ /:/g')
+			render_cards=$(echo -n /dev/dri/renderD128* | sed 's/ /:/g')
 			if [[ -n "${render_cards}" ]] ; then
 				addpredict "${render_cards}"
 			fi
@@ -541,7 +544,8 @@ src_prepare() {
 	einfo "Removing pre-built binaries ..."
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
-	# Clearing checksums where we have applied patches
+	# Clearing crate checksums where we have applied patches
+	moz_clear_vendor_checksums bindgen
 	moz_clear_vendor_checksums audioipc
 	moz_clear_vendor_checksums audioipc-client
 	moz_clear_vendor_checksums audioipc-server
@@ -561,6 +565,14 @@ src_prepare() {
 	if [[ -f .mozconfig ]] ; then
 		rm .mozconfig || die
 	fi
+
+	# [WFX-400] Revert to FF useragent.
+	echo 'MOZ_APP_UA_NAME="Firefox"' >> "${S}/browser/confvars.sh"
+
+	# Fix Waterfox Version Display
+	echo "G5.${PV}" > "${S}/browser/config/version_display.txt"
+
+	default
 }
 
 src_configure() {
@@ -572,12 +584,13 @@ src_configure() {
 	einfo "Current RUSTFLAGS:\t\t${RUSTFLAGS:-no value set}"
 
 	local have_switched_compiler=
-	if use clang && ! tc-is-clang ; then
+	if use clang; then
 		# Force clang
 		einfo "Enforcing the use of clang due to USE=clang ..."
-		have_switched_compiler=yes
+		if tc-is-gcc; then
+			have_switched_compiler=yes
+		fi
 		AR=llvm-ar
-		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -602,7 +615,8 @@ src_configure() {
 	# Ensure we use correct toolchain
 	export HOST_CC="$(tc-getBUILD_CC)"
 	export HOST_CXX="$(tc-getBUILD_CXX)"
-	tc-export CC CXX LD AR NM OBJDUMP RANLIB PKG_CONFIG
+	export AS="$(tc-getCC) -c"
+	tc-export CC CXX LD AR AS NM OBJDUMP RANLIB PKG_CONFIG
 
 	# Pass the correct toolchain paths through cbindgen
 	if tc-is-cross-compiler ; then
@@ -629,9 +643,9 @@ src_configure() {
 		--disable-cargo-incremental \
 		--disable-crashreporter \
 		--disable-gpsd \
-		--disable-tests \
+		--disable-install-strip \
 		--disable-parental-controls \
-		--enable-strip \
+		--disable-strip \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
@@ -741,10 +755,8 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	if use X && use wayland ; then
+	if use wayland ; then
 		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
-	elif ! use X && use wayland ; then
-		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
 	else
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
@@ -755,6 +767,7 @@ src_configure() {
 			mozconfig_add_options_ac "forcing ld=lld due to USE=clang and USE=lto" --enable-linker=lld
 
 			mozconfig_add_options_ac '+lto' --enable-lto=cross
+
 		else
 			# ThinLTO is currently broken, see bmo#1644409
 			mozconfig_add_options_ac '+lto' --enable-lto=full
@@ -893,7 +906,7 @@ src_configure() {
 	export MOZ_MAKE_FLAGS="${MAKEOPTS}"
 
 	# Use system's Python environment
-	PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
+	export PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS=mach
 
 	if use system-python-libs; then
 		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="system"
@@ -963,13 +976,7 @@ src_compile() {
 		addpredict /root
 	fi
 
-	if ! use X && use wayland; then
-		local -x GDK_BACKEND=wayland
-	else
-		local -x GDK_BACKEND=x11
-	fi
-
-	export MOZCONFIG="${S}/.mozconfig"
+	local -x GDK_BACKEND=x11
 
 	${virtx_cmd} ./mach build --verbose \
 		|| die
@@ -1080,7 +1087,7 @@ src_install() {
 	local desktop_filename="${PN}.desktop"
 	local exec_command="${PN}"
 	local icon="${PN}"
-	local name="Waterfox G5.${WF_PV}"
+	local name="Waterfox G5.${PV}"
 	local use_wayland="false"
 
 	if use wayland ; then
