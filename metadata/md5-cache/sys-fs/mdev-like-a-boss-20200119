@@ -1,0 +1,13 @@
+BDEPEND=>=dev-vcs/git-1.8.2.1[curl]
+DEFINED_PHASES=install postinst unpack
+DESCRIPTION=Config and scripts mdev-like-a-boss
+EAPI=7
+HOMEPAGE=https://github.com/slashbeast/mdev-like-a-boss
+INHERIT=git-r3
+KEYWORDS=~amd64 ~x86
+LICENSE=BSD
+PROPERTIES=live
+RDEPEND=sys-apps/busybox[mdev(+)]
+SLOT=0
+_eclasses_=git-r3	2347f8fe2d392b2a091191f94be37e6f
+_md5_=5b418793b1818142b79d594a00f05eeb
