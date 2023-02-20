@@ -127,7 +127,7 @@ COMMON_DEPEND="
 	)
 	system-icu? ( >=dev-libs/icu-71.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
-	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads] )
+	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
@@ -142,7 +142,8 @@ COMMON_DEPEND="
 			net-misc/networkmanager
 			sys-apps/dbus
 		)
-	)"
+	)
+"
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
@@ -165,10 +166,11 @@ DEPEND="
 			media-sound/pulseaudio
 			>=media-sound/apulse-0.1.12-r4[sdk]
 		)
-	)"
+	)
+"
 
 S="${WORKDIR}/Waterfox-G5.${PV}"
-MOZ_L10N_SOURCEDIR="${S}/browser/locales/l10n"
+MOZ_L10N_SOURCEDIR="${S}/waterfox/browser/locales"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -183,14 +185,19 @@ llvm_check_deps() {
 	fi
 
 	if use clang ; then
-		if ! has_version -b "=sys-devel/lld-${LLVM_SLOT}*" ; then
-			einfo "=sys-devel/lld-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+		if ! has_version -b "sys-devel/lld:${LLVM_SLOT}" ; then
+			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			return 1
+		fi
+
+		if ! has_version -b "virtual/rust:0/llvm-${LLVM_SLOT}" ; then
+			einfo "virtual/rust:0/llvm-${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
 
 		if use pgo ; then
-			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*" ; then
-				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}* is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
+				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 				return 1
 			fi
 		fi
@@ -203,48 +210,38 @@ llvm_check_deps() {
 WF_LANGS=()
 
 MOZ_LANGS=(
-	af ar ast be bg br ca cak cs cy da de dsb
-	el en-CA en-GB en-US es-AR es-ES et eu
-	fi fr fy-NL ga-IE gd gl he hr hsb hu
-	id is it ja ka kab kk ko lt lv ms nb-NO nl nn-NO
-	pa-IN pl pt-BR pt-PT rm ro ru
-	sk sl sq sr sv-SE th tr uk uz vi zh-CN zh-TW
+	ar cs da de el en-GB en-US es-ES es-MX fr hu
+	id it ja ko lt nl nn-NO pl pt-BR pt-PT ru
+	sv-SE th vi zh-CN zh-TW
 )
 
-MOZ_LANGS+=( ach )
-MOZ_LANGS+=( an )
-MOZ_LANGS+=( az )
-MOZ_LANGS+=( bn )
-MOZ_LANGS+=( bs )
-MOZ_LANGS+=( ca-valencia )
-MOZ_LANGS+=( eo )
-MOZ_LANGS+=( es-CL )
-MOZ_LANGS+=( es-MX )
-MOZ_LANGS+=( fa )
-MOZ_LANGS+=( ff )
-MOZ_LANGS+=( gn )
-MOZ_LANGS+=( gu-IN )
-MOZ_LANGS+=( hi-IN )
-MOZ_LANGS+=( hy-AM )
-MOZ_LANGS+=( ia )
-MOZ_LANGS+=( km )
-MOZ_LANGS+=( kn )
-MOZ_LANGS+=( lij )
-MOZ_LANGS+=( mk )
-MOZ_LANGS+=( mr )
-MOZ_LANGS+=( my )
-MOZ_LANGS+=( ne-NP )
-MOZ_LANGS+=( oc )
-MOZ_LANGS+=( sco )
-MOZ_LANGS+=( si )
-MOZ_LANGS+=( son )
-MOZ_LANGS+=( szl )
-MOZ_LANGS+=( ta )
-MOZ_LANGS+=( te )
-MOZ_LANGS+=( tl )
-MOZ_LANGS+=( trs )
-MOZ_LANGS+=( ur )
-MOZ_LANGS+=( xh )
+mozilla_set_globals() {
+	# https://bugs.gentoo.org/587334
+	local MOZ_TOO_REGIONALIZED_FOR_L10N=(
+		fy-NL ga-IE gu-IN hi-IN hy-AM nb-NO ne-NP nn-NO pa-IN sv-SE
+	)
+
+	local lang xflag
+	for lang in "${MOZ_LANGS[@]}" ; do
+		# en and en_US are handled internally
+		if [[ ${lang} == en ]] || [[ ${lang} == en-US ]] ; then
+			continue
+		fi
+
+		# strip region subtag if $lang is in the list
+		if has ${lang} "${MOZ_TOO_REGIONALIZED_FOR_L10N[@]}" ; then
+			xflag=${lang%%-*}
+		else
+			xflag=${lang}
+		fi
+
+		IUSE+=" l10n_${xflag/[_@]/-}"
+
+		# Store languages that actually can be compiled
+		WF_LANGS+=( ${xflag} )
+	done
+}
+mozilla_set_globals
 
 moz_clear_vendor_checksums() {
 	debug-print-function ${FUNCNAME} "$@"
@@ -382,7 +379,7 @@ pkg_setup() {
 		if use pgo || use lto || use debug ; then
 			CHECKREQS_DISK_BUILD="13500M"
 		else
-			CHECKREQS_DISK_BUILD="6400M"
+			CHECKREQS_DISK_BUILD="6600M"
 		fi
 
 		check-reqs_pkg_setup
@@ -496,19 +493,14 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	if use system-av1 && has_version "<media-libs/dav1d-1.0.0"; then
-		rm -v "${WORKDIR}"/firefox-patches/0033-bgo-835788-dav1d-1.0.0-support.patch || die
-		elog "<media-libs/dav1d-1.0.0 detected, removing 1.0.0 compat patch."
-	elif ! use system-av1; then
-		rm -v "${WORKDIR}"/firefox-patches/0033-bgo-835788-dav1d-1.0.0-support.patch || die
-		elog "-system-av1 USE flag detected, removing 1.0.0 compat patch."
-	fi
-
 	# Remove patches already applied in Waterfox
-	elog "Removing patches already applied in Waterfox..."
-
 	eapply "${WORKDIR}/firefox-patches"
 
+
+	## Apply additional polynomial-C patchest
+	elog "Apply Polynomial-C patchset..."
+	# unfuck URLbar
+	eapply "${FILESDIR}/waterfox-g5.0-URLbar_unfuck.patch"
 	eapply "${FILESDIR}/${PN}-fix_langpack_id.patch"
 	eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
 
@@ -591,6 +583,7 @@ src_configure() {
 			have_switched_compiler=yes
 		fi
 		AR=llvm-ar
+		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -638,14 +631,17 @@ src_configure() {
 	# Initialize MOZCONFIG
 	mozconfig_add_options_ac '' --enable-application=browser
 
+	# Set Gentoo defaults
+	export MOZILLA_OFFICIAL=1
+
 	mozconfig_add_options_ac 'Gentoo default' \
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
 		--disable-crashreporter \
 		--disable-gpsd \
-		--disable-install-strip \
+		--disable-tests \
 		--disable-parental-controls \
-		--disable-strip \
+		--enable-strip \
 		--disable-updater \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
@@ -755,8 +751,10 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	if use wayland ; then
+	if use X && use wayland ; then
 		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
+	elif ! use X && use wayland ; then
+		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
 	else
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
@@ -767,7 +765,6 @@ src_configure() {
 			mozconfig_add_options_ac "forcing ld=lld due to USE=clang and USE=lto" --enable-linker=lld
 
 			mozconfig_add_options_ac '+lto' --enable-lto=cross
-
 		else
 			# ThinLTO is currently broken, see bmo#1644409
 			mozconfig_add_options_ac '+lto' --enable-lto=full
@@ -927,6 +924,7 @@ src_configure() {
 	export MOZ_INCLUDE_SOURCE_INFO=1
 	export MOZ_REQUIRE_SIGNING=
 
+	mozconfig_add_options_ac 'for building locales' --with-l10n-base=${MOZ_L10N_SOURCEDIR}
 	mozconfig_add_options_ac 'Waterfox' --with-app-name=${PN}
 	mozconfig_add_options_ac 'Waterfox' --with-app-basename=Waterfox
 	mozconfig_add_options_ac 'Waterfox' --with-branding=waterfox/browser/branding
@@ -976,10 +974,17 @@ src_compile() {
 		addpredict /root
 	fi
 
-	local -x GDK_BACKEND=x11
+	if ! use X && use wayland; then
+		local -x GDK_BACKEND=wayland
+	else
+		local -x GDK_BACKEND=x11
+	fi
+
+	export MOZCONFIG="${S}/.mozconfig"
 
 	${virtx_cmd} ./mach build --verbose \
 		|| die
+
 }
 
 src_install() {
@@ -1050,6 +1055,12 @@ src_install() {
 		cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set gfx.font_rendering.graphite.enabled pref"
 		sticky_pref("gfx.font_rendering.graphite.enabled", true);
 		EOF
+	fi
+
+	# Install language packs
+	local langpacks=( $(find "${S}"/../${P}-*_build/dist/linux-*/xpi -type f -name '*.xpi') )
+	if [[ -n "${langpacks}" ]] ; then
+		moz_install_xpi "${MOZILLA_FIVE_HOME}/distribution/extensions" "${langpacks[@]}"
 	fi
 
 	# Install geckodriver
