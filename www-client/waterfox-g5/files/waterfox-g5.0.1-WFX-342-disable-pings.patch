@@ -1,0 +1,124 @@
+diff --git a/browser/installer/windows/nsis/defines.nsi.in b/browser/installer/windows/nsis/defines.nsi.in
+index 5a5a1bf19d9ec..1bdf05c094cba 100644
+--- a/browser/installer/windows/nsis/defines.nsi.in
++++ b/browser/installer/windows/nsis/defines.nsi.in
+@@ -82,7 +82,7 @@
+ !define BETA_UPDATE_CHANNEL
+ !endif
+ 
+-!define BaseURLStubPing "http://download-stats.mozilla.org/stub"
++!define BaseURLStubPing ""
+ 
+ # ARCH is used when it is necessary to differentiate the x64 registry keys from
+ # the x86 registry keys (e.g. the uninstall registry key).
+@@ -137,7 +137,7 @@ VIAddVersionKey "ProductVersion"  "${AppVersion}"
+ !define APPROXIMATE_REQUIRED_SPACE_MB "145"
+ 
+ # Constants for parts of the telemetry submission URL
+-!define TELEMETRY_BASE_URL https://incoming.telemetry.mozilla.org/submit
++!define TELEMETRY_BASE_URL
+ !define TELEMETRY_NAMESPACE firefox-installer
+ !define TELEMETRY_INSTALL_PING_VERSION 1
+ !define TELEMETRY_INSTALL_PING_DOCTYPE install
+diff --git a/browser/installer/windows/nsis/installer.nsi b/browser/installer/windows/nsis/installer.nsi
+index ec1e00f585664..3180e662fbc49 100755
+--- a/browser/installer/windows/nsis/installer.nsi
++++ b/browser/installer/windows/nsis/installer.nsi
+@@ -73,7 +73,7 @@ Var PostSigningData
+ ; are a member of the Administrators group.
+ !define NONADMIN_ELEVATE
+ 
+-!define AbortSurveyURL "http://www.kampyle.com/feedback_form/ff-feedback-form.php?site_code=8166124&form_id=12116&url="
++!define AbortSurveyURL "https://survey.waterfox.net/Desktop-Abort?channel=${UpdateChannel}&version=${AppVersion}&step="
+ 
+ ; Other included files may depend upon these includes!
+ ; The following includes are provided by NSIS.
+@@ -878,7 +878,7 @@ Section "-InstallEndCleanup"
+   ; When we're using the GUI, .onGUIEnd sends the ping, but of course that isn't
+   ; invoked when we're running silently.
+   ${If} ${Silent}
+-    Call SendPing
++    ; Call SendPing
+   ${EndIf}
+ SectionEnd
+ 
+@@ -2041,5 +2041,5 @@ FunctionEnd
+ 
+ Function .onGUIEnd
+   ${OnEndCommon}
+-  Call SendPing
++  ; Call SendPing
+ FunctionEnd
+diff --git a/browser/installer/windows/nsis/stub.nsi b/browser/installer/windows/nsis/stub.nsi
+index 15b2d76bbb806..d8ff8140bad20 100644
+--- a/browser/installer/windows/nsis/stub.nsi
++++ b/browser/installer/windows/nsis/stub.nsi
+@@ -509,13 +509,13 @@ Function .onUserAbort
+     ${If} $0 == 1002
+       ; The cancel button was clicked
+       Call LaunchHelpPage
+-      Call SendPing
++      SendMessage $HWNDPARENT "0x408" "120" ""
+     ${Else}
+       ; Either the continue button was clicked or the dialog was dismissed
+       Call StartDownload
+     ${EndIf}
+   ${Else}
+-    Call SendPing
++    SendMessage $HWNDPARENT "0x408" "120" ""
+   ${EndIf}
+ 
+   ; Aborting the abort will allow SendPing to hide the installer window and
+@@ -1417,7 +1417,7 @@ Function WaitForAppLaunch
+     WebBrowser::CancelTimer $TimerHandle
+     StrCpy $ProgressCompleted "${PROGRESS_BAR_APP_LAUNCH_END_STEP}"
+     Call SetProgressBars
+-    Call SendPing
++    SendMessage $HWNDPARENT "0x408" "120" ""
+     Return
+   ${EndIf}
+ 
+@@ -1426,7 +1426,7 @@ Function WaitForAppLaunch
+   ${If} $0 >= ${AppLaunchWaitTimeoutMS}
+     ; We've waited an unreasonably long time, so just exit.
+     WebBrowser::CancelTimer $TimerHandle
+-    Call SendPing
++    SendMessage $HWNDPARENT "0x408" "120" ""
+     Return
+   ${EndIf}
+ 
+@@ -1445,7 +1445,7 @@ Function DisplayDownloadError
+ 
+   MessageBox MB_OKCANCEL|MB_ICONSTOP "$(ERROR_DOWNLOAD_CONT)" IDCANCEL +2 IDOK +1
+   Call LaunchHelpPage
+-  Call SendPing
++  SendMessage $HWNDPARENT "0x408" "120" ""
+ FunctionEnd
+ 
+ Function LaunchHelpPage
+diff --git a/browser/installer/windows/nsis/uninstaller.nsi b/browser/installer/windows/nsis/uninstaller.nsi
+index 66c20f40592b1..621fba840e861 100755
+--- a/browser/installer/windows/nsis/uninstaller.nsi
++++ b/browser/installer/windows/nsis/uninstaller.nsi
+@@ -154,7 +154,7 @@ ShowUnInstDetails nevershow
+ !define URLUninstallSurvey "https://survey.waterfox.net/Desktop-Post-Uninstall?channel=${UpdateChannel}&version=${AppVersion}&osversion="
+ 
+ ; Support for the profile refresh feature
+-!define URLProfileRefreshHelp "https://support.mozilla.org/kb/refresh-firefox-reset-add-ons-and-settings"
++!define URLProfileRefreshHelp "https://www.waterfox.net/support/WINNT/refresh-waterfox-reset-add-ons-and-settings/"
+ 
+ ; Arguments to add to the command line when launching FileMainEXE for profile refresh
+ !define ArgsProfileRefresh "-reset-profile -migration -uninstaller-profile-refresh"
+diff --git a/browser/locales/en-US/installer/custom.properties b/browser/locales/en-US/installer/custom.properties
+index 179d13f7924b3..2b3ae8080eada 100644
+--- a/browser/locales/en-US/installer/custom.properties
++++ b/browser/locales/en-US/installer/custom.properties
+@@ -73,7 +73,7 @@ STATUS_INSTALL_LANG=Installing Language Files (${AB_CD})…
+ STATUS_UNINSTALL_MAIN=Uninstalling $BrandShortName…
+ STATUS_CLEANUP=A Little Housekeeping…
+ 
+-UN_SURVEY_CHECKBOX_LABEL=Tell Mozilla why you uninstalled $BrandShortName
++UN_SURVEY_CHECKBOX_LABEL=Tell Waterfox why you uninstalled
+ 
+ # _DESC strings support approximately 65 characters per line.
+ # One line

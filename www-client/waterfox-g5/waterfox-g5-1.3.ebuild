@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-102esr-patches-07j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-09j.tar.xz"
 
 LLVM_MAX_SLOT=15
 
@@ -13,6 +13,7 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="pgo"
+MOZ_ESR=yes
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing pax-utils python-any-r1 toolchain-funcs virtualx xdg
 
@@ -29,7 +30,7 @@ SRC_URI="
 
 DESCRIPTION="Waterfox Web Browser"
 HOMEPAGE="https://www.waterfox.net"
-KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
+KEYWORDS="amd64 arm64 x86"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
@@ -40,14 +41,12 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
-IUSE+=" geckodriver +gmp-autoupdate screencast"
+IUSE+=" geckodriver +gmp-autoupdate screencast X"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
 	wayland? ( dbus )
-	wifi? ( dbus )
-	screencast? ( wayland )
-"
+	wifi? ( dbus )"
 
 BDEPEND="
 	${PYTHON_DEPS}
@@ -142,8 +141,7 @@ COMMON_DEPEND="
 			net-misc/networkmanager
 			sys-apps/dbus
 		)
-	)
-"
+	)"
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
@@ -485,7 +483,20 @@ pkg_setup() {
 }
 
 src_unpack() {
-	default
+	local _lp_dir="${WORKDIR}/language_packs"
+	local _src_file
+
+	if [[ ! -d "${_lp_dir}" ]] ; then
+		mkdir "${_lp_dir}" || die
+	fi
+
+	for _src_file in ${A} ; do
+		if [[ ${_src_file} == *.xpi ]]; then
+			cp "${DISTDIR}/${_src_file}" "${_lp_dir}" || die "Failed to copy '${_src_file}' to '${_lp_dir}'!"
+		else
+			unpack ${_src_file}
+		fi
+	done
 }
 
 src_prepare() {
@@ -493,6 +504,9 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
+	#rm -v "${WORKDIR}"/firefox-patches/*-rust-opaque-binding-type.patch || die
+	#rm -v "${WORKDIR}"/firefox-patches/*-python-3.11-compatibility.patch || die
+	#rm -v "${WORKDIR}"/firefox-patches/*-ppc64-webrtc-missing-conditions.patch || die
 	# Remove patches already applied in Waterfox
 	eapply "${WORKDIR}/firefox-patches"
 
@@ -583,7 +597,6 @@ src_configure() {
 			have_switched_compiler=yes
 		fi
 		AR=llvm-ar
-		AS=llvm-as
 		CC=${CHOST}-clang
 		CXX=${CHOST}-clang++
 		NM=llvm-nm
@@ -668,7 +681,7 @@ src_configure() {
 	# Set update channel
 	local update_channel=release
 	[[ -n ${MOZ_ESR} ]] && update_channel=esr
-	mozconfig_add_options_ac '' --enable-update-channel=${update_channel}
+	mozconfig_add_options_ac '' --update-channel=${update_channel}
 
 	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
@@ -751,10 +764,8 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	if use X && use wayland ; then
+	if use wayland ; then
 		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
-	elif ! use X && use wayland ; then
-		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland
 	else
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
@@ -765,6 +776,7 @@ src_configure() {
 			mozconfig_add_options_ac "forcing ld=lld due to USE=clang and USE=lto" --enable-linker=lld
 
 			mozconfig_add_options_ac '+lto' --enable-lto=cross
+
 		else
 			# ThinLTO is currently broken, see bmo#1644409
 			mozconfig_add_options_ac '+lto' --enable-lto=full

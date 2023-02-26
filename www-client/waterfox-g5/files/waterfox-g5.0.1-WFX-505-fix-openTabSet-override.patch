@@ -1,0 +1,29 @@
+From fdf660aec809f39433ecd21eeca299d647ce53ce Mon Sep 17 00:00:00 2001
+From: adamp01 <47503375+adamp01@users.noreply.github.com>
+Date: Wed, 5 Oct 2022 13:32:19 +0100
+Subject: [PATCH] [WFX-505] Fix openTabSet override. (#2830)
+
+---
+ waterfox/browser/components/privatetab/PrivateTab.jsm | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/waterfox/browser/components/privatetab/PrivateTab.jsm b/waterfox/browser/components/privatetab/PrivateTab.jsm
+index d233247664bd..408cf631b0d8 100644
+--- a/waterfox/browser/components/privatetab/PrivateTab.jsm
++++ b/waterfox/browser/components/privatetab/PrivateTab.jsm
+@@ -268,12 +268,14 @@ const PrivateTab = {
+   },
+ 
+   overridePlacesUIUtils() {
+-    /* globals BrowserWindowTracker */
+     // Unused vars required for eval to execute
+     // eslint-disable-next-line no-unused-vars
+     const { PlacesUtils } = ChromeUtils.import(
+       "resource://gre/modules/PlacesUtils.jsm"
+     );
++    const { BrowserWindowTracker } = ChromeUtils.import(
++      "resource:///modules/BrowserWindowTracker.jsm"
++    );
+     // eslint-disable-next-line no-unused-vars
+     const { PrivateBrowsingUtils } = ChromeUtils.import(
+       "resource://gre/modules/PrivateBrowsingUtils.jsm"
