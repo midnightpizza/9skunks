@@ -1,19 +1,19 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# @ECLASS: librewolf-r0.eclass
+# @ECLASS: librewolf-r3.eclass
 # @MAINTAINER:
-# aidanharris
+# emmata
 # @AUTHOR:
-# aidanharris
+# emmata
 # @BLURB:
 # @DESCRIPTION: librewolf customisation/configuration
 
-if [[ ! ${_LIBREWOLF_R1} ]]; then
+if [[ ! ${_LIBREWOLF_R3} ]]; then
 
 inherit git-r3
 
-librewolf-r1_src_configure() {
+librewolf-r3_src_configure() {
 local _PN="LibreWolf"
 [[ "${PN}" == "librewolf-nightly" ]] && _PN="${_PN}-Nightly"
 # stolen from the AUR PKGBUILD with irrelevant options removed (here irrelvant means the feature is controlled via a useflag so there's no need to unconditionally enable/disable it here. Only the common options we want to always apply are listed here)
@@ -51,19 +51,20 @@ END
   # Remove some pre-installed addons that might be questionable
   eapply "${WORKDIR}/patches/remove_addons.patch"
 
+  # Disable (some) megabar functionality
+  # Adapted from https://github.com/WesleyBranton/userChrome.css-Customizations
+  # eapply "${WORKDIR}/patches/megabar.patch"
+
   # Disabling Pocket
   sed -i "s/'pocket'/#'pocket'/g" "${S}"/browser/components/moz.build
 
   eapply "${WORKDIR}/patches/context-menu.patch"
 
   # Remove mozilla vpn ads
-  #eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
+  eapply "${WORKDIR}/patches/mozilla-vpn-ad.patch"
 
-  # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)   
+  # Prevent creation of '.mozilla' (Will need to be symlinked for some browser plugins)
   eapply "${WORKDIR}/patches/mozilla_dirs.patch"
-
-  eapply "${WORKDIR}/patches/allow-ubo-private-mode.patch"
-
 
   # this one only to remove an annoying error message:
   sed -i 's#SaveToPocket.init();#// SaveToPocket.init();#g' "${S}"/browser/components/BrowserGlue.jsm
@@ -96,35 +97,30 @@ END
   fi
 }
 
-librewolf-r1_src_unpack() {
+librewolf-r3_src_unpack() {
 	if [[ "$PN" == "librewolf-nightly" ]]
 	then
 		mercurial_src_unpack
 	fi
-	local git_repos=(
-		"https://gitlab.com/librewolf-community/browser/common.git"
-		"https://gitlab.com/librewolf-community/settings.git"
-	)
-	pushd "${WORKDIR}"
-	for repo in ${git_repos[@]}
-	do
-		local _repo="${repo##*/}"
-		_repo="${_repo%.git}"
-		git-r3_fetch "$repo"
-		git-r3_checkout "$repo" "${WORKDIR}/${_repo}"
-	done
-	popd
+
+	git-r3_fetch "https://gitlab.com/librewolf-community/browser/common.git" \
+				 "v${LIBREWOLF_PV}"
+	git-r3_checkout "https://gitlab.com/librewolf-community/browser/common.git" \
+					"${WORKDIR}/common"
+
+	git-r3_fetch "https://gitlab.com/librewolf-community/settings.git"
+	git-r3_checkout "https://gitlab.com/librewolf-community/settings.git" \
+					"${WORKDIR}/settings"
 
 	# Grab patches
 	# pre-89 patches can be grabed from the 'linux' librewolf repository
-	# after 89 patches were moved to 'common' 
-        #"mozilla-vpn-ad.patch"
+	# after 89 patches were moved to 'common'
 	patch_list=(
 		"remove_addons.patch"
-		"context-menu.patch"
 		"megabar.patch"
+		"context-menu.patch"
+		"mozilla-vpn-ad.patch"
 		"mozilla_dirs.patch"
-		"allow-ubo-private-mode.patch"
 	)
 
 	if ver_test -lt "91.0"; then
@@ -136,17 +132,18 @@ librewolf-r1_src_unpack() {
 		mkdir "${WORKDIR}/patches"
 
 		for patch in ${patch_list[@]}; do
-			cp "${WORKDIR}/linux/${patch}" "${WORKDIR}/patches"
+			cp -r "${WORKDIR}/linux/${patch}" "${WORKDIR}/patches"
 		done
 	else
 		mkdir "${WORKDIR}/patches"
 		for patch in ${patch_list[@]}; do
 			cp "${WORKDIR}/common/patches/${patch}" "${WORKDIR}/patches"
+			#cp "${WORKDIR}/common/patches/removed-patches/${patch}" "${WORKDIR}/patches"
 		done
 	fi
 }
 
-librewolf-r1_src_install() {
+librewolf-r3_src_install() {
   local vendorjs="$ED/usr/$(get_libdir)/${PN}/browser/defaults/preferences/vendor.js"
 
   cat >> "$vendorjs" <<END
@@ -174,5 +171,5 @@ app.partner.librewolf=${PN}
 END
 }
 
-_LIBREWOLF_R1=1
+_LIBREWOLF_R3=1
 fi

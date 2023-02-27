@@ -43,7 +43,7 @@ MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs \
-	virtualx xdg librewolf-r2
+	virtualx xdg librewolf-r3
 
 MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
 
@@ -52,7 +52,7 @@ if [[ ${PV} == *_rc* ]] ; then
 fi
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,polynomial-c,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
 SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
@@ -66,7 +66,7 @@ KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
 SLOT="rapid"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
-IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
+IUSE="+clang cpu_flags_arm_neon dbus debug eme-free +hardened hwaccel"
 IUSE+=" jack libproxy lto +openh264 pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
 IUSE+=" wayland wifi +X"
@@ -83,23 +83,23 @@ REQUIRED_USE="|| ( X wayland )
 REQUIRED_USE+=" screencast? ( wayland )"
 
 BDEPEND="${PYTHON_DEPS}
-	|| (
-		(
-			sys-devel/clang
-			sys-devel/llvm
-			clang? (
-				sys-devel/lld
-				virtual/rust
-				pgo? ( =sys-libs/compiler-rt-sanitizers*[profile] )
-			)
+	sys-devel/clang:15
+	sys-devel/llvm:15
+	clang? (
+		|| (
+			sys-devel/lld:15
+			sys-devel/mold
 		)
+		virtual/rust:0/llvm-15
+		pgo? ( sys-libs/compiler-rt-sanitizers )
 	)
+	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( virtual/rust )
+	!clang? ( >=virtual/rust-1.65 )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
