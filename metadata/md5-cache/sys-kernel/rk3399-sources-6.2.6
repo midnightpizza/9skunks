@@ -1,0 +1,14 @@
+DEFINED_PHASES=compile install postinst postrm preinst prepare setup test unpack
+DESCRIPTION=Full sources including the Gentoo patchset for the 6.2 kernel tree
+EAPI=8
+HOMEPAGE=https://dev.gentoo.org/~mpagano/genpatches
+INHERIT=kernel-2
+IUSE=experimental symlink build
+KEYWORDS=~arm64
+LICENSE=GPL-2
+RDEPEND=!build? ( app-arch/cpio dev-lang/perl sys-devel/bc sys-devel/bison sys-devel/flex sys-devel/make >=sys-libs/ncurses-5.2 virtual/libelf virtual/pkgconfig )
+RESTRICT=MIRROR binchecks strip
+SLOT=6.2.6
+SRC_URI=https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.2.tar.xz https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.2-8.base.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.2-8.base.tar.xz https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.2-8.extras.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.2-8.extras.tar.xz experimental? ( https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.2-8.experimental.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.2-8.experimental.tar.xz ) https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/config -> kernel-aarch64-manjaro.config-6.2.6 https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/1003-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch -> 1003-panfrost-Silence-Panfrost-gem-shrinker-loggin-6.2.6.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch -> 1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-6.2.6.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr.patch -> 1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-6.2.6.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/2001-staging-add-rtl8723cs-driver.patch -> 2001-staging-add-rtl8723cs-driver-6.2.6.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/2003-arm64-dts-rockchip-Work-around-daughterboard-issues.patch -> 2003-arm64-dts-rockchip-Work-around-daughterboard-issues-6.2.6.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bb3cc2ade8caab2e732475bac63d700e523145b4/3010-drm-rockchip-dw_hdmi-Add-4k-30-support.patch -> 3010-drm-rockchip-dw_hdmi-Add-4k-30-support-6.2.6.patch
+_eclasses_=estack	055c42df72f76a4f45ec92b35e83cd56	multiprocessing	b4e253ab22cef7b1085e9b67c7a3b730	toolchain-funcs	6001248ef162a5fa2a21ce132a212f6b	multilib	5ca4e49abed8e3a2f7b56920eadee157	kernel-2	1e55bee3f3081b16ebc1ca0cf1264f6c
+_md5_=8cd9c8bfb8b8db77016a124ba5aa0fcf
