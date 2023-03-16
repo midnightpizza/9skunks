@@ -22,20 +22,14 @@ DESCRIPTION="Modifications to Chromium for removing Google integration and enhan
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PATCHSET="2"
 PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
-PATCHSET_URI_PPC64="https://quickbuild.io/~raptor-engineering-public"
-PATCHSET_NAME_PPC64="chromium_109.0.5414.74-2raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
-	ppc64? (
-		${PATCHSET_URI_PPC64}/+archive/ubuntu/chromium/+files/${PATCHSET_NAME_PPC64}.tar.xz
-		https://dev.gentoo.org/~sultan/distfiles/www-client/chromium/chromium-ppc64le-gentoo-patches-1.tar.xz
-	)
 "
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 arm64 ~x86"
-IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio qt5 screencast selinux suid +system-av1 +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi vdpau wayland widevine"
+KEYWORDS="amd64 ~arm64 ~x86"
+IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio qt5 screencast selinux suid +system-av1 +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -51,7 +45,7 @@ REQUIRED_USE="
 	!proprietary-codecs? ( !hevc )
 "
 
-#UGC_COMMIT_ID="b6129c6a740984e5b6b8ddcefb3710c097f86b09"
+#UGC_COMMIT_ID="ce036275d9d21a8408ef48ee9839b3c21b8448ca"
 # UGC_PR_COMMITS=(
 # 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
 # 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
@@ -137,7 +131,7 @@ COMMON_SNAPSHOT_DEPEND="
 		)
 		x11-libs/libxkbcommon:=
 		wayland? (
-			dev-libs/wayland:=
+			dev-libs/libffi:=
 			screencast? ( media-video/pipewire:= )
 		)
 	)
@@ -161,7 +155,7 @@ COMMON_DEPEND="
 	sys-libs/zlib:=[minizip]
 	!headless? (
 		X? ( ${COMMON_X_DEPEND} )
-		app-accessibility/at-spi2-core
+		>=app-accessibility/at-spi2-core-2.46.0:2
 		media-libs/mesa:=[X?,wayland?]
 		cups? ( >=net-print/cups-1.3.11:= )
 		virtual/udev
@@ -181,7 +175,6 @@ RDEPEND="${COMMON_DEPEND}
 			gui-libs/gtk:4[X?,wayland?]
 		)
 		qt5? ( dev-qt/qtgui:5[X?,wayland?] )
-		x11-misc/xdg-utils
 	)
 	virtual/ttf-fonts
 	selinux? ( sec-policy/selinux-chromium )
@@ -345,21 +338,21 @@ src_prepare() {
 		"/\"GlobalMediaControlsCastStartStop\",/{n;s/ENABLED/DISABLED/;}" \
 		"chrome/browser/media/router/media_router_feature.cc" || die
 
+		# "${WORKDIR}/patches"
 	local PATCHES=(
-		"${WORKDIR}/patches"
-		"${FILESDIR}/chromium-93-InkDropHost-crash.patch"
+		"${WORKDIR}/patches/chromium-110-compiler.patch"
+		"${WORKDIR}/patches/chromium-103-VirtualCursor-std-layout.patch"
 		"${FILESDIR}/chromium-98-gtk4-build.patch"
 		"${FILESDIR}/chromium-108-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-109-system-zlib.patch"
 		"${FILESDIR}/chromium-109-system-openh264.patch"
-		"${FILESDIR}/chromium-109-system-icu.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
-		"${FILESDIR}/chromium-shim_headers.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
 		"${FILESDIR}/perfetto-system-zlib.patch"
 		"${FILESDIR}/gtk-fix-prefers-color-scheme-query.diff"
 		"${FILESDIR}/restore-x86-r2.patch"
 	)
+
 
 	default
 
@@ -368,6 +361,7 @@ src_prepare() {
 
 	# adjust python interpreter version
 	sed -i -e "s|\(^script_executable = \).*|\1\"${EPYTHON}\"|g" .gn || die
+	sed -i -e "s|vpython3|${EPYTHON}|g" testing/xvfb.py || die
 
 	cp "${FILESDIR}/jsoncpp.gn" build/linux/unbundle || die
 	cp "${FILESDIR}/libusb.gn" build/linux/unbundle || die
@@ -394,11 +388,9 @@ src_prepare() {
 		eapply "${FILESDIR}/reverse-roll-src-third_party-ffmpeg_duration.patch"
 	fi
 
-	use system-openjpeg && eapply "${FILESDIR}/chromium-system-openjpeg-r3.patch"
+	use system-openjpeg && eapply "${FILESDIR}/chromium-system-openjpeg-r4.patch"
 
 	use vaapi && eapply "${FILESDIR}/vaapi-av1.diff"
-
-	use vdpau && eapply "${FILESDIR}/vdpau-support-r4.patch"
 
 	#* Applying UGC PRs here
 	if [ ! -z "${UGC_PR_COMMITS[*]}" ]; then
@@ -489,11 +481,10 @@ src_prepare() {
 		net/third_party/uri_template
 		third_party/abseil-cpp
 		third_party/angle
-		third_party/angle/src/common/third_party/base
-		third_party/angle/src/common/third_party/smhasher
 		third_party/angle/src/common/third_party/xxhash
+		third_party/angle/src/third_party/ceval
 		third_party/angle/src/third_party/libXNVCtrl
-		third_party/angle/src/third_party/trace_event
+		third_party/angle/src/third_party/systeminfo
 		third_party/angle/src/third_party/volk
 		third_party/apple_apsl
 		third_party/axe-core
@@ -543,11 +534,12 @@ src_prepare() {
 		third_party/devtools-frontend/src/front_end/third_party/i18n
 		third_party/devtools-frontend/src/front_end/third_party/intl-messageformat
 		third_party/devtools-frontend/src/front_end/third_party/lighthouse
-		third_party/devtools-frontend/src/front_end/third_party/lit-html
+		third_party/devtools-frontend/src/front_end/third_party/lit
 		third_party/devtools-frontend/src/front_end/third_party/lodash-isequal
 		third_party/devtools-frontend/src/front_end/third_party/marked
 		third_party/devtools-frontend/src/front_end/third_party/puppeteer
 		third_party/devtools-frontend/src/front_end/third_party/puppeteer/package/lib/esm/third_party/mitt
+		third_party/devtools-frontend/src/front_end/third_party/vscode.web-custom-data
 		third_party/devtools-frontend/src/front_end/third_party/wasmparser
 		third_party/devtools-frontend/src/test/unittests/front_end/third_party/i18n
 		third_party/devtools-frontend/src/third_party
@@ -594,7 +586,6 @@ src_prepare() {
 
 		third_party/libgav1
 		third_party/libjingle
-		third_party/libjxl
 		third_party/libphonenumber
 		third_party/libsecret
 		third_party/libsrtp
@@ -626,6 +617,7 @@ src_prepare() {
 		third_party/maldoca/src/third_party/tensorflow_protos
 		third_party/maldoca/src/third_party/zlibwrapper
 		third_party/markupsafe
+		third_party/material_color_utilities
 		third_party/mesa
 		third_party/metrics_proto
 		third_party/minigbm
@@ -651,7 +643,6 @@ src_prepare() {
 		third_party/pdfium/third_party/libopenjpeg
 	)
 	keeplibs+=(
-		third_party/pdfium/third_party/libpng16
 		third_party/pdfium/third_party/libtiff
 		third_party/pdfium/third_party/skia_shared
 		third_party/perfetto
@@ -662,7 +653,6 @@ src_prepare() {
 		third_party/private-join-and-compute
 		third_party/private_membership
 		third_party/protobuf
-		third_party/protobuf/third_party/six
 		third_party/pthreadpool
 		third_party/pyjson5
 		third_party/pyyaml
@@ -700,6 +690,7 @@ src_prepare() {
 		third_party/ukey2
 		third_party/utf
 		third_party/vulkan
+		third_party/wayland
 		third_party/web-animations-js
 		third_party/webdriver
 		third_party/webgpu-cts
@@ -723,6 +714,7 @@ src_prepare() {
 		v8/src/third_party/siphash
 		v8/src/third_party/valgrind
 		v8/src/third_party/utf8-decoder
+		v8/third_party/glibc
 		v8/third_party/inspector_protocol
 		v8/third_party/v8
 
@@ -753,16 +745,13 @@ src_prepare() {
 	if ! use system-harfbuzz; then
 		keeplibs+=( third_party/harfbuzz-ng )
 	fi
-	if use wayland && ! use headless ; then
-		keeplibs+=( third_party/wayland )
-	fi
 	if ! use system-openh264; then
 		keeplibs+=( third_party/openh264 )
 	fi
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64 || use ppc64 ; then
+	if use arm64; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
 	fi
 
@@ -851,6 +840,15 @@ src_configure() {
 	else
 		myconf_gn+=" host_toolchain=\"//build/toolchain/linux/unbundle:default\""
 	fi
+
+	# Create dummy pkg-config file for libsystemd, only dependency of installer
+	mkdir "${T}/libsystemd" || die
+	cat <<- EOF > "${T}/libsystemd/libsystemd.pc"
+		Name:
+		Description:
+		Version:
+	EOF
+	local -x PKG_CONFIG_PATH="${PKG_CONFIG_PATH:+"${PKG_CONFIG_PATH}:"}${T}/libsystemd"
 
 	# GN needs explicit config for Debug/Release as opposed to inferring it from build directory.
 	myconf_gn+=" is_debug=false"
@@ -1063,13 +1061,15 @@ src_configure() {
 	# Disable fatal linker warnings, bug 506268.
 	myconf_gn+=" fatal_linker_warnings=false"
 
-	# Disable external code space for V8 for ppc64. It is disabled for ppc64
 	# by default, but cross-compiling on amd64 enables it again.
 	if tc-is-cross-compiler; then
 		if ! use amd64 && ! use arm64; then
 			myconf_gn+=" v8_enable_external_code_space=false"
 		fi
 	fi
+
+	# Only enabled for clang, but gcc has endian macros too
+	myconf_gn+=" v8_use_libm_trig_functions=true"
 
 	# Bug 491582.
 	export TMPDIR="${WORKDIR}/temp"
@@ -1138,10 +1138,7 @@ src_configure() {
 		myconf_gn+=" ozone_platform_x11=$(usex X true false)"
 		myconf_gn+=" ozone_platform_wayland=$(usex wayland true false)"
 		myconf_gn+=" ozone_platform=$(usex wayland \"wayland\" \"x11\")"
-		if use wayland; then
-			myconf_gn+=" use_system_libwayland=true"
-			myconf_gn+=" use_system_wayland_scanner=true"
-		fi
+		use wayland && myconf_gn+=" use_system_libffi=true"
 	fi
 
 	# Results in undefined references in chrome linking, may require CFI to work
@@ -1159,6 +1156,8 @@ src_configure() {
 			tools/generate_shim_headers/generate_shim_headers.py || die
 		# Don't add symbols to build
 		myconf_gn+=" symbol_level=0"
+	else
+		myconf_gn+=" devtools_skip_typecheck=false"
 	fi
 
 	# user CXXFLAGS might overwrite -march=armv8-a+crc+crypto, bug #851639
@@ -1311,6 +1310,9 @@ src_install() {
 		local files=(out/Release/*.so out/Release/*.so.[0-9])
 		[[ ${#files[@]} -gt 0 ]] && doins "${files[@]}"
 	)
+
+	# Install bundled xdg-utils, avoids installing X11 libraries with USE="-X wayland"
+	doins out/Release/xdg-{settings,mime}
 
 	if ! use system-icu && ! use headless; then
 		doins out/Release/icudtl.dat

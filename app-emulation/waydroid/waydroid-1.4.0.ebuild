@@ -36,7 +36,5 @@ src_install() {
 	insinto "/usr/share/applications"
 	doins "data/Waydroid.desktop"
 	insinto "/etc/gbinder.d"
-	doins "gbinder/anbox.conf"
 	insinto "/usr/lib/systemd/system"
-	doins "debian/waydroid-container.service"
 }
