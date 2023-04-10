@@ -4,7 +4,7 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="11"
+K_GENPATCHES_VER="12"
 K_SECURITY_UNSUPPORTED="1"
 K_NOSETEXTRAVERSION="1"
 XANMOD_VERSION="1"
@@ -30,9 +30,9 @@ UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 
 # excluding CPU optimizations patches, since it's included in XanMod too
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
-UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2910_bfp-mark-get-entry-ip-as--maybe-unused.patch"
+#UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2910_bfp-mark-get-entry-ip-as--maybe-unused.patch"
 
-UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *cifs-fix-minor-compile-warning.patch"
+#UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *cifs-fix-minor-compile-warning.patch"
 
 pkg_postinst() {
 	elog "The XanMod team strongly suggests the use of updated CPU microcodes with its"
