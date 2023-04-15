@@ -21,15 +21,21 @@ inherit check-reqs chromium-2 desktop flag-o-matic ninja-utils pax-utils python-
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PATCHSET="2"
-PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
+PATCHSET_NAME="chromium-111-patchset-${PATCHSET}"
+PATCHSET_URI_PPC64="https://quickbuild.io/~raptor-engineering-public"
+PATCHSET_NAME_PPC64="chromium_111.0.5563.64-1raptor0~deb11u1.debian"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
+	ppc64? (
+		${PATCHSET_URI_PPC64}/+archive/ubuntu/chromium/+files/${PATCHSET_NAME_PPC64}.tar.xz
+		https://dev.gentoo.org/~sultan/distfiles/www-client/chromium/chromium-ppc64le-gentoo-patches-1.tar.xz
+	)
 "
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~x86"
-IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc js-type-check kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio qt5 screencast selinux suid +system-av1 +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi wayland widevine"
+KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
+IUSE="+X cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc kerberos +official optimize-thinlto optimize-webui pgo pic +proprietary-codecs pulseaudio qt5 screencast selinux suid +system-av1 +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png +system-re2 +system-snappy thinlto vaapi wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -45,10 +51,9 @@ REQUIRED_USE="
 	!proprietary-codecs? ( !hevc )
 "
 
-#UGC_COMMIT_ID="ce036275d9d21a8408ef48ee9839b3c21b8448ca"
+# UGC_COMMIT_ID="d3fd8c4c9e72532bd4a15e53e9b71618d3a98834"
 # UGC_PR_COMMITS=(
-# 	f2fbbb954431dcb4f1a62779053692fa2b5c7971
-# 	08aaf6a0c81eb14b5eee59dd92281cd05043f3a7
+# 	65351b70c750167efb566047bbcb1150e00749c3
 # )
 
 UGC_PV="${PV/_p/-}"
@@ -207,7 +212,6 @@ BDEPEND="
 	>=sys-devel/bison-2.4.3
 	sys-devel/flex
 	virtual/pkgconfig
-	js-type-check? ( virtual/jre )
 	clang? ( sys-devel/clang sys-devel/lld )
 	cfi? ( sys-devel/clang-runtime[sanitize] )
 "
@@ -252,24 +256,6 @@ python_check_deps() {
 }
 
 pre_build_checks() {
-	if [[ ${MERGE_TYPE} != binary ]]; then
-		# Commented due to #86
-		# local -x CPP="$(tc-getCXX) -E"
-		# if tc-is-gcc && ! ver_test "$(gcc-version)" -ge 9.2; then
-		# 	[[ -z "${NODIE}" ]] && die "At least gcc 9.2 is required"
-		# fi
-		# if use clang || tc-is-clang; then
-		# 	tc-is-cross-compiler && CPP=${CBUILD}-clang++ || CPP=${CHOST}-clang++
-		# 	CPP+=" -E"
-		# 	if ! ver_test "$(clang-major-version)" -ge 12; then
-		# 		[[ -z "${NODIE}" ]] && die "At least clang 12 is required"
-		# 	fi
-		# fi
-		if [[ ${EBUILD_PHASE_FUNC} == pkg_setup ]] && use js-type-check; then
-			"${BROOT}"/usr/bin/java -version 2>1 > /dev/null || die "Java VM not setup correctly"
-		fi
-	fi
-
 	# Check build requirements, bug #541816 and bug #471810 .
 	CHECKREQS_MEMORY="4G"
 	CHECKREQS_DISK_BUILD="12G"
@@ -346,6 +332,7 @@ src_prepare() {
 		"${FILESDIR}/chromium-108-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-109-system-zlib.patch"
 		"${FILESDIR}/chromium-109-system-openh264.patch"
+		"${FILESDIR}/chromium-111-InkDropHost-crash.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
 		"${FILESDIR}/chromium-cross-compile.patch"
 		"${FILESDIR}/perfetto-system-zlib.patch"
@@ -353,6 +340,15 @@ src_prepare() {
 		"${FILESDIR}/restore-x86-r2.patch"
 	)
 
+	if use ppc64 ; then
+		local p
+		for p in $(grep -v "^#" "${WORKDIR}"/debian/patches/series | grep "^ppc64le" || die); do
+			if [[ ! $p =~ "fix-breakpad-compile.patch" ]]; then
+				eapply "${WORKDIR}/debian/patches/${p}"
+			fi
+		done
+		PATCHES+=( "${WORKDIR}/ppc64le" )
+	fi
 
 	default
 
@@ -417,11 +413,6 @@ src_prepare() {
 		sed -i "\!${p}.patch!d" "${ugc_patch_series}" || die
 	done
 
-	if use js-type-check; then
-		ewarn "Keeping binary compiler.jar in source tree for js-type-check"
-		sed -i '\!third_party/closure_compiler/compiler/compiler.jar!d' "${ugc_pruning_list}" || die
-	fi
-
 	if use pgo || [ ! -z "$UGC_COMMIT_ID" ]; then
 		ewarn "Keeping binary profile data in source tree for pgo"
 		sed -i '\!chrome/build/pgo_profiles/.*!d' "${ugc_pruning_list}" || die
@@ -457,7 +448,7 @@ src_prepare() {
 	eend $? || die
 
 	ebegin "Applying domain substitution"
-	"${UGC_WD}/utils/domain_substitution.py" -q apply -r "${UGC_WD}/domain_regex.list" -f "${UGC_WD}/domain_substitution.list" -c build/domsubcache.tar.gz .
+	"${UGC_WD}/utils/domain_substitution.py" -q apply -r "${UGC_WD}/domain_regex.list" -f "${UGC_WD}/domain_substitution.list" .
 	eend $? || die
 
 	local keeplibs=(
@@ -751,17 +742,28 @@ src_prepare() {
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64; then
+	if use arm64 || use ppc64 ; then
 		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
+	fi
+	# we need to generate ppc64 stuff because upstream does not ship it yet
+	# it has to be done before unbundling.
+	if use ppc64; then
+		pushd third_party/libvpx >/dev/null || die
+		mkdir -p source/config/linux/ppc64 || die
+		# requires git and clang, bug #832803
+		sed -i -e "s|^update_readme||g; s|clang-format|${EPREFIX}/bin/true|g" \
+			generate_gni.sh || die
+		./generate_gni.sh || die
+		popd >/dev/null || die
+
+		pushd third_party/ffmpeg >/dev/null || die
+		cp libavcodec/ppc/h264dsp.c libavcodec/ppc/h264dsp_ppc.c || die
+		cp libavcodec/ppc/h264qpel.c libavcodec/ppc/h264qpel_ppc.c || die
+		popd >/dev/null || die
 	fi
 
 	# Remove most bundled libraries. Some are still needed.
 	build/linux/unbundle/remove_bundled_libraries.py "${keeplibs[@]}" --do-remove || die
-
-	if use js-type-check; then
-		mkdir -p third_party/jdk/current/bin/ || die
-		ln -s "${EPREFIX}"/usr/bin/java third_party/jdk/current/bin/java || die
-	fi
 
 	# bundled eu-strip is for amd64 only and we don't want to pre-stripped binaries
 	mkdir -p buildtools/third_party/eu-strip/bin || die
@@ -915,7 +917,6 @@ src_configure() {
 	myconf_gn+=" use_gnome_keyring=false"
 
 	# Optional dependencies.
-	myconf_gn+=" enable_js_type_check=$(usex js-type-check true false)"
 	myconf_gn+=" enable_hangout_services_extension=$(usex hangouts true false)"
 	myconf_gn+=" enable_widevine=$(usex widevine true false)"
 
@@ -1035,6 +1036,9 @@ src_configure() {
 	elif [[ $myarch = arm ]] ; then
 		myconf_gn+=" target_cpu=\"arm\""
 		ffmpeg_target_arch=$(usex cpu_flags_arm_neon arm-neon arm)
+	elif [[ $myarch = ppc64 ]] ; then
+		myconf_gn+=" target_cpu=\"ppc64\""
+		ffmpeg_target_arch=ppc64
 	else
 		die "Failed to determine target arch, got '$myarch'."
 	fi
@@ -1061,6 +1065,7 @@ src_configure() {
 	# Disable fatal linker warnings, bug 506268.
 	myconf_gn+=" fatal_linker_warnings=false"
 
+	# Disable external code space for V8 for ppc64. It is disabled for ppc64
 	# by default, but cross-compiling on amd64 enables it again.
 	if tc-is-cross-compiler; then
 		if ! use amd64 && ! use arm64; then
