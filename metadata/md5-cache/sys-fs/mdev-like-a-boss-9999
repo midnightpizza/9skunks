@@ -9,5 +9,5 @@ LICENSE=BSD
 PROPERTIES=live
 RDEPEND=mdev-bb? ( sys-fs/mdev-bb )
 SLOT=0
-_eclasses_=git-r3	2347f8fe2d392b2a091191f94be37e6f
+_eclasses_=git-r3	27e13c09a4c7e4c78ac812f74727e676
 _md5_=a068ae315d66d29111a719a159f75cf2
