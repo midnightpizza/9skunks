@@ -4,11 +4,11 @@
 EAPI=7
 
 CMAKE_ECLASS="cmake"
-PYTHON_COMPAT=( python3_{8,9} )
+PYTHON_COMPAT=( python3_{10,11} )
 inherit cmake-multilib python-single-r1
 
 SRC_URI="https://github.com/LunarG/${PN}/archive/sdk-${PV}/${PN}-sdk-$PV}.tar.gz"
-KEYWORDS="amd64"
+KEYWORDS=""
 S="${WORKDIR}"/${PN}-sdk-${PV}
 
 DESCRIPTION="Graphics API Capture and Replay Tools"
