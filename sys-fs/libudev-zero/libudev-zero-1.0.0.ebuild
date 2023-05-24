@@ -1,1 +1,0 @@
-libudev-zero-9999.ebuild

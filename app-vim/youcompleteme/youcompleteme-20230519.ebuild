@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{8..11} )
+PYTHON_COMPAT=( python3_{10..11} )
 inherit python-single-r1
 
 DESCRIPTION="A code-completion engine for Vim."
@@ -12,7 +12,7 @@ LICENSE="GPL-3"
 KEYWORDS="~amd64 ~ppc64 ~x86"
 
 SLOT="0"
-SHA="88efc6f6035e4c656e8791f3c3a8a4328a1634dc"
+SHA="78ba06ef21bfab9835ced9f4ba8ffdac1b975c40"
 MY_PN="YouCompleteMe"
 SRC_URI="https://github.com/ycm-core/${MY_PN}/archive/${SHA}.tar.gz -> ${P}.tar.gz"
 
