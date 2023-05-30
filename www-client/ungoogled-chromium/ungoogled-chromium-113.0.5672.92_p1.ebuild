@@ -113,7 +113,7 @@ COMMON_SNAPSHOT_DEPEND="
 	system-libevent? ( dev-libs/libevent )
 	system-openjpeg? ( media-libs/openjpeg:2= )
 	system-re2? ( >=dev-libs/re2-0.2019.08.01:= )
-	system-libvpx? ( >=media-libs/libvpx-1.13.0:=[postproc] )
+	system-libvpx? ( media-libs/libvpx:=[postproc] )
 	system-libusb? ( virtual/libusb:1 )
 	system-icu? ( >=dev-libs/icu-71.1:= )
 	>=dev-libs/libxml2-2.9.4-r3:=[icu]
