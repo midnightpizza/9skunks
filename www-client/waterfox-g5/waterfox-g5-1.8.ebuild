@@ -506,7 +506,7 @@ src_prepare() {
 
 	#rm -v "${WORKDIR}"/firefox-patches/*-rust-opaque-binding-type.patch || die
 	#rm -v "${WORKDIR}"/firefox-patches/*-python-3.11-compatibility.patch || die
-	#rm -v "${WORKDIR}"/firefox-patches/*-ppc64-webrtc-missing-conditions.patch || die
+	rm -v "${WORKDIR}"/firefox-patches/*gcc-13-fixes.patch || die
 	# Remove patches already applied in Waterfox
 	eapply "${WORKDIR}/firefox-patches"
 
