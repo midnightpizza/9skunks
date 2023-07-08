@@ -27,8 +27,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-staging-add-rtl8723cs-driver.patch
 	-> 2001-staging-add-rtl8723cs-driver-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/3010-drm-rockchip-dw_hdmi-Add-4k-30-support.patch
-	-> 3010-drm-rockchip-dw_hdmi-Add-4k-30-support-${PV}.patch
 	"
 
 
