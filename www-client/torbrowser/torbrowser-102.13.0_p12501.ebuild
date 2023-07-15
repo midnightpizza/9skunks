@@ -15,12 +15,12 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream mozilla version, used by mozlinguas
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/firefox/config#L15
-# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/config#L104
+# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/firefox/config#L14
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/browser/config#L106
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="12.0.6"
-TOR_TAG="${TOR_PV%.*}-1-build1"
-NOSCRIPT_VERSION="11.4.21"
+TOR_PV="12.5.1"
+TOR_TAG="${TOR_PV%.*}-1-build2"
+NOSCRIPT_VERSION="11.4.24"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
@@ -37,7 +37,7 @@ SRC_URI="
 	${TOR_SRC_BASE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
 	${TOR_SRC_ARCHIVE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
 	https://addons.mozilla.org/firefox/downloads/file/3954910/noscript-${NOSCRIPT_VERSION}.xpi
-	https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/tbb-${CHANGELOG_TAG}/projects/browser/Bundle-Data/Docs/ChangeLog.txt -> ${P}-ChangeLog.txt
+	https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/tbb-${CHANGELOG_TAG}/projects/browser/Bundle-Data/Docs-TBB/ChangeLog.txt -> ${P}-ChangeLog.txt
 	${PATCH_URIS[@]}"
 
 DESCRIPTION="Private browsing without tracking, surveillance, or censorship"
@@ -316,11 +316,13 @@ pkg_setup() {
 }
 
 src_prepare() {
+	rm "${WORKDIR}/firefox-patches/0035-bgo-902025-gcc-13-fixes.patch"
 	eapply "${WORKDIR}/firefox-patches"
 
-	# Revert "Change the default Firefox profile directory to be TBB-relative"
-	eapply "${FILESDIR}"/${PN}-102.3.0-Do_not_store_data_in_the_app_bundle.patch
-	eapply "${FILESDIR}"/${PN}-102.3.0-Change_the_default_Firefox_profile_directory.patch
+	# https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/20497#note_2873088
+	sed -i \
+		-e "s/MOZ_APP_VENDOR=\"Tor Project\"/MOZ_APP_VENDOR=\"TorProject\"/" \
+		"${S}"/browser/confvars.sh || die
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -500,20 +502,40 @@ src_configure() {
 	else
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
-	# Rename the binary and set the profile location
-	mozconfig_add_options_ac 'torbrowser' --with-app-name=torbrowser
-	mozconfig_add_options_ac 'torbrowser' --with-app-basename=torbrowser
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/mozconfig-linux-x86_64
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfigs/tor-browser
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfigs/base-browser
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.6.0esr-12.0-1-build2/browser/config/mozconfig
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/issues/40745
+	export MOZ_APP_BASENAME="TorBrowser"
+
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/firefox/build?ref_type=heads#L174
+	mozconfig_add_options_ac 'torbrowser' \
+		--with-base-browser-version=${TOR_PV} \
+		--enable-update-channel=release \
+		--with-branding=browser/branding/tb-release
+
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.9.0esr-12.5-1/browser/config/mozconfigs/tor-browser
 	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
 	mozconfig_add_options_ac 'torbrowser' \
-		--enable-optimize \
-		--enable-official-branding \
+		--without-relative-data-dir \
+		--with-distribution-id=org.torproject
+
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.9.0esr-12.5-1/browser/config/mozconfigs/base-browser
+	export MOZILLA_OFFICIAL=1
+	mozconfig_add_options_ac 'torbrowser' \
+		--enable-official-branding
+
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.9.0esr-12.5-1/mozconfig-linux-x86_64
+	mozconfig_add_options_ac 'torbrowser' \
 		--disable-strip \
-		--disable-install-strip \
+		--disable-install-strip
+
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-102.9.0esr-12.5-1/browser/config/mozconfigs/base-browser
+	mozconfig_add_options_ac 'torbrowser' \
+		--enable-optimize \
+		--enable-rust-simd \
+		--enable-verify-mar \
+		--enable-nss-mar \
+		--disable-base-browser-update \
+		--enable-bundled-fonts \
 		--disable-tests \
 		--disable-debug \
 		--disable-crashreporter \
@@ -521,16 +543,10 @@ src_configure() {
 		--disable-parental-controls \
 		--disable-eme \
 		--enable-proxy-bypass-protection \
-		MOZ_TELEMETRY_REPORTING= \
-		--with-tor-browser-version=${TOR_PV} \
-		--enable-update-channel=release \
-		--enable-bundled-fonts \
-		--with-branding=browser/branding/official \
-		--disable-tor-browser-update \
 		--disable-system-policies \
-		--enable-verify-mar \
 		--disable-backgroundtasks \
-		--enable-base-browser
+		MOZ_TELEMETRY_REPORTING= \
+		--without-wasm-sandboxed-libraries
 
 	# Avoid auto-magic on linker
 	if use clang ; then
@@ -657,7 +673,7 @@ src_compile() {
 	./mach build --verbose || die
 
 	# FIXME: add locale support
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/firefox/build#L172
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/firefox/build#L184
 	export MOZ_CHROME_MULTILOCALE=""
 	./mach package-multi-locale --locales en-US $MOZ_CHROME_MULTILOCALE || die
 	AB_CD=multi ./mach build stage-package || die
@@ -681,7 +697,7 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/build#L59
+	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/build#L65
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
 	newins "${DISTDIR}/noscript-${NOSCRIPT_VERSION}.xpi" {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
 
@@ -704,7 +720,7 @@ src_install() {
 	fi
 
 	# Install icons
-	local icon_srcdir="${S}/browser/branding/official"
+	local icon_srcdir="${S}/browser/branding/tb-release"
 
 	local icon size
 	for icon in "${icon_srcdir}"/default*.png ; do
@@ -719,11 +735,11 @@ src_install() {
 	done
 
 	# Install menu
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/RelativeLink/start-browser.desktop
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser.desktop
 	domenu "${FILESDIR}"/torbrowser.desktop
 
 	# Install wrapper
-	# see: https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/RelativeLink/start-browser
+	# see: https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser
 	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
 	rm "${ED}"/usr/bin/torbrowser || die # symlink to /usr/lib64/torbrowser/torbrowser
 
@@ -756,7 +772,7 @@ src_install() {
 	rm "${ED}"${MOZILLA_FIVE_HOME}/torbrowser-bin || die
 	dosym torbrowser ${MOZILLA_FIVE_HOME}/torbrowser-bin
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.0/projects/browser/Bundle-Data/Docs/ChangeLog.txt
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/Bundle-Data/Docs/ChangeLog.txt
 	newdoc "${DISTDIR}/${P}-ChangeLog.txt" ChangeLog.txt
 
 	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
@@ -795,7 +811,7 @@ pkg_postinst() {
 	fi
 
 	if [[ -z "${REPLACING_VERSIONS}" ]] ; then
-		ewarn "This patched firefox build is _NOT_ recommended by Tor upstream but uses"
+		ewarn "This Tor Browser build is _NOT_ recommended by Tor upstream but uses"
 		ewarn "the exact same sources. Use this only if you know what you are doing!"
 		elog "Torbrowser uses port 9150 to connect to Tor. You can change the port"
 		elog "in /etc/env.d/99torbrowser to match your setup."
@@ -804,5 +820,11 @@ pkg_postinst() {
 		elog "To get the advanced functionality (network information,"
 		elog "new identity), Torbrowser needs to access a control port."
 		elog "Set the Variables in /etc/env.d/99torbrowser accordingly."
+	fi
+
+	if [[ "${REPLACING_VERSIONS}" ]] && [[ "${REPLACING_VERSIONS}" < "102.7.0_p12500_alpha7" ]]; then
+		ewarn "With this update, the profile directory moved from \"~/.mozilla/torbrowser/\""
+		ewarn "to \"~/.torproject/torbrowser/\". To keep your settings and bookmarks,"
+		ewarn "move your profile to the new location before launching torbrowser"
 	fi
 }
