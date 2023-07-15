@@ -60,7 +60,6 @@ REQUIRED_USE="
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.110"
 RDEPEND="
-	>=dev-libs/expat-2.1.0-r3[${MULTILIB_USEDEP}]
 	>=media-libs/libglvnd-1.3.2[X?,${MULTILIB_USEDEP}]
 	>=sys-libs/zlib-1.2.8[${MULTILIB_USEDEP}]
 	unwind? ( sys-libs/libunwind[${MULTILIB_USEDEP}] )
@@ -403,7 +402,6 @@ multilib_src_configure() {
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
 		-Degl=enabled
-		-Dexpat=enabled
 		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
