@@ -403,6 +403,7 @@ multilib_src_configure() {
 		-Ddri3=enabled
 		-Degl=enabled
 		-Dgbm=enabled
+		-Dtools=panfrost 
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
 		$(meson_feature gles2)
