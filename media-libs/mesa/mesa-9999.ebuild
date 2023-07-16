@@ -5,20 +5,12 @@ EAPI=8
 
 PYTHON_COMPAT=( python3_{9..12} )
 
-inherit llvm meson-multilib pax-utils python-any-r1 linux-info
+inherit llvm meson-multilib pax-utils python-any-r1 linux-info git-r3
 
 MY_P="${P/_/-}"
 
 DESCRIPTION="OpenGL-like graphic library for Linux"
 HOMEPAGE="https://www.mesa3d.org/ https://mesa.freedesktop.org/"
-
-if [[ ${PV} == 9999 ]]; then
-		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
-	inherit git-r3
-else
-	SRC_URI="https://archive.mesa3d.org/${MY_P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
-fi
 
 LICENSE="MIT"
 SLOT="0"
@@ -34,7 +26,18 @@ IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug gles1 +gles2 +llvm
 	lm-sensors opencl osmesa +proprietary-codecs selinux
 	test unwind vaapi valgrind vdpau vulkan
-	vulkan-overlay wayland +X xa zink +zstd libglvnd"
+	vulkan-overlay wayland +X xa zink +zstd libglvnd panfork"
+
+src_unpack() {
+	if use panfork; then
+		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
+	else
+		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
+	fi
+	git-r3_src_unpack
+}
+
+
 
 REQUIRED_USE="
 	d3d9? (
@@ -57,6 +60,7 @@ REQUIRED_USE="
 	xa? ( X )
 	zink? ( vulkan )
 "
+
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.110"
 RDEPEND="
@@ -288,7 +292,9 @@ multilib_src_configure() {
 	use X && platforms+="x11"
 	use wayland && platforms+=",wayland"
 	emesonargs+=(-Dplatforms=${platforms#,})
-
+	if use panfork; then
+    		emesonargs+=(-Dtools=panfrost)
+	fi
 	if use video_cards_intel ||
 	   use video_cards_r300 ||
 	   use video_cards_r600 ||
@@ -403,7 +409,6 @@ multilib_src_configure() {
 		-Ddri3=enabled
 		-Degl=enabled
 		-Dgbm=enabled
-		-Dtools=panfrost 
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
 		$(meson_feature gles2)
