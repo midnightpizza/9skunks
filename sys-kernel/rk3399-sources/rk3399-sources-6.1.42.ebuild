@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="10"
-MANJARO_COMMIT="8f963113322d72b9125d03a9abca5313ac841b19"
+K_GENPATCHES_VER="48"
+MANJARO_COMMIT="dc8cc666df6eadfccb0115886f64672a7d1d2a1c"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -25,14 +25,10 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1003-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch
 	-> 1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr.patch
-	-> 1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-staging-add-rtl8723cs-driver.patch
 	-> 2001-staging-add-rtl8723cs-driver-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2003-arm64-dts-rockchip-Work-around-daughterboard-issues.patch
 	-> 2003-arm64-dts-rockchip-Work-around-daughterboard-issues-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/3010-drm-rockchip-dw_hdmi-Add-4k-30-support.patch
-	-> 3010-drm-rockchip-dw_hdmi-Add-4k-30-support-${PV}.patch
 	"
 
 
