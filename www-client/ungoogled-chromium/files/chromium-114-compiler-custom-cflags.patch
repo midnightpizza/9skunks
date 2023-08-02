@@ -153,7 +153,7 @@ index bd039fc..4d3759a 100644
  
      # In Chromium code, we define __STDC_foo_MACROS in order to get the
      # C99 macros on Mac and Linux.
-@@ -1690,16 +1592,6 @@ config("chromium_code") {
+@@ -1746,16 +1746,6 @@
        "__STDC_FORMAT_MACROS",
      ]
  
@@ -167,9 +167,9 @@ index bd039fc..4d3759a 100644
 -      defines += [ "_FORTIFY_SOURCE=2" ]
 -    }
 -
-     if (is_mac) {
-       cflags_objc = [ "-Wobjc-missing-property-synthesis" ]
-       cflags_objcc = [ "-Wobjc-missing-property-synthesis" ]
+     if (is_apple) {
+       cflags_objc = [ "-Wimplicit-retain-self" ]
+       cflags_objcc = [ "-Wimplicit-retain-self" ]
 @@ -2092,7 +1984,8 @@ config("default_stack_frames") {
  }
  
@@ -220,16 +220,16 @@ index bd039fc..4d3759a 100644
    cflags = [ "-O1" ] + common_optimize_on_cflags
    rustflags = [ "-Copt-level=1" ]
    ldflags = common_optimize_on_ldflags
-@@ -2356,7 +2253,8 @@ config("win_pdbaltpath") {
+@@ -2403,7 +2403,8 @@
  }
  
  # Full symbols.
 -config("symbols") {
 +config("symbols") { }
 +config("xsymbols") {
+   rustflags = []
    if (is_win) {
      if (is_clang) {
-       cflags = [
 @@ -2495,7 +2393,8 @@ config("symbols") {
  # Minimal symbols.
  # This config guarantees to hold symbol for stack trace which are shown to user
