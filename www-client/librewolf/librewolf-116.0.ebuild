@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-114-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-116-patches-01.tar.xz"
 
 LLVM_MAX_SLOT=16
 
@@ -16,7 +16,7 @@ VIRTUALX_REQUIRED="manual"
 
 # Librewolf version (please rev-bump if changed)
 # Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-2"
+LIBREWOLF_PV="${PV}-1"
 
 MOZ_ESR=
 
@@ -89,6 +89,33 @@ FF_ONLY_DEPEND="!www-client/firefox:0
 	screencast? ( media-video/pipewire:= )
 	selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
+	|| (
+		(
+			sys-devel/clang:16
+			sys-devel/llvm:16
+			clang? (
+				|| (
+					sys-devel/lld:16
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-16
+				pgo? ( =sys-libs/compiler-rt-sanitizers-16*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:15
+			sys-devel/llvm:15
+			clang? (
+				|| (
+					sys-devel/lld:15
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-15
+				pgo? ( =sys-libs/compiler-rt-sanitizers-15*[profile] )
+			)
+		)
+	)
+	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
 	>=dev-util/cbindgen-0.24.3
@@ -113,7 +140,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.89
+	>=dev-libs/nss-3.91
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -159,7 +186,6 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	wayland? (
 		>=media-libs/libepoxy-1.5.10-r1
 		x11-libs/gtk+:3[wayland]
-		x11-libs/libdrm
 		x11-libs/libxkbcommon[wayland]
 	)
 	wifi? (
@@ -625,8 +651,13 @@ src_unpack() {
 }
 
 src_prepare() {
-	use lto && rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch
-	! use ppc64 && rm -v "${WORKDIR}"/firefox-patches/*bmo-1775202-ppc64*.patch
+	if use lto; then
+		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
+	fi
+
+	if ! use ppc64; then
+		rm -v "${WORKDIR}"/firefox-patches/*ppc64*.patch || die
+	fi
 
 	eapply "${WORKDIR}/firefox-patches"
 
@@ -672,6 +703,7 @@ src_prepare() {
 		elog "if you get a build failure, try undefining FILES_PER_UNIFIED_FILE,"
 		elog "if that fails try -jumbo-build before opening a bug report."
 		elog ""
+
 		sed -i -e "s/\"FILES_PER_UNIFIED_FILE\", 16/\"FILES_PER_UNIFIED_FILE\", "${my_files_per_unified_file}"/" python/mozbuild/mozbuild/frontend/data.py ||
 			die "Failed to adjust FILES_PER_UNIFIED_FILE in python/mozbuild/mozbuild/frontend/data.py"
 		sed -i -e "s/FILES_PER_UNIFIED_FILE = 6/FILES_PER_UNIFIED_FILE = "${my_files_per_unified_file}"/" js/src/moz.build ||
@@ -705,12 +737,18 @@ src_configure() {
 	if use clang; then
 		# Force clang
 		einfo "Enforcing the use of clang due to USE=clang ..."
+
+		local version_clang=$(clang --version 2>/dev/null | grep -F -- 'clang version' | awk '{ print $3 }')
+		[[ -n ${version_clang} ]] && version_clang=$(ver_cut 1 "${version_clang}")
+		[[ -z ${version_clang} ]] && die "Failed to read clang version!"
+
 		if tc-is-gcc; then
 			have_switched_compiler=yes
 		fi
+
 		AR=llvm-ar
-		CC=${CHOST}-clang
-		CXX=${CHOST}-clang++
+		CC=${CHOST}-clang-${version_clang}
+		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
 	elif ! use clang && ! tc-is-gcc ; then
@@ -769,6 +807,7 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-gpsd \
 		--disable-install-strip \
+		--disable-legacy-profile-creation \
 		--disable-parental-controls \
 		--disable-strip \
 		--disable-tests \
@@ -912,7 +951,7 @@ src_configure() {
 	elif ! use X && use wayland ; then
 		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland-only
 	else
-		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
+		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
 	if use lto ; then
@@ -961,7 +1000,7 @@ src_configure() {
 	fi
 
 	# LTO flag was handled via configure
-	filter-flags '-flto*'
+	filter-lto
 
 	mozconfig_use_enable debug
 	if use debug ; then
