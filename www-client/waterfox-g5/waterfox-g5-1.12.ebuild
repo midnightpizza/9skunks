@@ -13,6 +13,7 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="pgo"
+
 MOZ_ESR=yes
 
 inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing pax-utils python-any-r1 toolchain-funcs virtualx xdg
@@ -20,7 +21,7 @@ inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm m
 WF_SRC_BASE_URI="https://github.com/WaterfoxCo/Waterfox/archive/refs/tags"
 
 PATCH_URIS=(
-	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
 SRC_URI="
@@ -30,7 +31,7 @@ SRC_URI="
 
 DESCRIPTION="Waterfox Web Browser"
 HOMEPAGE="https://www.waterfox.net"
-KEYWORDS="amd64 arm64 x86"
+KEYWORDS="amd64 arm64 ~ppc64 x86"
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
@@ -41,28 +42,48 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" wayland wifi"
 
 # Firefox-only IUSE
-IUSE+=" geckodriver +gmp-autoupdate screencast X"
+IUSE+=" geckodriver +gmp-autoupdate screencast"
 
 REQUIRED_USE="debug? ( !system-av1 )
 	pgo? ( lto )
 	wayland? ( dbus )
 	wifi? ( dbus )"
 
-BDEPEND="
-	${PYTHON_DEPS}
-	app-arch/unzip
-	app-arch/zip
-	>=dev-util/cbindgen-0.24.3
-	>=net-libs/nodejs-10.23.1
-	virtual/pkgconfig
-	>=virtual/rust-1.51.0
+REQUIRED_USE+=" screencast? ( wayland )"
+
+WATERFOX_ONLY_DEPEND="
+	screencast? ( media-video/pipewire:= )
+	selinux? ( sec-policy/selinux-mozilla )"
+BDEPEND="${PYTHON_DEPS}
 	|| (
-		(
-			sys-devel/clang
-			sys-devel/llvm
+	(
+			sys-devel/clang:16
+			sys-devel/llvm:16
 			clang? (
-				sys-devel/lld
-				pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
+				|| (
+					sys-devel/lld:16
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-16
+				pgo? ( =sys-libs/compiler-rt-sanitizers-16*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:15
+			sys-devel/llvm:15
+			clang? (
+				sys-devel/lld:15
+				virtual/rust:0/llvm-15
+				pgo? ( =sys-libs/compiler-rt-sanitizers-15*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:14
+			sys-devel/llvm:14
+			clang? (
+				sys-devel/lld:14
+				virtual/rust:0/llvm-14
+				pgo? ( =sys-libs/compiler-rt-sanitizers-14*[profile] )
 			)
 		)
 	)
@@ -75,13 +96,8 @@ BDEPEND="
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )"
 
-COMMON_DEPEND="
-	screencast? ( media-video/pipewire:= )
-	selinux? ( sec-policy/selinux-mozilla )
-	|| (
-		>=app-accessibility/at-spi2-core-2.46.0:2
-		dev-libs/atk
-	)
+COMMON_DEPEND="${WATERFOX_ONLY_DEPEND}
+	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
@@ -115,6 +131,12 @@ COMMON_DEPEND="
 	)
 	jack? ( virtual/jack )
 	libproxy? ( net-libs/libproxy )
+	pulseaudio? (
+		|| (
+			media-sound/pulseaudio
+			>=media-sound/apulse-0.1.12-r4
+		)
+	)
 	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	system-av1? (
 		>=media-libs/dav1d-1.0.0:=
@@ -145,27 +167,12 @@ COMMON_DEPEND="
 
 RDEPEND="${COMMON_DEPEND}
 	jack? ( virtual/jack )
-	openh264? ( media-libs/openh264:*[plugin] )
-	pulseaudio? (
-		|| (
-			media-sound/pulseaudio
-			>=media-sound/apulse-0.1.12-r4
-		)
-	)"
+	openh264? ( media-libs/openh264:*[plugin] )"
 
-DEPEND="
-	${COMMON_DEPEND}
-	!www-client/waterfox-current
-	!www-client/waterfox-G4
+DEPEND="${COMMON_DEPEND}
+	x11-base/xorg-proto
 	x11-libs/libICE
-	x11-libs/libSM
-	pulseaudio? (
-		|| (
-			media-sound/pulseaudio
-			>=media-sound/apulse-0.1.12-r4[sdk]
-		)
-	)
-"
+	x11-libs/libSM"
 
 S="${WORKDIR}/Waterfox-G5.${PV}"
 MOZ_L10N_SOURCEDIR="${S}/waterfox/browser/locales"
@@ -802,7 +809,7 @@ src_configure() {
 	fi
 
 	# LTO flag was handled via configure
-	filter-flags '-flto*'
+	filter-lto
 
 	mozconfig_use_enable debug
 	if use debug ; then
@@ -885,9 +892,9 @@ src_configure() {
 		fi
 	fi
 
-        if use elibc_musl && use arm64 ; then
-               	mozconfig_add_options_ac 'elf-hack is broken when using musl/arm64' --disable-elf-hack
-        fi
+	if use elibc_musl && use arm64 ; then
+		mozconfig_add_options_ac 'elf-hack is broken when using musl/arm64' --disable-elf-hack
+	fi
 
 	# Additional ARCH support
 	case "${ARCH}" in

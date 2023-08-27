@@ -203,7 +203,6 @@ llvm_check_deps() {
 	has_version "sys-devel/llvm:${LLVM_SLOT}[${LLVM_USE_DEPS}]"
 }
 
-
 pkg_pretend() {
 	if use vulkan; then
 		if ! use video_cards_d3d12 &&
@@ -408,6 +407,7 @@ multilib_src_configure() {
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
 		-Degl=enabled
+		-Dexpat=enabled
 		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
