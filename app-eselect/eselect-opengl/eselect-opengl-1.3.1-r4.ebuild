@@ -3,8 +3,6 @@
 
 EAPI=8
 
-inherit eutils multilib
-
 DESCRIPTION="Utility to switch between OpenGL implementations"
 HOMEPAGE="https://wiki.gentoo.org/wiki/No_homepage"
 
@@ -26,7 +24,7 @@ IUSE=""
 DEPEND="app-arch/xz-utils"
 RDEPEND=">=app-admin/eselect-1.2.4"
 
-S=${WORKDIR}
+S="${WORKDIR}"
 
 pkg_preinst() {
 	# we may be moving the config file, so get it early
@@ -35,27 +33,27 @@ pkg_preinst() {
 
 pkg_postinst() {
 	local opengl_dirs=()
-	readarray -t opengl_dirs < <(find "${EROOT}"/usr/lib*/opengl -maxdepth 0 -type d -print0 2>/dev/null)
-	if [[ ${#opengl_dirs[@]} -gt 0 ]]; then
+	local opengl_dir
+	for opengl_dir in $(find "${EROOT}"/usr/lib*/opengl -maxdepth 0 -type d -print0 2>/dev/null | xargs -0); do
 		# delete broken symlinks
-		find "${opengl_dirs[@]}" -xtype l -delete
+		find "${opengl_dir}" -xtype l -delete
 		# delete empty leftover directories (they confuse eselect)
-		find "${opengl_dirs[@]}" -depth -type d -empty -exec rmdir -v {} +
-	fi
+		find "${opengl_dir}" -depth -type d -empty -exec rmdir -v {} +
+	done
 
-	if [[ -n "${OLD_IMPL}" && "${OLD_IMPL}" != '(none)' ]] ; then
+	if [[ -n "${OLD_IMPL}" && "${OLD_IMPL}" != '(none)' ]]; then
 		eselect opengl set "${OLD_IMPL}"
 	fi
-	if [[ -f ${EROOT}/etc/env.d/03opengl ]]; then
+	if [[ -f "${EROOT}/etc/env.d/03opengl" ]]; then
 		# remove the old file, moved now
-		rm -vf "${EROOT}"/etc/env.d/03opengl
+		rm -vf "${EROOT}/etc/env.d/03opengl"
 	fi
 }
 
 src_prepare() {
 	default_src_prepare
 	# don't die on Darwin users
-	if [[ ${CHOST} == *-darwin* ]] ; then
+	if [[ ${CHOST} == *-darwin* ]]; then
 		sed -i -e 's/libGL\.so/libGL.dylib/' opengl.eselect-${PV} || die
 	fi
 }
