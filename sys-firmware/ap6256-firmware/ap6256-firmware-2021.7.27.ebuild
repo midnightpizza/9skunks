@@ -1,7 +1,7 @@
-# Copyright 2021 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit git-r3
 
@@ -16,7 +16,7 @@ KEYWORDS="~arm64"
 
 src_prepare() {
 	rm PKGBUILD || die
-	mkdir brcm || die
+	mkdir -p brcm || die
 	cp BCM4345C5.hcd brcm/BCM.hcd || die
 	cp BCM4345C5.hcd brcm/BCM4345C5.hcd || die
 	cp nvram_ap6256.txt brcm/brcmfmac43456-sdio.pine64,pinebook-pro.txt || die

@@ -1,16 +1,16 @@
 # Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 USE_RUBY="ruby24 ruby25 ruby26"
 
 inherit autotools ruby-single
 
 DESCRIPTION="Epic5 IRC Client"
-SRC_URI="http://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
 HOMEPAGE="http://epicsol.org/"
+SRC_URI="http://ftp.epicsol.org/pub/epic/EPIC5-PRODUCTION/${P}.tar.xz"
 
-RESTRICT_MIRROR=""
+RESTRICT="mirror"
 
 LICENSE="BSD"
 SLOT="0"
@@ -34,22 +34,22 @@ DEPEND="${RDEPEND}
 
 S="${WORKDIR}/${P}"
 
-
 src_configure() {
-	econf \
-		--libexecdir="${EPREFIX}"/usr/lib/misc \
-		--with-ipv6 \
-		--without-ruby \
-		$(use_with archive libarchive) \
-		$(use_with perl) \
-		$(use_with socks5) \
-		$(use_with tcl tcl "${EPREFIX}"/usr/$(get_libdir)/tclConfig.sh) \
+	local myeconfargs=(
+		--libexecdir="${EPREFIX}/usr/lib/misc"
+		--with-ipv6
+		--without-ruby
+		$(use_with archive libarchive)
+		$(use_with perl)
+		$(use_with socks5)
+		$(use_with tcl tcl "${EPREFIX}/usr/$(get_libdir)/tclConfig.sh")
 		$(use_with valgrind valgrind)
+	)
+	econf "${myeconfargs[@]}"
 }
 
 src_compile() {
-	# parallel build failure
-	emake -j1
+	emake
 }
 
 src_install() {
@@ -57,8 +57,7 @@ src_install() {
 
 	dodoc BUG_FORM COPYRIGHT EPIC4-USERS-README README KNOWNBUGS VOTES
 
-	cd "${S}"/doc || die
-	docinto doc
+	cd "${S}/doc" || die
 	dodoc \
 		*.txt colors EPIC* IRCII_VERSIONS missing \
 		nicknames outputhelp README.SSL SILLINESS TS4

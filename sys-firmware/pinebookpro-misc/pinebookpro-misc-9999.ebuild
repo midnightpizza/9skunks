@@ -1,7 +1,7 @@
 # Copyright 2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit git-r3
 
@@ -16,12 +16,20 @@ src_prepare() {
 	rm PKGBUILD || die
 
 	mkdir -p etc/udev/hwdb.d || die
-	mv 10-usb-kbd.hwdb etc/udev/hwdb.d/10-usb-kbd.hwdb || die
+	if [ -e "10-usb-kbd.hwdb" ]; then
+		mv "10-usb-kbd.hwdb" "etc/udev/hwdb.d/10-usb-kbd.hwdb" || die
+	else
+		die "10-usb-kbd.hwdb not found"
+	fi
 
 	mkdir -p var/lib/alsa || die
-	mv asound.state var/lib/alsa/asound.state || die
+	if [ -e "asound.state" ]; then
+		mv "asound.state" "var/lib/alsa/asound.state" || die
+	else
+		die "asound.state not found"
+	fi
 
-	default
+	default_src_prepare
 }
 
 src_install() {
@@ -29,7 +37,7 @@ src_install() {
 }
 
 pkg_postinst() {
-	if test -f /bin/systemctl; then
+	if command -v systemctl >/dev/null 2>&1; then
 		systemd-hwdb update || die
 	else
 		udevadm hwdb --update || die

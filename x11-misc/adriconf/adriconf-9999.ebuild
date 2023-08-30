@@ -1,14 +1,13 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit cmake desktop
+inherit cmake desktop git-r3
 
 DESCRIPTION="Advanced DRI Configurator"
-HOMEPAGE=""
-	inherit git-r3
-	EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/adriconf.git"
+HOMEPAGE="https://gitlab.freedesktop.org/mesa/adriconf"
+EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/adriconf.git"
 
 LICENSE="GPL-3"
 SLOT="0"
@@ -50,4 +49,5 @@ src_install() {
 	cmake_src_install
 
 	insinto /usr/share/metainfo
+	newins "${FILESDIR}/${PN}.appdata.xml" "${PN}.appdata.xml"
 }

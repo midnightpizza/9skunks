@@ -1,4 +1,4 @@
-EAPI=7
+EAPI=8
 
 inherit git-r3
 
@@ -17,21 +17,17 @@ RDEPEND="${DEPEND}
 	sys-apps/busybox[mdev(+)]"
 
 src_install() {
-	mkdir -p "${D}/etc" || die
-	mv "${S}/mdev.conf" "${D}/etc/mdev.conf"
-
-	newinitd "${S}/mdev.init" mdev || die
-	rm -f "${S}/mdev.init"
-
-	mkdir -p "${D}/opt/mdev" || die
+	doins -r mdev.conf "${D}/etc/"
+	newinitd "${FILESDIR}/mdev.init" mdev
+	dodir /opt/mdev
 	cp -a "${S}"/* "${D}/opt/mdev/" || die
 }
 
 pkg_postinst() {
-	einfo
-	einfo "Remember to add mdev to sysinit runlevel."
-	einfo "   rc-update add mdev sysinit"
-	einfo
+	elog
+	elog "Remember to add mdev to sysinit runlevel."
+	elog "   rc-update add mdev sysinit"
+	elog
 	ewarn
 	ewarn "Also remember to remove any udev* and devfs init scripts"
 	ewarn "from all runlevels."

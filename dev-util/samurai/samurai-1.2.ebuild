@@ -1,7 +1,7 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 DESCRIPTION="ninja-compatible build tool written in C"
 HOMEPAGE="https://github.com/michaelforney/samurai"
@@ -14,12 +14,12 @@ IUSE="replace-ninja"
 KEYWORDS="~amd64 ~arm ~x86 ~arm64"
 
 RDEPEND="replace-ninja? (
-		>=dev-util/ninja-999
-		)"
+    >=dev-util/ninja-999
+)"
 
 src_install() {
-emake DESTDIR="${D}" PREFIX=/usr install
-	if use replace-ninja ; then
-		dosym samu /usr/bin/ninja
-	fi
+    emake DESTDIR="${D}" PREFIX=/usr install
+    if use replace-ninja ; then
+        dosym samu /usr/bin/ninja
+    fi
 }

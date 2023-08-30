@@ -1,24 +1,22 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 CMAKE_ECLASS="cmake"
 PYTHON_COMPAT=( python3_{10,11} )
 inherit cmake-multilib python-single-r1
 
-SRC_URI="https://github.com/LunarG/${PN}/archive/sdk-${PV}/${PN}-sdk-$PV}.tar.gz"
-KEYWORDS=""
-S="${WORKDIR}"/${PN}-sdk-${PV}
-
 DESCRIPTION="Graphics API Capture and Replay Tools"
 HOMEPAGE="https://github.com/LunarG/gfxreconstruct"
-
 LICENSE="BSD BSD-2 MIT ZLIB"
 SLOT="0"
 IUSE="wayland +X"
 
-RDEPEND="${PYTHON_DEPS}
+SRC_URI="https://github.com/LunarG/${PN}/archive/sdk-${PV}/${PN}-sdk-$PV.tar.gz"
+
+RDEPEND="
+	${PYTHON_DEPS}
 	>=media-libs/vulkan-loader-${PV}:=[${MULTILIB_USEDEP},wayland?,X?]
 	wayland? ( dev-libs/wayland:=[${MULTILIB_USEDEP}] )
 	X? (
@@ -36,12 +34,12 @@ pkg_setup() {
 }
 
 multilib_src_configure() {
-	local mycmakeargs=(
-		-DBUILD_WERROR=OFF
-		-DBUILD_WSI_WAYLAND_SUPPORT=$(usex wayland)
-		-DBUILD_WSI_XCB_SUPPORT=$(usex X)
-		-DBUILD_WSI_XLIB_SUPPORT=$(usex X)
-		-DVULKAN_HEADER="${ESYSROOT}/usr/include/vulkan/vulkan_core.h"
+	local -a mycmakeargs=(
+		"-DBUILD_WERROR=OFF"
+		"-DBUILD_WSI_WAYLAND_SUPPORT=$(usex wayland)"
+		"-DBUILD_WSI_XCB_SUPPORT=$(usex X)"
+		"-DBUILD_WSI_XLIB_SUPPORT=$(usex X)"
+		"-DVULKAN_HEADER=\"${ESYSROOT}/usr/include/vulkan/vulkan_core.h\""
 	)
 
 	cmake_src_configure

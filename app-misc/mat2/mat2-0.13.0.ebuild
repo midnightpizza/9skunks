@@ -1,7 +1,7 @@
 # Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 PYTHON_COMPAT=( python3_{9..10} )
 PYTHON_REQ_USE="xml"
@@ -37,8 +37,22 @@ RDEPEND="${DEPEND}
 
 distutils_enable_tests unittest
 
+pkg_postinst() {
+	xdg_icon_cache_update
+	python_foreach_impl xdg_scriptlet_iconcache_update
+}
+
+pkg_postrm() {
+	xdg_icon_cache_update
+	python_foreach_impl xdg_scriptlet_iconcache_update
+}
+
 python_install_all() {
-	distutils-r1_python_install_all
+	local python_impl
+
+	for python_impl in "${PYTHON_COMPAT[@]}"; do
+		distutils-r1_python_install_all "$python_impl"
+	done
 
 	if use nautilus; then
 		insinto /usr/share/nautilus-python/extensions/
@@ -55,12 +69,4 @@ python_install_all() {
 
 	doman doc/mat2.1
 	dodoc *.md doc/*.md
-}
-
-pkg_postinst() {
-	xdg_icon_cache_update
-}
-
-pkg_postrm() {
-	xdg_icon_cache_update
 }

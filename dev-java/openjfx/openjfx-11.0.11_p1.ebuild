@@ -1,7 +1,7 @@
 # Copyright 2019-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=8
 
 MY_PV="${PV/_p/+}"
 SLOT="${MY_PV%%[.+]*}"
@@ -102,9 +102,9 @@ egradle() {
 	# FIXME: build.gradle believes $ANT_HOME/bin/ant shoud exist
 	unset ANT_HOME
 
-	einfo "gradle "${gradle_args[@]}" ${@}"
+	einfo "gradle ${gradle_args[*]} ${@}"
 	# TERM needed, otherwise gradle may fail on terms it does not know about
-	TERM="xterm" "${gradle}" "${gradle_args[@]}" ${@} || die "gradle failed"
+	TERM="xterm" "${gradle}" "${gradle_args[@]}" "${@}" || die "gradle failed"
 }
 
 pkg_setup() {

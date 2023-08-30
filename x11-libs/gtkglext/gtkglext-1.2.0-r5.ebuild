@@ -1,7 +1,7 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=8
 
 inherit autotools gnome2 multilib-minimal
 
@@ -41,13 +41,11 @@ src_prepare() {
 	eapply "${FILESDIR}"/${P}-no-pangox.patch
 
 	mv configure.{in,ac} || die "mv failed"
-	eautoreconf
-
+	autoreconf_foreach_impl
 	gnome2_src_prepare
 }
 
 multilib_src_configure() {
-	ECONF_SOURCE=${S} \
 	gnome2_src_configure \
 		--disable-static
 }

@@ -1,10 +1,9 @@
-# Copyright 1999-2014 Gentoo Foundation
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI=6
+EAPI=8
 
-inherit toolchain-funcs
+BDEPEND=">=sys-devel/toolchain-1.2.4"
 
 DESCRIPTION="Gimp plug-in for converting images into RGB normal maps"
 HOMEPAGE="https://github.com/RobertBeckebans/gimp-plugin-normalmap"
@@ -15,28 +14,27 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 
-RDEPEND="media-gfx/gimp
+RDEPEND="
+	media-gfx/gimp
 	media-libs/glew
 	x11-libs/gtkglext"
 DEPEND="${RDEPEND}
 	virtual/pkgconfig"
 
 src_prepare() {
-	eapply_user
-	sed -e 's:\(CFLAGS\)=-O3:\1+=:' \
+	default
+	sed -e 's:\(CFLAGS\)=-O3:\1+=' \
 		-e 's:-L/usr/X11R6/lib:-lm:' \
 		-i Makefile.linux || die
 }
 
 src_compile() {
-	local cc=$(tc-getCC)
+	local cc="$(tc-getCC)"
 	emake CC="${cc}" LDFLAGS="${LDFLAGS}" LD="${cc}" || die "emake failed"
 }
 
 src_install() {
-	exeinto $(pkg-config --variable=gimplibdir gimp-2.0)/plug-ins
-	doexe normalmap || die "Installation failed"
-	dodoc README || die
+	emake DESTDIR="${D}" install || die "emake install failed"
 }
 
 pkg_postinst() {

@@ -1,7 +1,7 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 DESCRIPTION="secure pipe daemon"
 HOMEPAGE="http://www.tarsnap.com/spiped.html"
@@ -24,15 +24,16 @@ RDEPEND="
 	!net-mail/qlogtools"
 
 src_install() {
-	dobin "${MY_PN}/${MY_PN}"
-	dosbin "${PN}/${PN}"
+	newexe "${MY_PN}/${MY_PN}" "${MY_PN}"
+	newexe "${PN}/${PN}" "${PN}"
 
 	doman "${MY_PN}/${MY_PN}.1" "${PN}/${PN}.1"
 
 	newinitd "${FILESDIR}/${PN}.initd" "${PN}"
 	newconfd "${FILESDIR}/${PN}.confd" "${PN}"
 
-	dodir "etc/${PN}"
+	insinto "/etc/${PN}"
+	doins "${FILESDIR}/${PN}.conf"
 }
 
 pkg_postinst() {

@@ -1,7 +1,7 @@
-# Copyright 1999-2019 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit git-r3
 
@@ -9,7 +9,6 @@ MY_PN="uBlock"
 
 DESCRIPTION="An efficient blocker for Chromium and Firefox. Fast and lean."
 HOMEPAGE="https://github.com/gorhill/uBlock"
-
 
 if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/gorhill/${MY_PN}.git"
@@ -31,15 +30,24 @@ DEPEND="${RDEPEND}"
 
 DOCS=( MANIFESTO.md README.md )
 
-src_unpack(){
-	[[ ${PV} == 9999 ]] && git-r3_src_unpack || default_src_unpack
+src_unpack() {
+	if [[ ${PV} == 9999 ]]; then
+		git-r3_src_unpack
+	else
+		default_src_unpack
+	fi
+
 	EGIT_REPO_URI="https://github.com/uBlockOrigin/uAssets.git"
 	EGIT_CHECKOUT_DIR="${WORKDIR}/uAssets"
-	[[ ${PV} == 9999 ]] && EGIT_COMMIT_DATE=$(GIT_DIR="${S}/.git" git show -s --format=%ct || die)
+
+	if [[ ${PV} == 9999 ]]; then
+		EGIT_COMMIT_DATE=$(GIT_DIR="${S}/.git" git show -s --format=%ct || die)
+	fi
+
 	git-r3_src_unpack
 }
 
-src_prepare(){
+src_prepare() {
 	sed -r -i \
 		-e 's/(git.+clone.+)https.+/\1\.\.\/uAssets/' \
 		tools/make-assets.sh || die
@@ -74,10 +82,11 @@ src_install() {
 		insinto "/usr/$(get_libdir)/thunderbird/extensions/{3550f703-e582-4d05-9a08-453d09bdfdc6}"
 		newins dist/build/uBlock0.thunderbird.xpi uBlock0@raymondhill.net.xpi
 	fi
+
 	einstalldocs
 }
 
-pkg_postinst(){
+pkg_postinst() {
 	if use chromium; then
 		echo
 		elog "If you use Chromium/Chrome (or based), the extension is installed in"

@@ -1,7 +1,7 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=8
 
 inherit eutils multilib
 
@@ -34,11 +34,9 @@ pkg_preinst() {
 }
 
 pkg_postinst() {
-	local shopt_save=$(shopt -p nullglob)
-	shopt -s nullglob
-	local opengl_dirs=( "${EROOT}"/usr/lib*/opengl )
-	${shopt_save}
-	if [[ -n ${opengl_dirs[@]} ]]; then
+	local opengl_dirs=()
+	readarray -t opengl_dirs < <(find "${EROOT}"/usr/lib*/opengl -maxdepth 0 -type d -print0 2>/dev/null)
+	if [[ ${#opengl_dirs[@]} -gt 0 ]]; then
 		# delete broken symlinks
 		find "${opengl_dirs[@]}" -xtype l -delete
 		# delete empty leftover directories (they confuse eselect)
@@ -55,7 +53,7 @@ pkg_postinst() {
 }
 
 src_prepare() {
-	eapply_user
+	default_src_prepare
 	# don't die on Darwin users
 	if [[ ${CHOST} == *-darwin* ]] ; then
 		sed -i -e 's/libGL\.so/libGL.dylib/' opengl.eselect-${PV} || die
@@ -65,5 +63,5 @@ src_prepare() {
 src_install() {
 	insinto "/usr/share/eselect/modules"
 	newins opengl.eselect-${PV} opengl.eselect
-#	doman opengl.eselect.5
+	#	doman opengl.eselect.5
 }

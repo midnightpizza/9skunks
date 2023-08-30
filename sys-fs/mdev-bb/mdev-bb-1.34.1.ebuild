@@ -1,4 +1,4 @@
-EAPI=7
+EAPI=8
 
 DESCRIPTION="mdev from busybox."
 HOMEPAGE="http://www.busybox.net/"
@@ -21,12 +21,11 @@ RDEPEND="
 	!<sys-fs/mdev-like-a-boss-20130703
 "
 DEPEND="${RDEPEND}
-	>=sys-kernel/linux-headers-2.6.39"
-
-S=${WORKDIR}/${MY_P}
+	>=sys-kernel/linux-headers-2.6.39
+"
 
 src_configure() {
-	cat >"${S}/tmp.config" <<-END_OF_CONFIG
+	cat > "${S}/tmp.config" << "END_OF_CONFIG"
 		CONFIG_HAVE_DOT_CONFIG=y
 		CONFIG_USE_PORTABLE_CODE=y
 		CONFIG_PLATFORM_LINUX=y
@@ -50,7 +49,7 @@ src_configure() {
 		CONFIG_FEATURE_MDEV_EXEC=y
 		CONFIG_FEATURE_MDEV_LOAD_FIRMWARE=y
 		CONFIG_FEATURE_SH_IS_NONE=y
-		CONFIG_FEATURE_BASH_IS_NONE=y"
+		CONFIG_FEATURE_BASH_IS_NONE=y
 END_OF_CONFIG
 
 	if use static; then
@@ -62,7 +61,7 @@ END_OF_CONFIG
 }
 
 src_install() {
-	mkdir "${D}/sbin" || die
+	mkdir -p "${D}/sbin" || die
 	cp busybox "${D}/sbin/mdev" || die
 	chmod 750 "${D}/sbin/mdev" || die
 }

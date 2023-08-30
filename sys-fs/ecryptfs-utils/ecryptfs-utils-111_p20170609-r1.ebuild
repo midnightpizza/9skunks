@@ -1,7 +1,7 @@
 # Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit autotools flag-o-matic linux-info pam
 
@@ -28,7 +28,8 @@ RDEPEND="
 	sys-process/lsof
 	gpg? ( app-crypt/gpgme:= )
 	gtk? ( x11-libs/gtk+:2 )
-	openssl? ( !libressl? ( dev-libs/openssl )
+	openssl? (
+		!libressl? ( dev-libs/openssl )
 		libressl? ( dev-libs/libressl ) )
 	pam? ( sys-libs/pam )
 	pkcs11? (
@@ -61,7 +62,7 @@ src_configure() {
 
 	econf \
 		--enable-nss \
-		--with-pamdir=$(getpam_mod_dir) \
+		--with-pamdir="$(getpam_mod_dir)" \
 		--disable-pywrap \
 		$(use_enable doc docs) \
 		$(use_enable gpg) \
@@ -78,7 +79,7 @@ src_install() {
 
 	use suid && fperms u+s /sbin/mount.ecryptfs_private
 
-	find "${ED}" -name '*.la' -exec rm -f '{}' + || die
+	find "${ED}" -name '*.la' -delete
 }
 
 pkg_postinst() {

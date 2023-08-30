@@ -1,7 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit meson
 
@@ -14,12 +14,17 @@ KEYWORDS="~amd64"
 IUSE="caps audit"
 RESTRICT="primaryuri"
 RDEPEND="caps? ( sys-libs/libcap )
-	audit? ( sys-process/audit )"
+         audit? ( sys-process/audit )"
 DOCS="README.md"
 
+pkg_setup() {
+    usex caps RDEPEND+=" caps? ( sys-libs/libcap )"
+    usex audit RDEPEND+=" audit? ( sys-process/audit )"
+}
+
 src_configure() {
-	local emesonargs=(
-		$(meson_use audit)
-	)
-	meson_src_configure
+    local emesonargs=(
+        $(meson_use audit)
+    )
+    meson_src_configure
 }

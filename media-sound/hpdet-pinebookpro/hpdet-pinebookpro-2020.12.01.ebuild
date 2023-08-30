@@ -1,7 +1,7 @@
-# Copyright 2020 Gentoo Authors
+# Copyright 2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 DESCRIPTION="Disables/enables the speaker on headphone plug/unplug"
 HOMEPAGE="https://gitlab.manjaro.org/manjaro-arm/packages/community/pinebookpro-audio"
@@ -21,7 +21,7 @@ RDEPEND="
 
 pkg_pretend() {
 	if kernel_is -lt 5 6; then
-		ewarn 'Warning: this feature only works as of 5.6_rc4!!!'
+		ewarn "Warning: this feature only works as of 5.6_rc4!!!"
 	fi
 }
 
@@ -33,17 +33,17 @@ src_install() {
 }
 
 pkg_postinst() {
-	if test -f $(which systemctl); then
+	if command -v systemctl &>/dev/null; then
 		systemctl try-restart acpid.service
 		if ! systemctl is-active acpid.service; then
-			ewarn 'acpid must be active for this to work.'
-			ewarn 'try systemctl enable --now acpid.service'
+			ewarn "acpid must be active for this to work."
+			ewarn "try systemctl enable --now acpid.service"
 		fi
-	elif test -f $(which rc-service); then
+	elif command -v rc-service &>/dev/null; then
 		rc-service --ifstarted acpid restart
 		if ! rc-service -N acpid status; then
-			ewarn 'acpid must be active for this to work.'
-			ewarn 'try rc-update add acpid default && rc-service acpid start'
+			ewarn "acpid must be active for this to work."
+			ewarn "try rc-update add acpid default && rc-service acpid start"
 		fi
 	fi
 }

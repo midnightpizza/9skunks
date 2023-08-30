@@ -1,11 +1,11 @@
 # Copyright 2020-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=8
 
 JAVA_PKG_IUSE="doc source"
 
-inherit eapi7-ver flag-o-matic java-pkg-2 java-pkg-simple multiprocessing toolchain-funcs
+inherit flag-o-matic java-pkg-2 java-pkg-simple multiprocessing toolchain-funcs
 
 EGRADLE_VER="4.10.3"
 EHG_COMMIT="9f49e3b6147f"
@@ -47,15 +47,7 @@ REQUIRED_USE="amd64? ( cpu_flags_x86_sse2 )"
 
 RESTRICT="test" # needs junit version we don't have, fragile
 
-# eclass overrides it, set back to normal
 S="${WORKDIR}/${P}"
-
-# FIXME: majority of flags are honored, needs a bit more patching
-QA_FLAGS_IGNORED=".*"
-
-JAVA_PKG_WANT_BUILD_VM="openjdk-8"
-JAVA_PKG_WANT_SOURCE="1.8"
-JAVA_PKG_WANT_TARGET="1.8"
 
 PATCHES=(
 	"${FILESDIR}"/8/99-sysdeps.patch
@@ -88,12 +80,10 @@ egradle() {
 
 	export GRADLE_HOME
 
-	# FIXME: build.gradle believes $ANT_HOME/bin/ant shoud exist
 	unset ANT_HOME
 
-	einfo "gradle "${gradle_args[@]}" ${@}"
-	# TERM needed, otherwise gradle may fail on terms it does not know about
-	TERM="xterm" "${gradle}" "${gradle_args[@]}" ${@} || die "gradle failed"
+	einfo "gradle ${gradle_args[*]} ${*}"
+	TERM="xterm" "${gradle}" "${gradle_args[@]}" "${@}" || die "gradle failed"
 }
 
 src_unpack() {
@@ -105,12 +95,9 @@ src_prepare() {
 	eapply "${WORKDIR}/${P}-backports"
 	default
 
-	# this will create local jar storage to be used as ivy repo
 	local d="${T}/jars"
 	mkdir "${d}" || die
 
-	# we need jars subdir in every prokect so gradle can find them
-	# only system jars, no bundling
 	local target targets
 	targets=(
 		jars
@@ -119,11 +106,12 @@ src_prepare() {
 		modules/{graphics,jmx,media,swing,swt,web,fxpackager}/jars
 	)
 	einfo "Copying system jars"
-	for target in ${targets[@]}; do
+	for target in "${targets[@]}"; do
 		ln -vs "${T}/jars" "${target}" || die
 	done
 
-	local swt_file_name="$(java-pkg_getjars swt-4.10)"
+	local swt_file_name
+	swt_file_name="$(java-pkg_getjars swt-4.10)"
 	java-pkg_jar-from --build-only --into "${d}" ant-core ant.jar ant-1.8.2.jar
 	java-pkg_jar-from --build-only --into "${d}" ant-core ant-launcher.jar ant-launcher-1.8.2.jar
 	java-pkg_jar-from --build-only --into "${d}" antlr antlr.jar antlr-2.7.7.jar
@@ -136,7 +124,6 @@ src_prepare() {
 }
 
 src_configure() {
-	# see gradle.properties.template in ${S}
 	cat <<- _EOF_ > "${S}"/gradle.properties
 		COMPILE_TARGETS = linux
 		GRADLE_VERSION_CHECK = false
@@ -179,7 +166,6 @@ src_configure() {
 	sed -i 's/mavenCentral/mavenLocal/g' buildSrc/build.gradle || die
 	einfo "Configured with the following settings:"
 	cat gradle.properties || die
-
 }
 
 src_compile() {

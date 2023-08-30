@@ -1,8 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI=7
+EAPI=8
 
 inherit gnustep-2 desktop
 
@@ -16,41 +15,45 @@ SRC_URI="https://github.com/OoliteProject/oolite/archive/${OOLITE_REV}.tar.gz ->
 	https://github.com/OoliteProject/oolite-binary-resources/archive/${BINRES_REV}.tar.gz -> oolite-binary-resources-${PV}.tar.gz
 	https://github.com/OoliteProject/oolite-sdl-dependencies/archive/${SDLDEL_REV}.tar.gz -> oolite-sdl-dependencies-${PV}.tar.gz
 "
-S="${WORKDIR}/${PN}-${OOLITE_REV}"
-OOLITE_VER_GITREV=6897 # git rev-list --count HEAD # depends on OOLITE_REV
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="${IUSE} debug"
 
-RDEPEND="virtual/opengl
-		gnustep-base/gnustep-gui
-		media-libs/sdl-mixer
-		media-libs/sdl-image
-		app-accessibility/espeak-ng
-		media-libs/libvorbis
-		dev-libs/nspr
-		media-libs/libpng
-		media-libs/openal
-		dev-lang/spidermonkey
-		sys-libs/zlib[minizip]"
+RDEPEND="
+	virtual/opengl
+	gnustep-base/gnustep-gui
+	media-libs/sdl-mixer
+	media-libs/sdl-image
+	app-accessibility/espeak-ng
+	media-libs/libvorbis
+	dev-libs/nspr
+	media-libs/libpng
+	media-libs/openal
+	dev-lang/spidermonkey
+	sys-libs/zlib[minizip]
+"
 
 DEPEND="${RDEPEND}
-		gnustep-base/gnustep-make[-libobjc2]"
+	gnustep-base/gnustep-make[-libobjc2]
+"
 
-PATCHES=( "${FILESDIR}/${P}-gentoo.patch" "${FILESDIR}/external-mozjs.patch" )
+PATCHES=(
+	"${FILESDIR}/${P}-gentoo.patch"
+	"${FILESDIR}/external-mozjs.patch"
+)
 
 src_prepare() {
 	gnustep-base_src_prepare
 	mv "${WORKDIR}/oolite-binary-resources-${BINRES_REV}"/* "${S}"/Resources/Binary/
 	mv "${WORKDIR}/oolite-sdl-dependencies-${SDLDEL_REV}"/* "${S}"/deps/Cross-platform-deps/
 	sed -i -e 's:.*STRIP.*:	true:' \
-		-e "/ADDITIONAL_OBJCFLAGS *=/aADDITIONAL_OBJCFLAGS += -fobjc-exceptions $(pkg-config --cflags mozjs185) -DEXTERNAL_MOZJS" \
+		-e "/ADDITIONAL_OBJCFLAGS *=/aADDITIONAL_OBJCFLAGS += -fobjc-exceptions $(pkg-config --cflags mozjs-60) -DEXTERNAL_MOZJS" \
 		-e '/ADDITIONAL_OBJC_LIBS *=/aADDITIONAL_OBJC_LIBS += -lminizip' \
 		-e 's|:src/Core/MiniZip||g' \
 		-e 's|-Isrc/Core/MiniZip|-I/usr/include/minizip|' \
-		-e 's|LIBJS *= js_static|LIBJS = mozjs185|' \
+		-e 's|LIBJS *= js_static|LIBJS = mozjs-60|' \
 		"${S}"/GNUmakefile || die
 	sed "/void png_error/d" -i src/Core/Materials/OOPNGTextureLoader.m
 	rm -rf src/Core/MiniZip/
@@ -58,7 +61,7 @@ src_prepare() {
 
 src_compile() {
 	egnustep_env
-	emake -f Makefile $(use debug && echo debug || echo release) DEPS= VER_GITHASH=${OOLITE_REV:0:7} VER_GITREV=${OOLITE_VER_GITREV}
+	emake -f Makefile $(usex debug release) DEPS= VER_GITHASH=${OOLITE_REV:0:7} VER_GITREV=${OOLITE_VER_GITREV}
 }
 
 src_install() {

@@ -1,42 +1,50 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-EAPI=7
+EAPI=8
 
-inherit autotools git-r3
+inherit autotools
 
 DESCRIPTION="Tools for Flash-Friendly File System (F2FS)"
-HOMEPAGE="http://sourceforge.net/projects/f2fs-tools/"
-SRC_URI=""
-
-EGIT_REPO_URI="https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git"
+HOMEPAGE="https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git/about/"
+if [[ ${PV} == *9999 ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/${PN}.git"
+	EGIT_BRANCH="dev"
+else
+	SRC_URI="https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/${PN}.git/snapshot/${P}.tar.gz"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~x86"
+fi
 
 LICENSE="GPL-2"
-SLOT="0/6"
-KEYWORDS="amd64 arm ~arm64 ~mips ppc ppc64 x86"
+SLOT="0/10"
 IUSE="selinux"
 
 RDEPEND="
+	app-arch/lz4:=
+	dev-libs/lzo:2
+	sys-apps/util-linux
 	selinux? ( sys-libs/libselinux )
-	elibc_musl? ( sys-libs/queue-standalone )"
+	elibc_musl? ( sys-libs/queue-standalone )
+"
 DEPEND="${RDEPEND}"
 
 src_prepare() {
-	eapply_user
-	echo 'mkfs_f2fs_LDFLAGS = ' >> mkfs/Makefile.am
+	default
 	eautoreconf
 }
 
 src_configure() {
-	#This is required to install to /sbin, bug #481110
-	econf \
-		--bindir="${EPREFIX}"/sbin \
-		--disable-static \
+	local myconf=(
+		# This is required to install to /sbin, bug #481110
+		--bindir="${EPREFIX}"/sbin
 		$(use_with selinux)
+	)
+
+	econf "${myconf[@]}"
 }
 
 src_install() {
 	default
-	find "${D}" -name "*.la" -delete || die
+	find "${ED}" -name "*.la" -delete || die
 }
