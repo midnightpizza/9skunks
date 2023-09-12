@@ -3,8 +3,6 @@
 
 EAPI=8
 
-BDEPEND=">=sys-devel/toolchain-1.2.4"
-
 DESCRIPTION="Gimp plug-in for converting images into RGB normal maps"
 HOMEPAGE="https://github.com/RobertBeckebans/gimp-plugin-normalmap"
 SRC_URI="https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/gimp-normalmap/gimp-normalmap-1.2.3.tar.bz2"
@@ -18,19 +16,14 @@ RDEPEND="
 	media-gfx/gimp
 	media-libs/glew
 	x11-libs/gtkglext"
-DEPEND="${RDEPEND}
-	virtual/pkgconfig"
 
 src_prepare() {
 	default
-	sed -e 's:\(CFLAGS\)=-O3:\1+=' \
-		-e 's:-L/usr/X11R6/lib:-lm:' \
-		-i Makefile.linux || die
+	sed -i 's/CFLAGS=-O3/CFLAGS+=/' Makefile.linux || die
+	sed -i 's:-L/usr/X11R6/lib:-lm:' Makefile.linux || die
 }
-
 src_compile() {
-	local cc="$(tc-getCC)"
-	emake CC="${cc}" LDFLAGS="${LDFLAGS}" LD="${cc}" || die "emake failed"
+	emake CC="${CC}" LDFLAGS="${LDFLAGS}" LD="${CC}" || die "emake failed"
 }
 
 src_install() {
