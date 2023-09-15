@@ -3,11 +3,11 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-116-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-117-patches-04.tar.xz"
 
 LLVM_MAX_SLOT=16
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -45,15 +45,11 @@ inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info \
 	llvm multiprocessing optfeature pax-utils python-any-r1 toolchain-funcs \
 	virtualx xdg
 
-# MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-#
-# if [[ ${PV} == *_rc* ]] ; then
-# 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
-# fi
 MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
 
+
 PATCH_URIS=(
-	https://dev.gentoo.org/~{juippis,whissi,slashbeast}/mozilla/patchsets/${FIREFOX_PATCHSET}
+	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
 SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
@@ -69,7 +65,7 @@ SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
-IUSE+=" jack +jumbo-build libproxy lto +openh264 pgo pulseaudio sndio selinux"
+IUSE+=" jack +jumbo-build libproxy lto openh264 pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
 IUSE+=" +telemetry valgrind wayland wifi +X"
 
@@ -94,10 +90,7 @@ BDEPEND="${PYTHON_DEPS}
 			sys-devel/clang:16
 			sys-devel/llvm:16
 			clang? (
-				|| (
-					sys-devel/lld:16
-					sys-devel/mold
-				)
+				sys-devel/lld:16
 				virtual/rust:0/llvm-16
 				pgo? ( =sys-libs/compiler-rt-sanitizers-16*[profile] )
 			)
@@ -106,10 +99,7 @@ BDEPEND="${PYTHON_DEPS}
 			sys-devel/clang:15
 			sys-devel/llvm:15
 			clang? (
-				|| (
-					sys-devel/lld:15
-					sys-devel/mold
-				)
+				sys-devel/lld:15
 				virtual/rust:0/llvm-15
 				pgo? ( =sys-libs/compiler-rt-sanitizers-15*[profile] )
 			)
@@ -130,7 +120,7 @@ BDEPEND="${PYTHON_DEPS}
 			x11-base/xorg-server[xvfb]
 			x11-apps/xhost
 		)
-		wayland? (
+		!X? (
 			>=gui-libs/wlroots-0.15.1-r1[tinywl]
 			x11-misc/xkeyboard-config
 		)
@@ -140,7 +130,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.91
+	>=dev-libs/nss-3.92
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -210,6 +200,10 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 		x11-libs/libxcb:=
 	)"
 RDEPEND="${COMMON_DEPEND}
+	hwaccel? (
+		media-video/libva-utils
+		sys-apps/pciutils
+	)
 	jack? ( virtual/jack )
 	openh264? ( media-libs/openh264:*[plugin] )"
 DEPEND="${COMMON_DEPEND}
@@ -694,6 +688,10 @@ src_prepare() {
 
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
+	# Clear checksums from cargo crates we've manually patched.
+	# moz_clear_vendor_checksums xyz
+	moz_clear_vendor_checksums proc-macro2
+
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
 	if [[ -n ${FILES_PER_UNIFIED_FILE} ]] && use jumbo-build; then
@@ -773,7 +771,11 @@ src_configure() {
 	export HOST_CC="$(tc-getBUILD_CC)"
 	export HOST_CXX="$(tc-getBUILD_CXX)"
 	export AS="$(tc-getCC) -c"
-	tc-export CC CXX LD AR AS NM OBJDUMP RANLIB PKG_CONFIG
+
+	# Configuration tests expect llvm-readelf output, bug 913130
+	READELF="llvm-readelf"
+
+	tc-export CC CXX LD AR AS NM OBJDUMP RANLIB READELF PKG_CONFIG
 
 	# Pass the correct toolchain paths through cbindgen
 	if tc-is-cross-compiler ; then
@@ -812,6 +814,8 @@ src_configure() {
 		--disable-strip \
 		--disable-tests \
 		--disable-updater \
+		--disable-wasm-function-references \
+		--disable-wasm-gc \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
