@@ -745,8 +745,8 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
-		CC=${CHOST}-clang-${version_clang}
-		CXX=${CHOST}-clang++-${version_clang}
+		CC=${CHOST}-clang
+		CXX=${CHOST}-clang++
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
 	elif ! use clang && ! tc-is-gcc ; then
