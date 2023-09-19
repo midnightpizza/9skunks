@@ -3,11 +3,11 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-102esr-patches-10j.tar.xz"
+FIREFOX_PATCHSET="firefox-102esr-patches-13.tar.xz"
 
 LLVM_MAX_SLOT=16
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -15,11 +15,11 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream mozilla version, used by mozlinguas
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/firefox/config#L14
+# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/firefox/config#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/browser/config#L106
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="12.5.3"
-TOR_TAG="${TOR_PV%.*}-1-build2"
+TOR_PV="12.5.4"
+TOR_TAG="${TOR_PV%.*}-1-build1"
 NOSCRIPT_VERSION="11.4.26"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
@@ -60,7 +60,10 @@ BDEPEND="${PYTHON_DEPS}
 			sys-devel/clang:16
 			sys-devel/llvm:16
 			clang? (
-				sys-devel/lld:16
+				|| (
+					sys-devel/lld:16
+					sys-devel/mold
+				)
 				virtual/rust:0/llvm-16
 			)
 		)
@@ -492,8 +495,11 @@ src_configure() {
 
 	mozconfig_use_enable dbus
 	mozconfig_add_options_ac ''  --disable-libproxy
+	
+if [ "$CPU_ARCH" == "amd64" ]; then
+    mozconfig_add_options_ac '' --disable-eme
+fi
 
-	mozconfig_add_options_ac '' --disable-eme
 
 	mozconfig_add_options_ac '' --disable-geckodriver
 
