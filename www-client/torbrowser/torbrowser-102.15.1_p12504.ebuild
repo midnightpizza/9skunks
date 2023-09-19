@@ -51,7 +51,7 @@ SLOT="0"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 IUSE="+clang dbus hardened"
 IUSE+=" pulseaudio"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp eme-free"
 IUSE+=" wayland"
 
 BDEPEND="${PYTHON_DEPS}
@@ -496,9 +496,8 @@ src_configure() {
 	mozconfig_use_enable dbus
 	mozconfig_add_options_ac ''  --disable-libproxy
 	
-if [ "$CPU_ARCH" == "amd64" ]; then
-    mozconfig_add_options_ac '' --disable-eme
-fi
+	use eme-free && mozconfig_add_options_ac '+eme-free' --disable-eme
+
 
 
 	mozconfig_add_options_ac '' --disable-geckodriver
