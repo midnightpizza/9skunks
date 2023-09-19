@@ -684,6 +684,12 @@ src_configure() {
 	echo "=========================================================="
 	echo
 
+    if [[ ${ARCH} == "arm64" ]]; then
+        einfo "Removing --disable-eme for arm64"
+        sed -i 's/ac_add_options --disable-eme//g' "${S}"/.mozconfig || die "sed failed"
+    fi
+
+
 	./mach configure || die
 }
 
