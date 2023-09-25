@@ -23,20 +23,16 @@ inherit python-any-r1 qmake-utils readme.gentoo-r1 toolchain-funcs xdg-utils
 DESCRIPTION="Modifications to Chromium for removing Google integration and enhancing privacy"
 HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PATCHSET="2"
-PATCHSET_NAME="chromium-$(ver_cut 1)-patchset-${PATCHSET}"
-PATCHSET_PPC64="115.0.5790.102-1raptor0~deb11u2"
+PATCHSET_NAME="chromium-116-patchset-${PATCHSET}"
+PATCHSET_PPC64="116.0.5845.110-2raptor0~deb11u1"
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}.tar.xz
 	https://github.com/stha09/chromium-patches/releases/download/${PATCHSET_NAME}/${PATCHSET_NAME}.tar.xz
-	ppc64? (
-		https://quickbuild.io/~raptor-engineering-public/+archive/ubuntu/chromium/+files/chromium_${PATCHSET_PPC64}.debian.tar.xz
-		https://dev.gentoo.org/~sultan/distfiles/www-client/chromium/chromium-ppc64le-gentoo-patches-1.tar.xz
-	)
 "
 
 LICENSE="BSD uazo-bromite? ( GPL-3 )"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
-IUSE="+X bluetooth cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc kerberos nvidia +official optimize-thinlto optimize-webui pax-kernel pgo pic +proprietary-codecs pulseaudio qt5 qt6 screencast selinux suid system-abseil-cpp system-av1 system-brotli system-crc32c system-double-conversion +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png system-re2 +system-snappy system-woff2 thinlto uazo-bromite vaapi wayland widevine"
+KEYWORDS="amd64 ~arm64 ~x86"
+IUSE="+X bluetooth cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless hevc kerberos nvidia +official optimize-thinlto optimize-webui override-data-dir pax-kernel pgo pic +proprietary-codecs pulseaudio qt5 qt6 screencast selinux suid system-abseil-cpp system-av1 system-brotli system-crc32c system-double-conversion +system-ffmpeg +system-harfbuzz +system-icu +system-jsoncpp +system-libevent +system-libusb system-libvpx +system-openh264 system-openjpeg +system-png system-re2 +system-snappy system-woff2 thinlto uazo-bromite vaapi wayland widevine"
 RESTRICT="
 	!system-ffmpeg? ( proprietary-codecs? ( bindist ) )
 	!system-openh264? ( bindist )
@@ -56,19 +52,17 @@ REQUIRED_USE="
 	qt6? ( qt5 )
 "
 
-#UGC_COMMIT_ID="21e4a63a088d6f60c9a8d330b02896fa927bacee"
+#UGC_COMMIT_ID="3d12c5f0544b28c9446bcc037a500defcbf5c3d0"
 # UGC_PR_COMMITS=(
 # 	c917e096342e5b90eeea91ab1f8516447c8756cf
 # 	5794e9d12bf82620d5f24505798fecb45ca5a22d
 # )
 
-UAZO_BROMITE_COMMIT_ID="0747986f1c3f5fd1ad219a23c34a460b6d44aff3"
+UAZO_BROMITE_COMMIT_ID="9fdf65383f548d60c8837ad63a0fa6ab72ec88d6"
 
-# CHROMIUM_COMMITS=(
-# 	ddfcc907907a20d9f8fbc1416492e2093b339b22
-# 	6ab6fdfe3d403b6917069957c707e6822b873962
-# 	a818a8afbb4e21efb3f261543ccd83081fc30636
-# )
+CHROMIUM_COMMITS=(
+	5a8dfcaf84b5af5aeb738702651e98bfc43d6d45
+)
 
 UGC_PV="${PV/_p/-}"
 UGC_PF="${PN}-${UGC_PV}"
@@ -87,14 +81,14 @@ SRC_URI+="${UGC_URL}
 
 if [ ! -z "${UGC_PR_COMMITS[*]}" ]; then
 	for i in "${UGC_PR_COMMITS[@]}"; do
-		SRC_URI+="https://github.com/ungoogled-software/${PN}/commit/$i.patch -> ${PN}-$i.patch
+		SRC_URI+="https://github.com/ungoogled-software/${PN}/commit/$i.patch?full_index=true -> ${PN}-$i.patch
 		"
 	done
 fi
 
 if [ ! -z "${CHROMIUM_COMMITS[*]}" ]; then
 	for i in "${CHROMIUM_COMMITS[@]}"; do
-		SRC_URI+="https://github.com/chromium/chromium/commit/${i/-}.patch -> chromium-${i/-}.patch
+		SRC_URI+="https://github.com/chromium/chromium/commit/${i/-}.patch?full_index=true -> chromium-${i/-}.patch
 		"
 	done
 fi
@@ -215,9 +209,12 @@ RDEPEND="${COMMON_DEPEND}
 	)
 	virtual/ttf-fonts
 	selinux? ( sec-policy/selinux-chromium )
-	!www-client/chromium
-	!www-client/chromium-bin
-	!www-client/ungoogled-chromium-bin
+	!override-data-dir? (
+		!www-client/chromium
+		!www-client/chromium-bin
+		!www-client/ungoogled-chromium-bin
+		!www-client/cromite[-override-data-dir]
+	)
 "
 
 DEPEND="${COMMON_DEPEND}
@@ -239,7 +236,7 @@ BDEPEND="
 		qt6? ( dev-qt/qtbase:6 )
 	)
 	dev-lang/perl
-	>=dev-util/gn-0.1807
+	>=dev-util/gn-0.2114
 	>=dev-util/gperf-3.0.3
 	>=dev-util/ninja-1.7.2
 	dev-vcs/git
@@ -363,21 +360,28 @@ src_prepare() {
 		"/\"GlobalMediaControlsCastStartStop\",/{n;s/ENABLED/DISABLED/;}" \
 		"chrome/browser/media/router/media_router_feature.cc" || die
 
+	rm ${WORKDIR}/patches/chromium-116-abseil-arm64.patch
+	rm ${WORKDIR}/patches/chromium-116-object_paint_properties_sparse-include.patch
+	rm ${WORKDIR}/patches/chromium-116-profile_view_utils-include.patch
+	rm ${WORKDIR}/patches/chromium-116-url_load_stats-include.patch
+
+		# "${FILESDIR}/chromium-qt6.patch"
+		# "${FILESDIR}/chromium-114-remove-evdev-dep.patch"
+		# "${FILESDIR}/chromium-115-binutils-2.41.patch"
+		# "${FILESDIR}/chromium-98-gtk4-build.patch"
 	local PATCHES=(
 		"${WORKDIR}/patches"
 		"${FILESDIR}/chromium-cross-compile.patch"
 		"${FILESDIR}/chromium-use-oauth2-client-switches-as-default.patch"
-		"${FILESDIR}/chromium-qt6.patch"
-		"${FILESDIR}/chromium-98-gtk4-build.patch"
 		"${FILESDIR}/chromium-108-EnumTable-crash.patch"
 		"${FILESDIR}/chromium-109-system-openh264.patch"
 		"${FILESDIR}/chromium-109-system-zlib.patch"
 		"${FILESDIR}/chromium-111-InkDropHost-crash.patch"
-		"${FILESDIR}/chromium-114-remove-evdev-dep.patch"
-		"${FILESDIR}/chromium-115-binutils-2.41.patch"
 		"${FILESDIR}/perfetto-system-zlib.patch"
 		"${FILESDIR}/gtk-fix-prefers-color-scheme-query.diff"
 		"${FILESDIR}/restore-x86-r2.patch"
+		"${FILESDIR}/chromium-117-material_color_utilities.patch"
+		"${FILESDIR}/chromium-117-later-gtk4-version.patch"
 	)
 
 	if [ ! -z "${CHROMIUM_COMMITS[*]}" ]; then
@@ -388,16 +392,6 @@ src_prepare() {
 				PATCHES+=( "${DISTDIR}/chromium-$i.patch" )
 			fi
 		done
-	fi
-
-	if use ppc64 ; then
-		local p
-		for p in $(grep -v "^#" "${WORKDIR}"/debian/patches/series | grep "^ppc64le" || die); do
-			if [[ ! $p =~ "fix-breakpad-compile.patch" ]]; then
-				eapply "${WORKDIR}/debian/patches/${p}"
-			fi
-		done
-		PATCHES+=( "${WORKDIR}/ppc64le" )
 	fi
 
 	default
@@ -422,8 +416,6 @@ src_prepare() {
 			"${BR_PA_PATH}/Disable-TLS-resumption.patch"
 			"${BR_PA_PATH}/Remove-navigator.connection-info.patch"
 
-			"${BR_PA_PATH}/00WIN-ADDTO-Add-a-proxy-configuration-page.patch"
-
 			"${BR_PA_PATH}/AudioBuffer-AnalyserNode-fp-mitigations.patch"
 			"${BR_PA_PATH}/00Fonts-fingerprinting-mitigation.patch"
 
@@ -439,7 +431,9 @@ src_prepare() {
 			"${BR_PA_PATH}/Timezone-customization.patch"
 			"${BR_PA_PATH}/00Disable-speechSynthesis-getVoices-API.patch"
 			"${BR_PA_PATH}/00Remove-support-for-device-memory-and-cpu-recovery.patch"
+			"${BR_PA_PATH}/00Disable-Feeback-Collector.patch"
 			"${BR_PA_PATH}/00Disable-remote-altsvc-for-h3-connections.patch"
+			"${BR_PA_PATH}/00Disable-PartnerCustomizations.patch"
 		)
 		for i in "${BROMITE_PATCHES[@]}"; do
 			if [[ "$i" =~ "Add-autoplay-site-setting.patch" ]] ||
@@ -474,6 +468,11 @@ src_prepare() {
 	if use hevc; then
 		sed -i '/^bool IsHevcProfileSupported(const VideoType& type) {$/{s++bool IsHevcProfileSupported(const VideoType\& type) { return true;+;h};${x;/./{x;q0};x;q1}' \
 			media/base/supported_types.cc || die
+	fi
+
+	if use override-data-dir; then
+		sed -i '/"chromium";/{s++"ungoogled-chromium";+;h};${x;/./{x;q0};x;q1}' \
+			chrome/common/chrome_paths_linux.cc || die
 	fi
 
 	if use system-abseil-cpp; then
@@ -607,7 +606,6 @@ src_prepare() {
 		third_party/angle/src/third_party/libXNVCtrl
 	)
 	keeplibs+=(
-		third_party/angle/src/third_party/systeminfo
 		third_party/angle/src/third_party/volk
 		third_party/apple_apsl
 		third_party/axe-core
@@ -671,6 +669,7 @@ src_prepare() {
 		third_party/devtools-frontend/src/front_end/third_party/marked
 		third_party/devtools-frontend/src/front_end/third_party/puppeteer
 		third_party/devtools-frontend/src/front_end/third_party/puppeteer/package/lib/esm/third_party/mitt
+		third_party/devtools-frontend/src/front_end/third_party/puppeteer/package/lib/esm/third_party/rxjs
 		third_party/devtools-frontend/src/front_end/third_party/vscode.web-custom-data
 		third_party/devtools-frontend/src/front_end/third_party/wasmparser
 		third_party/devtools-frontend/src/test/unittests/front_end/third_party/i18n
@@ -775,7 +774,6 @@ src_prepare() {
 	)
 	keeplibs+=(
 		third_party/pdfium/third_party/libtiff
-		third_party/pdfium/third_party/skia_shared
 		third_party/perfetto
 		third_party/perfetto/protos/third_party/chromium
 		third_party/pffft
@@ -845,6 +843,7 @@ src_prepare() {
 		third_party/xnnpack
 		third_party/zxcvbn-cpp
 		third_party/zlib/google
+		third_party/zstd
 		url/third_party/mozilla
 		v8/src/third_party/siphash
 		v8/src/third_party/valgrind
@@ -886,27 +885,8 @@ src_prepare() {
 	if ! use system-re2; then
 		keeplibs+=( third_party/re2 )
 	fi
-	if use arm64 || use ppc64 ; then
-		keeplibs+=( third_party/swiftshader/third_party/llvm-10.0 )
-	fi
 	if use uazo-bromite ; then
 		keeplibs+=( third_party/ungoogled )
-	fi
-	# we need to generate ppc64 stuff because upstream does not ship it yet
-	# it has to be done before unbundling.
-	if use ppc64; then
-		pushd third_party/libvpx >/dev/null || die
-		mkdir -p source/config/linux/ppc64 || die
-		# requires git and clang, bug #832803
-		sed -i -e "s|^update_readme||g; s|clang-format|${EPREFIX}/bin/true|g" \
-			generate_gni.sh || die
-		./generate_gni.sh || die
-		popd >/dev/null || die
-
-		pushd third_party/ffmpeg >/dev/null || die
-		cp libavcodec/ppc/h264dsp.c libavcodec/ppc/h264dsp_ppc.c || die
-		cp libavcodec/ppc/h264qpel.c libavcodec/ppc/h264qpel_ppc.c || die
-		popd >/dev/null || die
 	fi
 
 	ebegin "Removing bundled libraries"
@@ -1143,6 +1123,7 @@ src_configure() {
 	myconf_gn+=" enable_hevc_parser_and_hw_decoder=$(usex hevc true false)"
 
 	# Ungoogled flags
+	myconf_gn+=" build_with_tflite_lib=false"
 	myconf_gn+=" enable_mdns=false"
 	myconf_gn+=" enable_mse_mpeg2ts_stream_parser=$(usex proprietary-codecs true false)"
 	myconf_gn+=" enable_reading_list=false"
@@ -1150,17 +1131,17 @@ src_configure() {
 	myconf_gn+=" enable_reporting=false"
 	myconf_gn+=" enable_service_discovery=false"
 	myconf_gn+=" exclude_unwind_tables=true"
-	myconf_gn+=" use_official_google_api_keys=false"
 	myconf_gn+=" google_api_key=\"\""
 	myconf_gn+=" google_default_client_id=\"\""
 	myconf_gn+=" google_default_client_secret=\"\""
 	myconf_gn+=" safe_browsing_mode=0"
+	myconf_gn+=" use_official_google_api_keys=false"
 	myconf_gn+=" use_unofficial_version_number=false"
+
 	myconf_gn+=" blink_symbol_level=0"
 	myconf_gn+=" symbol_level=0"
 	myconf_gn+=" enable_iterator_debugging=false"
 	myconf_gn+=" enable_swiftshader=false"
-	myconf_gn+=" build_with_tflite_lib=false"
 
 	# Additional flags
 	myconf_gn+=" perfetto_use_system_zlib=true"
@@ -1222,9 +1203,6 @@ src_configure() {
 	elif [[ $myarch = arm ]] ; then
 		myconf_gn+=" target_cpu=\"arm\""
 		ffmpeg_target_arch=$(usex cpu_flags_arm_neon arm-neon arm)
-	elif [[ $myarch = ppc64 ]] ; then
-		myconf_gn+=" target_cpu=\"ppc64\""
-		ffmpeg_target_arch=ppc64
 	else
 		die "Failed to determine target arch, got '$myarch'."
 	fi
