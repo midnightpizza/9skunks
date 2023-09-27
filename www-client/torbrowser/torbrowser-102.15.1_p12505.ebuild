@@ -18,9 +18,9 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/firefox/config#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-12.5/projects/browser/config#L106
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="12.5.4"
-TOR_TAG="${TOR_PV%.*}-1-build1"
-NOSCRIPT_VERSION="11.4.26"
+TOR_PV="12.5.5"
+TOR_TAG="${TOR_PV%.*}-1-build2"
+NOSCRIPT_VERSION="11.4.27"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
@@ -45,7 +45,7 @@ SRC_URI="
 DESCRIPTION="Private browsing without tracking, surveillance, or censorship"
 HOMEPAGE="https://www.torproject.org/ https://gitlab.torproject.org/tpo/applications/tor-browser/"
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 
 SLOT="0"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
@@ -479,9 +479,7 @@ src_configure() {
 		--x-includes="${ESYSROOT}/usr/include" \
 		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
 
-	if ! use x86 ; then
-		mozconfig_add_options_ac '' --enable-rust-simd
-	fi
+	mozconfig_add_options_ac '' --enable-rust-simd
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
@@ -495,10 +493,8 @@ src_configure() {
 
 	mozconfig_use_enable dbus
 	mozconfig_add_options_ac ''  --disable-libproxy
-	
-	use eme-free && mozconfig_add_options_ac '+eme-free' --disable-eme
 
-
+	mozconfig_add_options_ac '' --disable-eme
 
 	mozconfig_add_options_ac '' --disable-geckodriver
 
@@ -802,7 +798,7 @@ src_install() {
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser#L340
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tree/main/projects/fonts
 	sed -i -e 's|<dir>fonts</dir>|<dir>/usr/share/torbrowser/fonts</dir>|' \
-		${WORKDIR}/tor-browser/Browser/fontconfig/fonts.conf || die
+		"${WORKDIR}"/tor-browser/Browser/fontconfig/fonts.conf || die
 	insinto /usr/share/torbrowser/
 	doins -r "${WORKDIR}/tor-browser/Browser/fontconfig"
 	doins -r "${WORKDIR}/tor-browser/Browser/fonts"
