@@ -211,7 +211,7 @@ SRC_URI="
 S="${WORKDIR}/${PN}-${COMMIT}/interfacer"
 LICENSE="Apache-2.0 BSD BSD-2 CC0-1.0 CC-BY-3.0 ISC LGPL-2.1 MIT MPL-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS=""
 
 IUSE="+register +duckduckgo"
 BDEPEND="dev-go/go-bindata"

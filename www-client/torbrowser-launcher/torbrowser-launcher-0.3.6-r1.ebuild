@@ -50,7 +50,7 @@ RDEPEND="${PYTHON_DEPS}
 	dev-python/PySocks[${PYTHON_USEDEP}]
 	dev-python/distro[${PYTHON_USEDEP}]
 	dev-python/packaging[${PYTHON_USEDEP}]
-	dev-python/requests[${PYTHON_USEDEP}]
+	dev-python/requests[${PYTHON_USEDEP}]"
 
 pkg_postinst() {
 	xdg_pkg_postinst
