@@ -106,7 +106,7 @@ pkg_setup() {
 
 src_prepare() {
 	default
-
+	eapply "${FILESDIR}/eudev-253.patch"
 	# Change rules back to group uucp instead of dialout for now
 	sed -e 's/GROUP="dialout"/GROUP="uucp"/' -i rules/*.rules \
 		|| die "failed to change group dialout to uucp"
