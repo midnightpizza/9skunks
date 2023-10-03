@@ -412,14 +412,15 @@ multilib_src_configure() {
 	else
 		emesonargs+=(-Dintel-clc=disabled)
 	fi
-
+	if ! use panfork; then
+        emesonargs+=(-Dexpat=enabled)
+    fi
 	emesonargs+=(
 		$(meson_use test build-tests)
 		-Dglx=$(usex X dri disabled)
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
 		-Degl=enabled
-		-Dexpat=enabled
 		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
