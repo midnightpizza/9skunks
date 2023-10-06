@@ -16,7 +16,7 @@ LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
 
-IUSE="alsa ao lua opengl +openmp pulseaudio vulkan"
+IUSE="alsa ao opengl +openmp pulseaudio vulkan"
 
 DEPEND="
 	dev-libs/libchdr
@@ -27,7 +27,7 @@ DEPEND="
 	sys-libs/zlib
 	alsa? ( media-libs/alsa-lib )
 	ao? ( media-libs/libao )
-	lua? ( ${LUA_DEPS} )
+	${LUA_DEPS}
 	opengl? ( virtual/opengl )
 	openmp? ( sys-devel/gcc:*[openmp] )
 	pulseaudio? ( media-sound/pulseaudio )
@@ -42,7 +42,7 @@ BDEPEND=""
 REQUIRED_USE="|| ( opengl vulkan ) || ( ao alsa pulseaudio )"
 
 src_unpack() {
-	use lua && EGIT_SUBMODULES+=( 'core/deps/luabridge' )
+	EGIT_SUBMODULES+=( 'core/deps/luabridge' )
 	git-r3_src_unpack
 }
 src_prepare() {
@@ -57,8 +57,8 @@ src_prepare() {
 	# Skip ao if flag not enabled
 	use !ao && sed -i -e '/pkg_check_modules(AO/d' CMakeLists.txt
 
-	# Skip lua if flag not enabled
-	use !lua && sed -i -e '/find_package(Lua)/d' CMakeLists.txt
+	## Skip lua if flag not enabled
+	#use !lua && sed -i -e '/find_package(Lua)/d' CMakeLists.txt
 
 	# Skip pulseaudio if flag not enabled
 	use !pulseaudio && sed -i -e '/pkg_check_modules(LIBPULSE/d' CMakeLists.txt
