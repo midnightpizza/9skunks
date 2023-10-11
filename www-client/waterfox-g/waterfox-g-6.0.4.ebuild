@@ -573,6 +573,8 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*ppc64*.patch || die
 	fi
 
+	rm -v "${WORKDIR}"/firefox-patches/*-gcc-binutils-2.41.patch || die
+
 	eapply "${WORKDIR}/firefox-patches"
 
 
