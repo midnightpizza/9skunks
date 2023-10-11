@@ -19,7 +19,6 @@ KEYWORDS=""
 IUSE="alsa ao opengl +openmp pulseaudio vulkan"
 
 DEPEND="
-	dev-libs/libchdr
 	dev-libs/libzip
 	dev-libs/xxhash
 	media-libs/libsdl2
@@ -76,8 +75,8 @@ src_prepare() {
 		CMakeLists.txt || die
 
 	# Unbundle chdr
-	sed -i -e '/add_subdirectory.*chdr/d' -e 's/chdr-static/chdr/' \
-		-e 's:core/deps/chdr/include:/usr/include/chdr:' CMakeLists.txt || die
+#	sed -i -e '/add_subdirectory.*chdr/d' -e 's/chdr-static/chdr/' \
+#		-e 's:core/deps/chdr/include:/usr/include/chdr:' CMakeLists.txt || die
 
 	# Do not use ccache
 	sed -i -e '/find_program(CCACHE_FOUND/d' CMakeLists.txt
