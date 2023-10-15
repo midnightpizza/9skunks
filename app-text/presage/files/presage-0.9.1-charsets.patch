@@ -1,0 +1,191 @@
+diff --git a/src/lib/core/charsets.h b/src/lib/core/charsets.h
+index 1c74d76..9901396 100644
+--- a/src/lib/core/charsets.h
++++ b/src/lib/core/charsets.h
+@@ -28,8 +28,6 @@
+ // ISO 8859-1 standard ///////////////////////
+ #include "iso8859_1.h"
+ 
+-
+-// FIXME: ensure values are correct
+ const char RIGHT_ARROW = 28;
+ const char LEFT_ARROW  = 29;
+ const char UP_ARROW    = 30;
+@@ -41,7 +39,6 @@ const char DELETE      = 18;     // ?
+ const char PAGE_UP     = 128;
+ const char PAGE_DOWN   = 128;
+ 
+-
+ const char DEFAULT_WORD_CHARS[]={
+     'A',
+     'B',
+@@ -105,73 +102,72 @@ const char DEFAULT_WORD_CHARS[]={
+     '7',
+     '8',
+     '9',
+-	
+-    Agrave  ,
+-    Aacute  ,
+-    Acirc   ,
+-    Atilde  ,
+-    Auml    ,
+-    Aring   ,
+-    AElig   ,
+-    Ccedil  ,
+-    Egrave  ,
+-    Eacute  ,
+-    Ecirc   ,
+-    Euml    ,
+-    Igrave  ,
+-    Iacute  ,
+-    Icirc   ,
+-    Iuml    ,
+-    ETH     ,
+-    Ntilde  ,
+-    Ograve  ,
+-    Oacute  ,
+-    Ocirc   ,
+-    Otilde  ,
+-    Ouml    ,
+-    times   ,
+-    Oslash  ,
+-    Ugrave  ,
+-    Uacute  ,
+-    Ucirc   ,
+-    Uuml    ,
+-    Yacute  ,
+-    THORN   ,
+-    szlig   ,
+-    agrave  ,
+-    aacute  ,
+-    acirc   ,
+-    atilde  ,
+-    auml    ,
+-    aring   ,
+-    aelig   ,
+-    ccedil  ,
+-    egrave  ,
+-    eacute  ,
+-    ecirc   ,
+-    euml    ,
+-    igrave  ,
+-    iacute  ,
+-    icirc   ,
+-    iuml    ,
+-    eth     ,
+-    ntilde  ,
+-    ograve  ,
+-    oacute  ,
+-    ocirc   ,
+-    otilde  ,
+-    ouml    ,
+-    divide  ,
+-    oslash  ,
+-    ugrave  ,
+-    uacute  ,
+-    ucirc   ,
+-    uuml    ,
+-    yacute  ,
+-    thorn   ,
+-    yuml    ,
+-
+-    '\0' };
++    (char)192,
++    (char)193,
++    (char)194,
++    (char)195,
++    (char)196,
++    (char)197,
++    (char)198,
++    (char)199,
++    (char)200,
++    (char)201,
++    (char)202,
++    (char)203,
++    (char)204,
++    (char)205,
++    (char)206,
++    (char)207,
++    (char)208,
++    (char)209,
++    (char)210,
++    (char)211,
++    (char)212,
++    (char)213,
++    (char)214,
++    (char)215,
++    (char)216,
++    (char)217,
++    (char)218,
++    (char)219,
++    (char)220,
++    (char)221,
++    (char)222,
++    (char)223,
++    (char)224,
++    (char)225,
++    (char)226,
++    (char)227,
++    (char)228,
++    (char)229,
++    (char)230,
++    (char)231,
++    (char)232,
++    (char)233,
++    (char)234,
++    (char)235,
++    (char)236,
++    (char)237,
++    (char)238,
++    (char)239,
++    (char)240,
++    (char)241,
++    (char)242,
++    (char)243,
++    (char)244,
++    (char)245,
++    (char)246,
++    (char)247,
++    (char)248,
++    (char)249,
++    (char)250,
++    (char)251,
++    (char)252,
++    (char)253,
++    (char)254,
++    (char)255,
++    '\0'
++};
+ 
+ const char DEFAULT_SEPARATOR_CHARS[]={
+     '!',
+@@ -206,7 +202,8 @@ const char DEFAULT_SEPARATOR_CHARS[]={
+     '|',
+     '}',
+     '~',
+-    '\0' };
++    '\0'
++};
+ 
+ const char DEFAULT_BLANKSPACE_CHARS[]={
+     ' ',  // space
+@@ -215,7 +212,8 @@ const char DEFAULT_BLANKSPACE_CHARS[]={
+     '\r', // carriage return
+     '\t', // horizontal tab
+     '\v', // vertical tab
+-    '\0' };
++    '\0'
++};
+ 
+ const char DEFAULT_CONTROL_CHARS[]={
+     RIGHT_ARROW,
+@@ -228,7 +226,7 @@ const char DEFAULT_CONTROL_CHARS[]={
+     DELETE,
+     PAGE_UP,
+     PAGE_DOWN,
+-    '\0' };
+-
++    '\0'
++};
+ 
+ #endif // PRESAGE_CHARSETS

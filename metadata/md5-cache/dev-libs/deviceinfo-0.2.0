@@ -1,0 +1,15 @@
+BDEPEND=>=dev-util/ninja-1.8.2 >=dev-util/cmake-3.20.5
+DEFINED_PHASES=compile configure install prepare test
+DEPEND=dev-cpp/yaml-cpp systemd? ( dev-libs/glib )
+DESCRIPTION=Library to detect and configure devices
+EAPI=7
+HOMEPAGE=https://gitlab.com/ubports/development/core/deviceinfo
+INHERIT=cmake
+IUSE=systemd
+KEYWORDS=~arm64 amd64
+LICENSE=GPL-3
+RDEPEND=dev-cpp/yaml-cpp systemd? ( dev-libs/glib ) systemd? ( sys-apps/dbus sys-apps/systemd )
+SLOT=0
+SRC_URI=https://gitlab.com/ubports/development/core/deviceinfo/-/archive/0.2.0/deviceinfo-0.2.0.tar.bz2
+_eclasses_=toolchain-funcs	fbbbc99d10168de2926e06da7169b8dc	multilib	c19072c3cd7ac5cb21de013f7e9832e0	flag-o-matic	e5cc383ea8420f92fe3737be790021dc	multiprocessing	30ead54fa2e2b5f9cd4e612ffc34d0fe	ninja-utils	39e7a84b06eff4efd9f2e0c3d1668b98	xdg-utils	baea6080dd821f5562d715887954c9d3	cmake	fc2f89084f590ac95c004ea95b0d2f80
+_md5_=0fe0ba53f2a6654ab19a0dbd1e4344cd

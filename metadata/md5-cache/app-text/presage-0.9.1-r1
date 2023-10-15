@@ -1,0 +1,12 @@
+DEFINED_PHASES=compile configure prepare
+DEPEND=sqlite? ( dev-db/sqlite:3 )
+DESCRIPTION=Intelligent predictive text entry platform
+EAPI=8
+HOMEPAGE=https://presage.sourceforge.io/
+IUSE=doc sqlite
+KEYWORDS=arm64 amd64
+LICENSE=GPL-2+
+RDEPEND=sqlite? ( dev-db/sqlite:3 )
+SLOT=0
+SRC_URI=mirror://sourceforge/presage/presage-0.9.1.tar.gz
+_md5_=ae29e21409e4554225d4c4302ba65bb9

@@ -1,0 +1,22 @@
+diff --git a/apps/gtk/gprompter/scintilla/gtk/ScintillaGTK.cxx b/apps/gtk/gprompter/scintilla/gtk/ScintillaGTK.cxx
+index 926457b..9737395 100644
+--- a/apps/gtk/gprompter/scintilla/gtk/ScintillaGTK.cxx
++++ b/apps/gtk/gprompter/scintilla/gtk/ScintillaGTK.cxx
+@@ -1626,13 +1626,15 @@ void ScintillaGTK::ReceivedDrop(GtkSelectionData *selection_data) {
+ 		drop.push_back('\0');
+ 		NotifyURIDropped(&drop[0]);
+ 	} else if ((TypeOfGSD(selection_data) == GDK_TARGET_STRING) || (TypeOfGSD(selection_data) == atomUTF8)) {
+-		if (TypeOfGSD(selection_data) > 0) {
++		// Check if the selection data is not nullptr before proceeding
++		if (selection_data != nullptr) {
+ 			SelectionText selText;
+ 			GetGtkSelectionText(selection_data, selText);
+ 			DropAt(posDrop, selText.Data(), selText.Length(), false, selText.rectangular);
+ 		}
+ 	} else if (LengthOfGSD(selection_data) > 0) {
+-		//~ fprintf(stderr, "ReceivedDrop other %p\n", static_cast<void *>(selection_data->type));
++		// Handle other cases if needed
++		// fprintf(stderr, "ReceivedDrop other %p\n", static_cast<void *>(selection_data->type));
+ 	}
+ 	Redraw();
+ }

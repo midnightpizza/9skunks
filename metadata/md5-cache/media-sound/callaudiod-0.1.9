@@ -1,0 +1,13 @@
+BDEPEND=dev-util/gdbus-codegen dev-util/glib-utils >=dev-util/meson-0.62.2 >=dev-util/ninja-1.8.2 dev-util/meson-format-array
+DEFINED_PHASES=compile configure install test
+DESCRIPTION=Call audio routing daemon
+EAPI=8
+HOMEPAGE=https://gitlab.com/mobian1/callaudiod
+INHERIT=meson
+KEYWORDS=~arm64 amd64
+LICENSE=GPL-3
+RDEPEND=dev-libs/glib:2 media-libs/alsa-lib || ( media-libs/libpulse >=media-sound/apulse-0.1.12-r4[sdk] )
+SLOT=0
+SRC_URI=https://gitlab.com/mobian1/callaudiod/-/archive/0.1.9/callaudiod-0.1.9.tar.bz2
+_eclasses_=multiprocessing	30ead54fa2e2b5f9cd4e612ffc34d0fe	ninja-utils	39e7a84b06eff4efd9f2e0c3d1668b98	toolchain-funcs	fbbbc99d10168de2926e06da7169b8dc	multilib	c19072c3cd7ac5cb21de013f7e9832e0	python-utils-r1	12aa0037eb004139215ff04894d52b28	meson	af1ca7ad21fdd31fcc4fa91d8abca977
+_md5_=76f195c5eb63516c6efbe277b5d9f0fc

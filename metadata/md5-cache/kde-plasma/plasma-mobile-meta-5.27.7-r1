@@ -1,0 +1,12 @@
+DEFINED_PHASES=postinst
+DESCRIPTION=Meta package for a complete Plasma Mobile environment for smartphones
+EAPI=7
+HOMEPAGE=https://www.plasma-mobile.org/
+INHERIT=optfeature
+IUSE=+bluetooth +desktop-portal +dialer +gtk haptic +pulseaudio +sms kwallet
+KEYWORDS=~arm64 ~amd64
+LICENSE=metapackage
+RDEPEND=>=app-crypt/keysmith-23.04.3 >=kde-apps/angelfish-23.04.3:5 >=kde-apps/calindori-23.04.3:5 >=kde-apps/kaccounts-providers-23.04.3:5 >=kde-apps/kalk-23.04.3:5 >=kde-apps/koko-23.04.3:5 >=kde-apps/ktrip-23.04.3:5 >=kde-apps/okular-23.04.3:5[mobile] kde-apps/plasma-phonebook:5 kde-apps/plasma-camera >=kde-apps/qmlkonsole-23.04.3:5 >=kde-misc/kclock-23.04.3 >=kde-misc/kdeconnect-23.04.3:5 >=kde-misc/kweather-23.04.3:5 >=kde-plasma/discover-5.27.7:5 >=kde-plasma/kscreen-5.27.7:5 >=kde-plasma/kwayland-integration-5.27.7:5 >=kde-plasma/oxygen-5.27.7:5 >=kde-plasma/oxygen-sounds-5.27.7:5 >=kde-plasma/plasma-mobile-5.27.7:5 kde-plasma/plasma-mobile-sounds kde-plasma/plasma-settings:5 >=kde-plasma/powerdevil-5.27.7:5 >=media-sound/kasts-23.04.3 >=media-sound/elisa-23.04.3:5 >=media-sound/krecorder-23.04.3 >=media-video/plasmatube-23.04.3:5 x11-apps/maliit-keyboard x11-misc/sddm bluetooth? ( >=kde-plasma/bluedevil-5.27.7:5 ) desktop-portal? ( >=kde-plasma/xdg-desktop-portal-kde-5.27.7:5 ) dialer? ( >=kde-apps/plasma-dialer-5.27.7:5 ) gtk? ( >=kde-plasma/breeze-gtk-5.27.7:5 ) haptic? ( app-mobilephone/hfd-service ) kwallet? ( >=kde-plasma/kwallet-pam-5.27.7:5 ) pulseaudio? ( >=kde-plasma/plasma-pa-5.27.7:5 ) sms? ( app-mobilephone/spacebar:5 )
+SLOT=5
+_eclasses_=optfeature	222cb475c5a4f7ae7cfb0bf510a6fe54
+_md5_=6ad9ee432603c877ca03269c72237ad6
