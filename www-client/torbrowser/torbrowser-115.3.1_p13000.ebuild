@@ -5,7 +5,7 @@ EAPI=8
 
 FIREFOX_PATCHSET="firefox-115esr-patches-06.tar.xz"
 
-LLVM_MAX_SLOT=16
+LLVM_MAX_SLOT=17
 
 PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -57,19 +57,11 @@ IUSE+=" wayland +X"
 BDEPEND="${PYTHON_DEPS}
 	|| (
 		(
-			sys-devel/clang:16
-			sys-devel/llvm:16
+			sys-devel/clang
+			sys-devel/llvm
 			clang? (
-				sys-devel/lld:16
-				virtual/rust:0/llvm-16
-			)
-		)
-		(
-			sys-devel/clang:15
-			sys-devel/llvm:15
-			clang? (
-				sys-devel/lld:15
-				virtual/rust:0/llvm-15
+				sys-devel/lld
+				virtual/rust
 			)
 		)
 	)
