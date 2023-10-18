@@ -15,10 +15,3 @@ IUSE="kerberos static-libs bindist"
 
 DEPEND=">=dev-util/samurai-1.0.0"
 
-src_prepare() {
-	default
-}
-
-src_configure() {
-	econf $(use_enable kerberos) $(use_enable static-libs static) $(use_enable bindist)
-}
