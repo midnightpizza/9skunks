@@ -1,38 +1,44 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="48"
+K_GENPATCHES_VER="66"
 K_SECURITY_UNSUPPORTED="1"
 K_NOSETEXTRAVERSION="1"
 XANMOD_VERSION="1"
-XANMOD_URI="https://github.com/xanmod/linux/releases/download/"
+XANMOD_URI="https://sourceforge.net/projects/xanmod/files/releases/xanmod/${OKV}-xanmod${XANMOD_VER}"
+XANMOD_VER="1"
+XANMOD_BRANCH="lts"
 
 HOMEPAGE="https://xanmod.org"
 LICENSE+=" CDDL"
-KEYWORDS="~amd64"
 
 inherit kernel-2
 detect_version
 
-DESCRIPTION="XanMod kernel sources, including the Gentoo patchset - LTS branch"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+DESCRIPTION="Full XanMod sources including the Gentoo patchset"
+HOMEPAGE="https://xanmod.org"
+
+LICENSE+=" CDDL"
+
+XANMOD_URI="https://sourceforge.net/projects/xanmod/files/releases/${XANMOD_BRANCH}/${OKV}-xanmod${XANMOD_VER}"
+XANMOD_PATCH="patch-${OKV}-${XANMOD_VER}.patch.xz"
+
 SRC_URI="
 	${KERNEL_BASE_URI}/linux-${KV_MAJOR}.${KV_MINOR}.tar.xz
-	${XANMOD_URI}/${OKV}-xanmod${XANMOD_VERSION}/patch-${OKV}-xanmod${XANMOD_VERSION}.xz
-	${GENPATCHES_URI}"
+	${XANMOD_URI}/patch-${OKV}-xanmod${XANMOD_VER%_rev*}.xz -> ${XANMOD_PATCH}
+	${GENPATCHES_URI}
+"
 
-UNIPATCH_LIST+="${DISTDIR}/patch-${OKV}-xanmod${XANMOD_VERSION}.xz"
+	UNIPATCH_LIST+=" ${DISTDIR}/${XANMOD_PATCH}"
 
 # excluding all minor kernel revision patches; XanMod will take care of that
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 
-# excluding CPU optimizations patches, since it's included in XanMod too
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
-#UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2910_bfp-mark-get-entry-ip-as--maybe-unused.patch"
-
-#UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *cifs-fix-minor-compile-warning.patch"
 
 pkg_postinst() {
 	elog "The XanMod team strongly suggests the use of updated CPU microcodes with its"
