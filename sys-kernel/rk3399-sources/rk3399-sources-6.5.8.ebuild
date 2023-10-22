@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="15"
-MANJARO_COMMIT="a0c8cc6e65a6072da989f98fa93bb3fd01f3f44e"
+K_GENPATCHES_VER="10"
+MANJARO_COMMIT="3633002b19032037d06481e5045ab3b6c8e3a96b"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -25,8 +25,6 @@ SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 	-> 1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr.patch
 	-> 1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-staging-add-rtl8723cs-driver.patch
-	-> 2001-staging-add-rtl8723cs-driver-${PV}.patch
 	"
 
 

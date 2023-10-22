@@ -4,8 +4,8 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras experimental"
-K_GENPATCHES_VER="15"
-MANJARO_COMMIT="a0c8cc6e65a6072da989f98fa93bb3fd01f3f44e"
+K_GENPATCHES_VER="66"
+MANJARO_COMMIT="dc8cc666df6eadfccb0115886f64672a7d1d2a1c"
 RESTRICT="MIRROR"
 
 inherit kernel-2
@@ -21,12 +21,14 @@ DESCRIPTION="Full sources including the Gentoo patchset for the ${KV_MAJOR}.${KV
 SRC_URI="${KERNEL_URI} ${GENPATCHES_URI} ${ARCH_URI}
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/config
 	-> kernel-aarch64-manjaro.config-${PV}
+	https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1003-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch
+	-> 1003-panfrost-Silence-Panfrost-gem-shrinker-loggin-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch
 	-> 1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay-${PV}.patch
-		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr.patch
-	-> 1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr-${PV}.patch
 		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2001-staging-add-rtl8723cs-driver.patch
 	-> 2001-staging-add-rtl8723cs-driver-${PV}.patch
+		https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/${MANJARO_COMMIT}/2003-arm64-dts-rockchip-Work-around-daughterboard-issues.patch
+	-> 2003-arm64-dts-rockchip-Work-around-daughterboard-issues-${PV}.patch
 	"
 
 
