@@ -871,9 +871,4 @@ pkg_postinst() {
 		elog "Set the Variables in /etc/env.d/99torbrowser accordingly."
 	fi
 
-	if ver_test "${REPLACING_VERSIONS}" -lt "102.7.0_p12500"; then
-		ewarn "With this update, the profile directory moved from \"~/.mozilla/torbrowser/\""
-		ewarn "to \"~/.torproject/torbrowser/\". To keep your settings and bookmarks,"
-		ewarn "move your profile to the new location before launching torbrowser"
-	fi
 }
