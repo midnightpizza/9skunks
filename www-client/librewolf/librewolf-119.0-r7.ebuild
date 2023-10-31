@@ -16,7 +16,7 @@ VIRTUALX_REQUIRED="manual"
 
 # Librewolf version (please rev-bump if changed)
 # Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-4"
+LIBREWOLF_PV="${PV}-7"
 
 MOZ_ESR=
 
