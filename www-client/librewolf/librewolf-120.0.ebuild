@@ -16,7 +16,7 @@ VIRTUALX_REQUIRED="manual"
 
 # Librewolf version (please rev-bump if changed)
 # Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-8"
+LIBREWOLF_PV="${PV}-1"
 
 MOZ_ESR=
 
@@ -71,8 +71,11 @@ IUSE+=" +telemetry valgrind wayland wifi +X"
 # Firefox-only IUSE
 IUSE+=" geckodriver +gmp-autoupdate screencast"
 
+# "-jumbo-build +system-icu": build failure on firefox-120:
+#   firefox-120.0/intl/components/src/TimeZone.cpp:345:3: error: use of undeclared identifier 'MOZ_TRY'
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
+	!jumbo-build? ( !system-icu )
 	pgo? ( lto )
 	wifi? ( dbus )"
 
@@ -95,7 +98,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.24.3
+	>=dev-util/cbindgen-0.26.0
 	net-libs/nodejs
 	virtual/pkgconfig
 	!clang? ( virtual/rust )
@@ -131,7 +134,6 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	x11-libs/pango
 	x11-libs/pixman
 	dbus? (
-		dev-libs/dbus-glib
 		sys-apps/dbus
 	)
 	jack? ( virtual/jack )
@@ -167,7 +169,6 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	)
 	wifi? (
 		kernel_linux? (
-			dev-libs/dbus-glib
 			net-misc/networkmanager
 			sys-apps/dbus
 		)
@@ -642,6 +643,11 @@ src_prepare() {
 
 	eapply "${WORKDIR}/firefox-patches"
 
+	# Workaround for bgo#917599
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		eapply "${FILESDIR}"/firefox-115.4.0-icu-74.patch
+	fi
+
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
 
@@ -1060,11 +1066,19 @@ src_configure() {
 
 	# elf-hack
 	if use amd64 || use x86 ; then
-		if use clang ; then
-			mozconfig_add_options_ac 'relr elf-hack with clang' --enable-elf-hack=relr
+		if tc-ld-is-mold ; then
+			# relr-elf-hack is currently broken with mold, bgo#916259
+			mozconfig_add_options_ac 'disable elf-hack with mold linker' --disable-elf-hack
 		else
-			mozconfig_add_options_ac 'legacy elf-hack with gcc' --enable-elf-hack=legacy
+			if use clang ; then
+				mozconfig_add_options_ac 'relr elf-hack with clang' --enable-elf-hack=relr
+			else
+				mozconfig_add_options_ac 'legacy elf-hack with gcc' --enable-elf-hack=legacy
+			fi
 		fi
+	elif use ppc64 ; then
+		# '--disable-elf-hack' is not recognized on ppc64, bgo#917049
+		:;
 	else
 		mozconfig_add_options_ac 'disable elf-hack on non-supported arches' --disable-elf-hack
 	fi
@@ -1254,6 +1268,18 @@ src_install() {
 			cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set hwaccel x11 prefs"
 			pref("gfx.x11-egl.force-enabled",          true);
 			EOF
+		fi
+
+		# Install the vaapitest binary on supported arches (+arm when keyworded)
+		if use amd64 || use arm64 || use x86 ; then
+			exeinto "${MOZILLA_FIVE_HOME}"
+			doexe "${BUILD_DIR}"/dist/bin/vaapitest
+		fi
+
+		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
+		if use arm64 ; then
+			exeinto "${MOZILLA_FIVE_HOME}"
+			doexe "${BUILD_DIR}"/dist/bin/v4l2test
 		fi
 	fi
 

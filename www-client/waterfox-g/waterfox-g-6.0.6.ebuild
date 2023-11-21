@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-119-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-115esr-patches-06.tar.xz"
 
 LLVM_MAX_SLOT=17
 
@@ -13,60 +13,33 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
+WF_PN="Waterfox"
+WF_PV="G${PV/_beta/b}"
 
-# Librewolf version (please rev-bump if changed)
-# Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-7"
+inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing optfeature pax-utils python-any-r1 toolchain-funcs virtualx xdg
 
-MOZ_ESR=
-
-MOZ_PV=${PV}
-MOZ_PV_SUFFIX=
-if [[ ${PV} =~ (_(alpha|beta|rc).*)$ ]] ; then
-	MOZ_PV_SUFFIX=${BASH_REMATCH[1]}
-
-	# Convert the ebuild version to the upstream Mozilla version
-	MOZ_PV="${MOZ_PV/_alpha/a}" # Handle alpha for SRC_URI
-	MOZ_PV="${MOZ_PV/_beta/b}"  # Handle beta for SRC_URI
-	MOZ_PV="${MOZ_PV%%_rc*}"    # Handle rc for SRC_URI
-fi
-
-if [[ -n ${MOZ_ESR} ]] ; then
-	# ESR releases have slightly different version numbers
-	MOZ_PV="${MOZ_PV}esr"
-fi
-
-MOZ_PN="firefox"
-MOZ_P="${MOZ_PN}-${MOZ_PV}"
-MOZ_PV_DISTFILES="${MOZ_PV}${MOZ_PV_SUFFIX}"
-MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
-
-inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing \
-	optfeature pax-utils python-any-r1 readme.gentoo-r1 toolchain-funcs virtualx xdg
-
-MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
-
+WF_SRC_BASE_URI="https://github.com/WaterfoxCo/Waterfox/archive/refs/tags"
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
 )
 
-SRC_URI="${MOZ_SRC_BASE_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
-	${PATCH_URIS[@]}"
+SRC_URI="
+	${WF_SRC_BASE_URI}/${WF_PV}.tar.gz -> ${P}.tar.gz
+	${PATCH_URIS[@]}
+"
 
-DESCRIPTION="LibreWolf Web Browser"
-HOMEPAGE="https://librewolf-community.gitlab.io/"
-
-KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
-
-SLOT="rapid"
-SLOT_TMP="0/$(ver_cut 1)"
+DESCRIPTION="Waterfox Web Browser"
+HOMEPAGE="https://www.waterfox.net"
+KEYWORDS="amd64 arm64 ppc64 x86"
+SLOT="6"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
+RESTRICT="mirror"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
-IUSE+=" jack +jumbo-build libproxy lto openh264 pgo pulseaudio sndio selinux"
+IUSE+=" jack libproxy lto openh264 pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
-IUSE+=" +telemetry valgrind wayland wifi +X"
+IUSE+=" wayland wifi +X"
 
 # Firefox-only IUSE
 IUSE+=" geckodriver +gmp-autoupdate screencast"
@@ -76,8 +49,7 @@ REQUIRED_USE="|| ( X wayland )
 	pgo? ( lto )
 	wifi? ( dbus )"
 
-FF_ONLY_DEPEND="!www-client/firefox:0
-	!www-client/firefox:esr
+WATERFOX_ONLY_DEPEND="!www-client/waterfox-g5
 	screencast? ( media-video/pipewire:= )
 	selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
@@ -98,7 +70,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( virtual/rust )
+	!clang? ( >=virtual/rust-1.65 )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
@@ -112,12 +84,12 @@ BDEPEND="${PYTHON_DEPS}
 			x11-misc/xkeyboard-config
 		)
 	)"
-COMMON_DEPEND="${FF_ONLY_DEPEND}
+COMMON_DEPEND="${WATERFOX_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.94
+	>=dev-libs/nss-3.90
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -153,13 +125,12 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 		>=media-gfx/graphite2-1.3.13
 		>=media-libs/harfbuzz-2.8.1:0=
 	)
-	system-icu? ( dev-libs/icu )
+	system-icu? ( >=dev-libs/icu-73.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
-	valgrind? ( dev-util/valgrind )
 	wayland? (
 		>=media-libs/libepoxy-1.5.10-r1
 		x11-libs/gtk+:3[wayland]
@@ -200,7 +171,8 @@ DEPEND="${COMMON_DEPEND}
 		x11-libs/libSM
 	)"
 
-S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
+S="${WORKDIR}/Waterfox-${WF_PV}"
+MOZ_L10N_SOURCEDIR="${S}/waterfox/browser/locales"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
 # overridden in the enviromnent (advanced hackers only)
@@ -236,49 +208,14 @@ llvm_check_deps() {
 	einfo "Using LLVM slot ${LLVM_SLOT} to build" >&2
 }
 
-MOZ_LANGS=(
-	af ar ast be bg br ca cak cs cy da de dsb
-	el en-CA en-GB en-US es-AR es-ES et eu
-	fi fr fy-NL ga-IE gd gl he hr hsb hu
-	id is it ja ka kab kk ko lt lv ms nb-NO nl nn-NO
-	pa-IN pl pt-BR pt-PT rm ro ru
-	sk sl sq sr sv-SE th tr uk uz vi zh-CN zh-TW
-)
+# Store languages that actually can be compiled
+WF_LANGS=()
 
-# Firefox-only LANGS
-MOZ_LANGS+=( ach )
-MOZ_LANGS+=( an )
-MOZ_LANGS+=( az )
-MOZ_LANGS+=( bn )
-MOZ_LANGS+=( bs )
-MOZ_LANGS+=( ca-valencia )
-MOZ_LANGS+=( eo )
-MOZ_LANGS+=( es-CL )
-MOZ_LANGS+=( es-MX )
-MOZ_LANGS+=( fa )
-MOZ_LANGS+=( ff )
-MOZ_LANGS+=( gn )
-MOZ_LANGS+=( gu-IN )
-MOZ_LANGS+=( hi-IN )
-MOZ_LANGS+=( hy-AM )
-MOZ_LANGS+=( ia )
-MOZ_LANGS+=( km )
-MOZ_LANGS+=( kn )
-MOZ_LANGS+=( lij )
-MOZ_LANGS+=( mk )
-MOZ_LANGS+=( mr )
-MOZ_LANGS+=( my )
-MOZ_LANGS+=( ne-NP )
-MOZ_LANGS+=( oc )
-MOZ_LANGS+=( sco )
-MOZ_LANGS+=( si )
-MOZ_LANGS+=( son )
-MOZ_LANGS+=( ta )
-MOZ_LANGS+=( te )
-MOZ_LANGS+=( tl )
-MOZ_LANGS+=( trs )
-MOZ_LANGS+=( ur )
-MOZ_LANGS+=( xh )
+MOZ_LANGS=(
+	ar cs da de el en-GB en-US es-ES es-MX fr hu
+	id it ja ko lt nl nn-NO pl pt-BR pt-PT ru
+	sv-SE th vi zh-CN zh-TW
+)
 
 mozilla_set_globals() {
 	# https://bugs.gentoo.org/587334
@@ -300,10 +237,10 @@ mozilla_set_globals() {
 			xflag=${lang}
 		fi
 
-		SRC_URI+=" l10n_${xflag/[_@]/-}? ("
-		SRC_URI+=" ${MOZ_SRC_BASE_URI}/linux-x86_64/xpi/${lang}.xpi -> ${MOZ_P_DISTFILES}-${lang}.xpi"
-		SRC_URI+=" )"
 		IUSE+=" l10n_${xflag/[_@]/-}"
+
+		# Store languages that actually can be compiled
+		WF_LANGS+=( ${xflag} )
 	done
 }
 mozilla_set_globals
@@ -615,20 +552,7 @@ pkg_setup() {
 }
 
 src_unpack() {
-	local _lp_dir="${WORKDIR}/language_packs"
-	local _src_file
-
-	if [[ ! -d "${_lp_dir}" ]] ; then
-		mkdir "${_lp_dir}" || die
-	fi
-
-	for _src_file in ${A} ; do
-		if [[ ${_src_file} == *.xpi ]]; then
-			cp "${DISTDIR}/${_src_file}" "${_lp_dir}" || die "Failed to copy '${_src_file}' to '${_lp_dir}'!"
-		else
-			unpack ${_src_file}
-		fi
-	done
+	default
 }
 
 src_prepare() {
@@ -640,7 +564,23 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*ppc64*.patch || die
 	fi
 
+	rm -v "${WORKDIR}"/firefox-patches/*-gcc-binutils-2.41.patch || die
+
 	eapply "${WORKDIR}/firefox-patches"
+
+
+	## Apply additional polynomial-C patchest
+	elog "Apply Polynomial-C patchset..."
+	# unfuck URLbar
+	#eapply "${FILESDIR}/${PN}6.0b1-URLbar_unfuck.patch"
+	eapply "${FILESDIR}/${PN}-fix_langpack_id.patch"
+	eapply "${FILESDIR}/${PN}6-fix-gtk-icons.patch"
+
+	# [WFX-400] Revert to FF useragent.
+	echo 'MOZ_APP_UA_NAME="Firefox"' >> "${S}/browser/confvars.sh"
+
+	# Fix Waterfox Version Display
+	echo "${WF_PV}" > "${S}/browser/config/version_display.txt"
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -675,29 +615,6 @@ src_prepare() {
 
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
-	# Clear checksums from cargo crates we've manually patched.
-	# moz_clear_vendor_checksums xyz
-	moz_clear_vendor_checksums proc-macro2
-
-	# Respect choice for "jumbo-build"
-	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
-	if [[ -n ${FILES_PER_UNIFIED_FILE} ]] && use jumbo-build; then
-		local my_files_per_unified_file=${FILES_PER_UNIFIED_FILE:=16}
-		elog ""
-		elog "jumbo-build defaults modified to ${my_files_per_unified_file}."
-		elog "if you get a build failure, try undefining FILES_PER_UNIFIED_FILE,"
-		elog "if that fails try -jumbo-build before opening a bug report."
-		elog ""
-
-		sed -i -e "s/\"FILES_PER_UNIFIED_FILE\", 16/\"FILES_PER_UNIFIED_FILE\", "${my_files_per_unified_file}"/" python/mozbuild/mozbuild/frontend/data.py ||
-			die "Failed to adjust FILES_PER_UNIFIED_FILE in python/mozbuild/mozbuild/frontend/data.py"
-		sed -i -e "s/FILES_PER_UNIFIED_FILE = 6/FILES_PER_UNIFIED_FILE = "${my_files_per_unified_file}"/" js/src/moz.build ||
-			die "Failed to adjust FILES_PER_UNIFIED_FILE in js/src/moz.build"
-	fi
-
-	# Clearing crate checksums where we have applied patches
-	moz_clear_vendor_checksums bindgen
-
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
 	mkdir -p "${BUILD_DIR}" || die
@@ -707,7 +624,14 @@ src_prepare() {
 	echo -n "${MOZ_API_KEY_LOCATION//gGaPi/}" > "${S}"/api-location.key || die
 	echo -n "${MOZ_API_KEY_MOZILLA//m0ap1/}" > "${S}"/api-mozilla.key || die
 
+	# Remove default mozconfig
+	if [[ -f .mozconfig ]] ; then
+		rm .mozconfig || die
+	fi
+
 	xdg_environment_reset
+
+	default
 }
 
 src_configure() {
@@ -732,10 +656,11 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
-		CC=${CHOST}-clang
-		CXX=${CHOST}-clang++
+		CC=${CHOST}-clang-${version_clang}
+		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
+
 	elif ! use clang && ! tc-is-gcc ; then
 		# Force gcc
 		have_switched_compiler=yes
@@ -753,16 +678,11 @@ src_configure() {
 		strip-unsupported-flags
 	fi
 
-	# Ensure we use correct toolchain,
-	# AS is used in a non-standard way by upstream, #bmo1654031
+	# Ensure we use correct toolchain
 	export HOST_CC="$(tc-getBUILD_CC)"
 	export HOST_CXX="$(tc-getBUILD_CXX)"
 	export AS="$(tc-getCC) -c"
-
-	# Configuration tests expect llvm-readelf output, bug 913130
-	READELF="llvm-readelf"
-
-	tc-export CC CXX LD AR AS NM OBJDUMP RANLIB READELF PKG_CONFIG
+	tc-export CC CXX LD AR AS NM OBJDUMP RANLIB PKG_CONFIG
 
 	# Pass the correct toolchain paths through cbindgen
 	if tc-is-cross-compiler ; then
@@ -770,7 +690,7 @@ src_configure() {
 	fi
 
 	# Set MOZILLA_FIVE_HOME
-	export MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
+	export MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}${SLOT}"
 
 	# python/mach/mach/mixin/process.py fails to detect SHELL
 	export SHELL="${EPREFIX}/bin/bash"
@@ -786,28 +706,23 @@ src_configure() {
 	mozconfig_add_options_ac '' --enable-project=browser
 
 	# Set Gentoo defaults
-	if use telemetry; then
-		export MOZILLA_OFFICIAL=1
-	fi
+	export MOZILLA_OFFICIAL=1
 
 	mozconfig_add_options_ac 'Gentoo default' \
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
 		--disable-crashreporter \
-		--disable-disk-remnant-avoidance \
 		--disable-gpsd \
 		--disable-install-strip \
-		--disable-legacy-profile-creation \
 		--disable-parental-controls \
 		--disable-strip \
 		--disable-tests \
 		--disable-updater \
-		--disable-wasm-function-references \
-		--disable-wasm-gc \
 		--disable-wmf \
+		--enable-legacy-profile-creation \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
-		--enable-official-branding \
+		--disable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
@@ -825,27 +740,13 @@ src_configure() {
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
 		--with-unsigned-addon-scopes=app,system \
-		--x-includes="${SYSROOT}${EPREFIX}/usr/include" \
-		--x-libraries="${SYSROOT}${EPREFIX}/usr/$(get_libdir)"
+		--x-includes="${ESYSROOT}/usr/include" \
+		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
 
-	# Librewolf
-	mozconfig_add_options_ac 'LibreWolf Branding' \
-		--with-app-name="librewolf" \
-		--with-app-basename="LibreWolf" \
-		--with-branding=browser/branding/librewolf
-
-	mozconfig_add_options_mk 'Librewolf Disable Telemetry' \
-		MOZ_CRASHREPORTER=0 \
-		MOZ_DATA_REPORTING=0 \
-		MOZ_SERVICES_HEALTHREPORT=0 \
-		MOZ_TELEMETRY_REPORTING=0
-
-	export MOZ_REQUIRE_SIGNING=
-
-	# Set update channel
-	local update_channel=release
-	[[ -n ${MOZ_ESR} ]] && update_channel=esr
-	mozconfig_add_options_ac '' --update-channel=${update_channel}
+	# # Set update channel
+	# local update_channel=release
+	# [[ -n ${MOZ_ESR} ]] && update_channel=esr
+	# mozconfig_add_options_ac '' --update-channel=${update_channel}
 
 	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
@@ -857,8 +758,6 @@ src_configure() {
 	# bug 833001, bug 903411#c8
 	if use ppc64 || use riscv; then
 		mozconfig_add_options_ac '' --disable-sandbox
-	elif use valgrind; then
-		mozconfig_add_options_ac 'valgrind requirement' --disable-sandbox
 	else
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
@@ -915,7 +814,6 @@ src_configure() {
 
 	mozconfig_use_enable dbus
 	mozconfig_use_enable libproxy
-	mozconfig_use_enable valgrind
 
 	use eme-free && mozconfig_add_options_ac '+eme-free' --disable-eme
 
@@ -924,9 +822,6 @@ src_configure() {
 	if use hardened ; then
 		mozconfig_add_options_ac "+hardened" --enable-hardening
 		append-ldflags "-Wl,-z,relro -Wl,-z,now"
-
-		# Increase the FORTIFY_SOURCE value, #910071.
-		sed -i -e '/-D_FORTIFY_SOURCE=/s:2:3:' "${S}"/build/moz.configure/toolchain.configure || die
 	fi
 
 	local myaudiobackends=""
@@ -939,14 +834,12 @@ src_configure() {
 
 	mozconfig_use_enable wifi necko-wifi
 
-	! use jumbo-build && mozconfig_add_options_ac '--disable-unified-build' --disable-unified-build
-
 	if use X && use wayland ; then
 		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
 	elif ! use X && use wayland ; then
 		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland-only
 	else
-		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
+		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
 
 	if use lto ; then
@@ -1058,15 +951,31 @@ src_configure() {
 		fi
 	fi
 
-	# elf-hack
-	if use amd64 || use x86 ; then
-		if use clang ; then
-			mozconfig_add_options_ac 'relr elf-hack with clang' --enable-elf-hack=relr
-		else
-			mozconfig_add_options_ac 'legacy elf-hack with gcc' --enable-elf-hack=legacy
+	if use clang ; then
+		# https://bugzilla.mozilla.org/show_bug.cgi?id=1482204
+		# https://bugzilla.mozilla.org/show_bug.cgi?id=1483822
+		# toolkit/moz.configure Elfhack section: target.cpu in ('arm', 'x86', 'x86_64')
+		local disable_elf_hack=
+		if use amd64 ; then
+			disable_elf_hack=yes
+		elif use x86 ; then
+			disable_elf_hack=yes
+		elif use arm ; then
+			disable_elf_hack=yes
 		fi
-	else
-		mozconfig_add_options_ac 'disable elf-hack on non-supported arches' --disable-elf-hack
+
+		if [[ -n ${disable_elf_hack} ]] ; then
+			mozconfig_add_options_ac 'elf-hack is broken when using Clang' --disable-elf-hack
+		fi
+	elif tc-is-gcc ; then
+		if ver_test $(gcc-fullversion) -ge 10 ; then
+			einfo "Forcing -fno-tree-loop-vectorize to workaround GCC bug, see bug 758446 ..."
+			append-cxxflags -fno-tree-loop-vectorize
+		fi
+	fi
+
+	if use elibc_musl && use arm64 ; then
+		mozconfig_add_options_ac 'elf-hack is broken when using musl/arm64' --disable-elf-hack
 	fi
 
 	# Additional ARCH support
@@ -1088,10 +997,6 @@ src_configure() {
 		mozconfig_add_options_ac '!elibc_glibc' --disable-jemalloc
 	fi
 
-	if use valgrind; then
-		mozconfig_add_options_ac 'valgrind requirement' --disable-jemalloc
-	fi
-
 	# Allow elfhack to work in combination with unstripped binaries
 	# when they would normally be larger than 2GiB.
 	append-ldflags "-Wl,--compress-debug-sections=zlib"
@@ -1111,13 +1016,6 @@ src_configure() {
 		export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="none"
 	fi
 
-	if ! use telemetry; then
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_CRASHREPORTER=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_DATA_REPORTING=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_SERVICES_HEALTHREPORT=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_TELEMETRY_REPORTING=0"
-	fi
-
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
 
@@ -1127,6 +1025,16 @@ src_configure() {
 
 	# Set build dir
 	mozconfig_add_options_mk 'Gentoo default' "MOZ_OBJDIR=${BUILD_DIR}"
+
+	export MOZ_INCLUDE_SOURCE_INFO=1
+	export MOZ_REQUIRE_SIGNING=
+
+	mozconfig_add_options_ac 'for building locales' --with-l10n-base=${MOZ_L10N_SOURCEDIR}
+	mozconfig_add_options_ac 'Waterfox' --with-app-name=${PN}${SLOT}
+	mozconfig_add_options_ac 'Waterfox' --with-app-basename=${WF_PN}
+	mozconfig_add_options_ac 'Waterfox' --with-branding=waterfox/browser/branding
+	mozconfig_add_options_ac 'Waterfox' --with-distribution-id=net.waterfox
+	mozconfig_add_options_ac 'Waterfox' "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 
 	# Show flags we will use
 	einfo "Build BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
@@ -1156,10 +1064,6 @@ src_configure() {
 	done
 	echo "=========================================================="
 	echo
-
-	if use valgrind; then
-		sed -i -e 's/--enable-optimize=-O[0-9s]/--enable-optimize="-g -O2"/' .mozconfig || die
-	fi
 
 	./mach configure || die
 }
@@ -1196,7 +1100,26 @@ src_compile() {
 		local -x GDK_BACKEND=x11
 	fi
 
+	export MOZCONFIG="${S}/.mozconfig"
+
 	${virtx_cmd} ./mach build --verbose || die
+
+	local loc mymozconfig
+	for loc in ${LINGUAS} ; do
+		if has ${loc} "${MOZ_LANGS[@]}" ; then
+			mymozconfig=".mozconfig_${loc}"
+			cp .mozconfig ${mymozconfig} || die
+			sed "/MOZ_OBJDIR/s:=.*#:=${S}/../${P}-${loc}_build #:" \
+				-i ${mymozconfig} || die
+			export MOZCONFIG="${S}/${mymozconfig}"
+			# returns non-zero exit code so we just die
+			# later in src_install in case the langpacks
+			# failed to build
+			${virtx_cmd} ./mach build --verbose \
+				config/nsinstall langpack-${loc}
+		fi
+	done
+	export MOZCONFIG="${S}/.mozconfig"
 }
 
 src_install() {
@@ -1208,25 +1131,20 @@ src_install() {
 
 	DESTDIR="${D}" ./mach install || die
 
-	## LibreWolf
-	# For some reason 'local-settings.js' doesn't get properly packaged.
-	# Install it manually
-	insinto "${MOZILLA_FIVE_HOME}/defaults/pref"
-	doins "${S}/lw/local-settings.js"
-
-	# Upstream cannot ship symlink but we can (bmo#658850)
-	rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
-	dosym ${PN} ${MOZILLA_FIVE_HOME}/${PN}-bin
+	# Remove waterfox-g6-bin if available; do not create symlink.
+	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" ]] ; then
+		rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
+	fi
 
 	# Don't install llvm-symbolizer from sys-devel/llvm package
 	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" ]] ; then
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	## Disabled for LibreWolf
 	# Install policy (currently only used to disable application updates)
-	# insinto "${MOZILLA_FIVE_HOME}/distribution"
-	# newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
+	insinto "${MOZILLA_FIVE_HOME}/distribution"
+	newins "${FILESDIR}"/distribution.ini distribution.ini
+	newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
 
 	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
@@ -1242,7 +1160,7 @@ src_install() {
 
 	# Force hwaccel prefs if USE=hwaccel is enabled
 	if use hwaccel ; then
-		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js \
+		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js-r2 \
 		>>"${GENTOO_PREFS}" \
 		|| die "failed to add prefs to force hardware-accelerated rendering to all-gentoo.js"
 
@@ -1275,7 +1193,7 @@ src_install() {
 	fi
 
 	# Install language packs
-	local langpacks=( $(find "${WORKDIR}/language_packs" -type f -name '*.xpi') )
+	local langpacks=( $(find "${S}"/../${P}-*_build/dist/linux-*/xpi -type f -name '*.xpi') )
 	if [[ -n "${langpacks}" ]] ; then
 		moz_install_xpi "${MOZILLA_FIVE_HOME}/distribution/extensions" "${langpacks[@]}"
 	fi
@@ -1291,9 +1209,11 @@ src_install() {
 	fi
 
 	# Install icons
-	local icon_srcdir="${S}/browser/branding/${PN}"
+	local icon_srcdir="${S}/waterfox/browser/branding"
+	local icon_symbolic_file="${FILESDIR}/icon/waterfox-symbolic.svg"
 
 	insinto /usr/share/icons/hicolor/symbolic/apps
+	newins "${icon_symbolic_file}" ${PN}${SLOT}-symbolic.svg
 
 	local icon size
 	for icon in "${icon_srcdir}"/default*.png ; do
@@ -1301,38 +1221,43 @@ src_install() {
 		size=${size##*/default}
 
 		if [[ ${size} -eq 48 ]] ; then
-			newicon "${icon}" ${PN}.png
+			newicon "${icon}" ${PN}${SLOT}.png
 		fi
 
-		newicon -s ${size} "${icon}" ${PN}.png
+		newicon -s ${size} "${icon}" ${PN}${SLOT}.png
 	done
 
 	# Install menu
-	local app_name="LibreWolf"
-	local desktop_file="${FILESDIR}/icon/${MOZ_PN}-r2.desktop"
-	local desktop_filename="${PN}.desktop"
-	local exec_command="${PN}"
+	local app_name="Waterfox G${SLOT}"
+	local desktop_file="${FILESDIR}/icon/${PN}.desktop"
+	local desktop_filename="${PN}${SLOT}.desktop"
+	local exec_command="${PN}${SLOT}"
 	local icon="${PN}"
+	local name="Waterfox ${WF_PV}"
 	local use_wayland="false"
 
 	if use wayland ; then
 		use_wayland="true"
 	fi
 
-	cp "${desktop_file}" "${WORKDIR}/${PN}.desktop-template" || die
+	cp "${desktop_file}" "${T}/${PN}.desktop-template" || die
 
 	sed -i \
 		-e "s:@NAME@:${app_name}:" \
 		-e "s:@EXEC@:${exec_command}:" \
 		-e "s:@ICON@:${icon}:" \
-		"${WORKDIR}/${PN}.desktop-template" \
+		"${T}/${PN}.desktop-template" \
 		|| die
 
-	newmenu "${WORKDIR}/${PN}.desktop-template" "${desktop_filename}"
+	newmenu "${T}/${PN}.desktop-template" "${desktop_filename}"
+
+	rm "${T}/${PN}.desktop-template" || die
 
 	# Install wrapper script
-	[[ -f "${ED}/usr/bin/${PN}" ]] && rm "${ED}/usr/bin/${PN}"
-	newbin "${FILESDIR}/${MOZ_PN}.sh" ${PN}
+	[[ -e "${ED}/usr/bin/${PN}" ]] && rm "${ED}/usr/bin/${PN}"
+	sed "s@%WATERFOX_NAME%@${PN}${SLOT}@" "${FILESDIR}/${PN}".sh \
+		> ${T}/${PN}.sh || die
+	newbin "${T}/${PN}".sh ${PN}${SLOT}
 
 	# Update wrapper
 	sed -i \
@@ -1340,7 +1265,7 @@ src_install() {
 		-e "s:@MOZ_FIVE_HOME@:${MOZILLA_FIVE_HOME}:" \
 		-e "s:@APULSELIB_DIR@:${apulselib}:" \
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
-		"${ED}/usr/bin/${PN}" \
+		"${ED}/usr/bin/${PN}${SLOT}" \
 		|| die
 }
 
@@ -1385,23 +1310,10 @@ pkg_postinst() {
 	fi
 
 	local show_doh_information
-	local show_normandy_information
-	local show_shortcut_information
 
 	if [[ -z "${REPLACING_VERSIONS}" ]] ; then
 		# New install; Tell user that DoH is disabled by default
 		show_doh_information=yes
-		show_normandy_information=yes
-		show_shortcut_information=no
-	else
-		local replacing_version
-		for replacing_version in ${REPLACING_VERSIONS} ; do
-			if ver_test "${replacing_version}" -lt 91.0 ; then
-				# Tell user that we no longer install a shortcut
-				# per supported display protocol
-				show_shortcut_information=yes
-			fi
-		done
 	fi
 
 	if [[ -n "${show_doh_information}" ]] ; then
@@ -1414,41 +1326,18 @@ pkg_postinst() {
 		elog "You can enable DNS-over-HTTPS in ${PN^}'s preferences."
 	fi
 
-	# bug 713782
-	if [[ -n "${show_normandy_information}" ]] ; then
-		elog
-		elog "Upstream operates a service named Normandy which allows Mozilla to"
-		elog "push changes for default settings or even install new add-ons remotely."
-		elog "While this can be useful to address problems like 'Armagadd-on 2.0' or"
-		elog "revert previous decisions to disable TLS 1.0/1.1, privacy and security"
-		elog "concerns prevail, which is why we have switched off the use of this"
-		elog "service by default."
-		elog
-		elog "To re-enable this service set"
-		elog
-		elog "    app.normandy.enabled=true"
-		elog
-		elog "in about:config."
-	fi
-
-	if [[ -n "${show_shortcut_information}" ]] ; then
-		elog
-		elog "Since ${PN}-91.0 we no longer install multiple shortcuts for"
-		elog "each supported display protocol.  Instead we will only install"
-		elog "one generic ${PN^} shortcut."
-		elog "If you still want to be able to select between running ${PN^}"
-		elog "on X11 or Wayland, you have to re-create these shortcuts on your own."
-	fi
-
 	# bug 835078
 	if use hwaccel && has_version "x11-drivers/xf86-video-nouveau"; then
 		ewarn "You have nouveau drivers installed in your system and 'hwaccel' "
-		ewarn "enabled for LibreWolf. Nouveau / your GPU might not supported the "
+		ewarn "enabled for Waterfox. Nouveau / your GPU might not support the "
 		ewarn "required EGL, so either disable 'hwaccel' or try the workaround "
-		ewarn "explained in https://bugs.gentoo.org/835078#c5 if LibreWolf crashes."
+		ewarn "explained in https://bugs.gentoo.org/835078#c5 if Waterfox crashes."
 	fi
 
-	optfeature_header "Optional programs for extra features:"
-	optfeature "desktop notifications" x11-libs/libnotify
-	optfeature "fallback mouse cursor theme e.g. on WMs" gnome-base/gsettings-desktop-schemas
+	if ! has_version "sys-libs/glibc"; then
+		elog
+		elog "glibc not found! You won't be able to play DRM content."
+		elog "See Gentoo bug #910309 or upstream bug #1843683."
+		elog
+	fi
 }
