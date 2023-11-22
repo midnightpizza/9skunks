@@ -1,0 +1,14 @@
+DEFINED_PHASES=compile install postinst postrm preinst prepare setup test unpack
+DESCRIPTION=Full sources including the Gentoo patchset for the 6.6 kernel tree
+EAPI=8
+HOMEPAGE=https://dev.gentoo.org/~mpagano/genpatches
+INHERIT=kernel-2
+IUSE=experimental symlink build
+KEYWORDS=~arm64
+LICENSE=GPL-2
+RDEPEND=!build? ( app-arch/cpio dev-lang/perl sys-devel/bc sys-devel/bison sys-devel/flex sys-devel/make >=sys-libs/ncurses-5.2 virtual/libelf virtual/pkgconfig )
+RESTRICT=MIRROR binchecks strip
+SLOT=6.6.2
+SRC_URI=https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.6-3.base.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.6-3.base.tar.xz https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.6-3.extras.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.6-3.extras.tar.xz experimental? ( https://dev.gentoo.org/~alicef/dist/genpatches/genpatches-6.6-3.experimental.tar.xz https://dev.gentoo.org/~mpagano/dist/genpatches/genpatches-6.6-3.experimental.tar.xz ) https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/config -> kernel-aarch64-manjaro.config-6.6.2 https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/1003-panfrost-Silence-Panfrost-gem-shrinker-loggin.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/1004-arm64-dts-rockchip-Add-Firefly-Station-p1-support.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/1005-rk3399-rp64-pcie-Reimplement-rockchip-PCIe-bus-scan-delay.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/1007-arm64-dts-rockchip-Add-PCIe-bus-scan-delay-to-RockPr.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/2001-staging-add-rtl8723cs-driver.patch https://gitlab.manjaro.org/manjaro-arm/packages/core/linux/-/raw/bc510492071c7be4d801c1ac5aa57999e9d73aa8/3003-arm64-dts-rockchip-Add-hdmi-cec-assigned-clocks-to-r.patch
+_eclasses_=toolchain-funcs	eed10cf5e5a06916e654d31f5a1925cc	multilib	c19072c3cd7ac5cb21de013f7e9832e0	crossdev	f04338ff78f213a4a55c5c37b3c6563e	estack	c61c368a76fdf3a82fdf8dbaebea3804	multiprocessing	30ead54fa2e2b5f9cd4e612ffc34d0fe	kernel-2	5f1a05e8ec7196f00c7754b57f927f06
+_md5_=bd9af6511f2d8bf5adb2479fccba6fbe

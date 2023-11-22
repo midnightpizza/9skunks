@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-115esr-patches-06.tar.xz"
+FIREFOX_PATCHSET="firefox-115esr-patches-08.tar.xz"
 
 LLVM_MAX_SLOT=17
 
@@ -18,8 +18,8 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/firefox/config?ref_type=heads#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/config?ref_type=heads#L91
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="13.0"
-TOR_TAG="${TOR_PV%a*}-1-build2"
+TOR_PV="13.0.4"
+TOR_TAG="${TOR_PV%.*}-1-build2"
 NOSCRIPT_VERSION="11.4.28"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
@@ -36,8 +36,8 @@ PATCH_URIS=(
 SRC_URI="
 	${TOR_SRC_BASE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
 	${TOR_SRC_ARCHIVE_URI}/src-firefox-tor-browser-${MOZ_PV}-${TOR_TAG}.tar.xz
-	${TOR_SRC_BASE_URI}/tor-browser-linux64-${TOR_PV}_ALL.tar.xz
-	${TOR_SRC_ARCHIVE_URI}/tor-browser-linux64-${TOR_PV}_ALL.tar.xz
+	${TOR_SRC_BASE_URI}/tor-browser-linux-x86_64-${TOR_PV}.tar.xz
+	${TOR_SRC_ARCHIVE_URI}/tor-browser-linux-x86_64-${TOR_PV}.tar.xz
 	https://addons.mozilla.org/firefox/downloads/file/3954910/noscript-${NOSCRIPT_VERSION}.xpi
 	https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/tbb-${CHANGELOG_TAG}/projects/browser/Bundle-Data/Docs-TBB/ChangeLog.txt -> ${P}-ChangeLog.txt
 	${PATCH_URIS[@]}"
@@ -181,42 +181,6 @@ moz_clear_vendor_checksums() {
 		|| die
 }
 
-moz_install_xpi() {
-	debug-print-function ${FUNCNAME} "$@"
-
-	if [[ ${#} -lt 2 ]] ; then
-		die "${FUNCNAME} requires at least two arguments"
-	fi
-
-	local DESTDIR=${1}
-	shift
-
-	insinto "${DESTDIR}"
-
-	local emid xpi_file xpi_tmp_dir
-	for xpi_file in "${@}" ; do
-		emid=
-		xpi_tmp_dir=$(mktemp -d --tmpdir="${T}")
-
-		# Unpack XPI
-		unzip -qq "${xpi_file}" -d "${xpi_tmp_dir}" || die
-
-		# Determine extension ID
-		if [[ -f "${xpi_tmp_dir}/install.rdf" ]] ; then
-			emid=$(sed -n -e '/install-manifest/,$ { /em:id/!d; s/.*[\">]\([^\"<>]*\)[\"<].*/\1/; p; q }' "${xpi_tmp_dir}/install.rdf")
-			[[ -z "${emid}" ]] && die "failed to determine extension id from install.rdf"
-		elif [[ -f "${xpi_tmp_dir}/manifest.json" ]] ; then
-			emid=$(sed -n -e 's/.*"id": "\([^"]*\)".*/\1/p' "${xpi_tmp_dir}/manifest.json")
-			[[ -z "${emid}" ]] && die "failed to determine extension id from manifest.json"
-		else
-			die "failed to determine extension id"
-		fi
-
-		einfo "Installing ${emid}.xpi into ${ED}${DESTDIR} ..."
-		newins "${xpi_file}" "${emid}.xpi"
-	done
-}
-
 mozconfig_add_options_ac() {
 	debug-print-function ${FUNCNAME} "$@"
 
@@ -350,6 +314,12 @@ pkg_setup() {
 }
 
 src_prepare() {
+	# Workaround for bgo#917599
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		eapply "${WORKDIR}"/firefox-patches/0029-bmo-1862601-system-icu-74.patch
+	fi
+	rm -v "${WORKDIR}"/firefox-patches/0029-bmo-1862601-system-icu-74.patch || die
+
 	eapply "${WORKDIR}/firefox-patches"
 
 	# https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/20497#note_2873088
@@ -389,6 +359,10 @@ src_prepare() {
 	einfo "Removing pre-built binaries ..."
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
+	# Clear cargo checksums from crates we have patched
+	# moz_clear_vendor_checksums crate
+	moz_clear_vendor_checksums audio_thread_priority
+
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
 	mkdir -p "${BUILD_DIR}" || die
@@ -416,11 +390,13 @@ src_configure() {
 		if tc-is-gcc; then
 			have_switched_compiler=yes
 		fi
+
 		AR=llvm-ar
 		CC=${CHOST}-clang-${version_clang}
 		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
+
 	elif ! use clang && ! tc-is-gcc ; then
 		# Force gcc
 		have_switched_compiler=yes
@@ -467,8 +443,6 @@ src_configure() {
 	mozconfig_add_options_ac '' --enable-project=browser
 
 	# Set Gentoo defaults
-	export MOZILLA_OFFICIAL=1
-
 	mozconfig_add_options_ac 'Gentoo default' \
 		--allow-addon-sideload \
 		--disable-cargo-incremental \
@@ -479,12 +453,15 @@ src_configure() {
 		--disable-strip \
 		--disable-tests \
 		--disable-updater \
+		--disable-wmf \
+		--enable-legacy-profile-creation \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
 		--enable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
+		--enable-system-policies \
 		--host="${CBUILD:-${CHOST}}" \
 		--libdir="${EPREFIX}/usr/$(get_libdir)" \
 		--prefix="${EPREFIX}/usr" \
@@ -502,6 +479,7 @@ src_configure() {
 		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
 
 	mozconfig_add_options_ac '' --enable-rust-simd
+	mozconfig_add_options_ac '' --enable-sandbox
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
@@ -627,11 +605,6 @@ src_configure() {
 		if [[ -n ${disable_elf_hack} ]] ; then
 			mozconfig_add_options_ac 'elf-hack is broken when using Clang' --disable-elf-hack
 		fi
-	elif tc-is-gcc ; then
-		if ver_test $(gcc-fullversion) -ge 10 ; then
-			einfo "Forcing -fno-tree-loop-vectorize to workaround GCC bug, see bug 758446 ..."
-			append-cxxflags -fno-tree-loop-vectorize
-		fi
 	fi
 
 	if ! use elibc_glibc ; then
@@ -709,10 +682,8 @@ src_compile() {
 	./mach build --verbose || die
 
 	# FIXME: add locale support
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/firefox/build#L184
-	export MOZ_CHROME_MULTILOCALE=""
-	./mach package-multi-locale --locales en-US $MOZ_CHROME_MULTILOCALE || die
-	AB_CD=multi ./mach build stage-package || die
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/firefox/build?ref_type=heads#L171
+	./mach build stage-package || die
 }
 
 src_install() {
@@ -733,7 +704,7 @@ src_install() {
 		rm -v "${ED}${MOZILLA_FIVE_HOME}/llvm-symbolizer" || die
 	fi
 
-	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/build#L65
+	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/build?ref_type=heads#L70
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
 	newins "${DISTDIR}/noscript-${NOSCRIPT_VERSION}.xpi" {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
 
