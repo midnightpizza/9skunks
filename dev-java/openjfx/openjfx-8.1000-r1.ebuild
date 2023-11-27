@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Gentoo Authors
+# Copyright 2020-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,14 +15,17 @@ HOMEPAGE="https://openjfx.io"
 SRC_URI="
 	https://hg.openjdk.java.net/${PN}/8u-dev/rt/archive/${EHG_COMMIT}.tar.bz2 -> ${P}.tar.bz2
 	https://dev.gentoo.org/~gyakovlev/distfiles/${P}-backports.tar.bz2
-	https://services.gradle.org/distributions/gradle-${EGRADLE_VER}-bin.zip
+	https://downloads.gradle.org/distributions/gradle-${EGRADLE_VER}-bin.zip
 "
+# eclass overrides it, set back to normal
+S="${WORKDIR}/${P}"
 
 LICENSE="GPL-2-with-classpath-exception"
 SLOT="$(ver_cut 1)"
 KEYWORDS="~amd64 ~ppc64"
-
 IUSE="debug doc media cpu_flags_x86_sse2 webkit"
+REQUIRED_USE="amd64? ( cpu_flags_x86_sse2 )"
+RESTRICT="test" # needs junit version we don't have, fragile
 
 DEPEND="
 	app-arch/unzip
@@ -43,11 +46,12 @@ RDEPEND="
 	virtual/jre:1.8
 "
 
-REQUIRED_USE="amd64? ( cpu_flags_x86_sse2 )"
+# FIXME: majority of flags are honored, needs a bit more patching
+QA_FLAGS_IGNORED=".*"
 
-RESTRICT="test" # needs junit version we don't have, fragile
-
-S="${WORKDIR}/${P}"
+JAVA_PKG_WANT_BUILD_VM="openjdk-8"
+JAVA_PKG_WANT_SOURCE="1.8"
+JAVA_PKG_WANT_TARGET="1.8"
 
 PATCHES=(
 	"${FILESDIR}"/8/99-sysdeps.patch
@@ -80,10 +84,12 @@ egradle() {
 
 	export GRADLE_HOME
 
+	# FIXME: build.gradle believes $ANT_HOME/bin/ant shoud exist
 	unset ANT_HOME
 
-	einfo "gradle ${gradle_args[*]} ${*}"
-	TERM="xterm" "${gradle}" "${gradle_args[@]}" "${@}" || die "gradle failed"
+	einfo "gradle "${gradle_args[@]}" ${@}"
+	# TERM needed, otherwise gradle may fail on terms it does not know about
+	TERM="xterm" "${gradle}" "${gradle_args[@]}" ${@} || die "gradle failed"
 }
 
 src_unpack() {
@@ -95,9 +101,12 @@ src_prepare() {
 	eapply "${WORKDIR}/${P}-backports"
 	default
 
+	# this will create local jar storage to be used as ivy repo
 	local d="${T}/jars"
 	mkdir "${d}" || die
 
+	# we need jars subdir in every prokect so gradle can find them
+	# only system jars, no bundling
 	local target targets
 	targets=(
 		jars
@@ -106,12 +115,11 @@ src_prepare() {
 		modules/{graphics,jmx,media,swing,swt,web,fxpackager}/jars
 	)
 	einfo "Copying system jars"
-	for target in "${targets[@]}"; do
+	for target in ${targets[@]}; do
 		ln -vs "${T}/jars" "${target}" || die
 	done
 
-	local swt_file_name
-	swt_file_name="$(java-pkg_getjars swt-4.10)"
+	local swt_file_name="$(java-pkg_getjars swt-4.10)"
 	java-pkg_jar-from --build-only --into "${d}" ant-core ant.jar ant-1.8.2.jar
 	java-pkg_jar-from --build-only --into "${d}" ant-core ant-launcher.jar ant-launcher-1.8.2.jar
 	java-pkg_jar-from --build-only --into "${d}" antlr antlr.jar antlr-2.7.7.jar
@@ -124,6 +132,7 @@ src_prepare() {
 }
 
 src_configure() {
+	# see gradle.properties.template in ${S}
 	cat <<- _EOF_ > "${S}"/gradle.properties
 		COMPILE_TARGETS = linux
 		GRADLE_VERSION_CHECK = false
@@ -166,6 +175,7 @@ src_configure() {
 	sed -i 's/mavenCentral/mavenLocal/g' buildSrc/build.gradle || die
 	einfo "Configured with the following settings:"
 	cat gradle.properties || die
+
 }
 
 src_compile() {
@@ -177,7 +187,7 @@ src_compile() {
 
 src_install() {
 	local dest="/usr/$(get_libdir)/openjdk-${SLOT}"
-	local ddest="${ED%/}/${dest#/}"
+	local ddest="${ED}${dest}"
 	dodir "${dest}"
 	pushd build/export/sdk > /dev/null || die
 	cp -pPRv * "${ddest}" || die

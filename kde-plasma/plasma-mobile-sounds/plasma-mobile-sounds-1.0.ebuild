@@ -14,7 +14,7 @@ SRC_URI=""
 
 LICENSE="CC0-1.0 CC-BY-4.0 CC-BY-SA-4.0"
 SLOT="5"
-KEYWORDS="~arm64"
+KEYWORDS="~arm64 ~amd64"
 IUSE=""
 
 src_unpack() {

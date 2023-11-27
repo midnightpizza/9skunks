@@ -13,7 +13,7 @@ SRC_URI="mirror://kde/stable/plasma-mobile/${PV}/${KDE_ORG_NAME}-${PV}.tar.xz"
 
 LICENSE="|| ( GPL-2 GPL-3 ) LGPL-2.1"
 SLOT="5"
-KEYWORDS="~arm64"
+KEYWORDS="~arm64 ~amd64"
 IUSE=""
 
 DEPEND="
@@ -34,7 +34,6 @@ DEPEND="
 	>=kde-frameworks/kio-${KFMIN}:${SLOT}
 	>=kde-frameworks/modemmanager-qt-${KFMIN}:${SLOT}
 	>=kde-frameworks/networkmanager-qt-${KFMIN}:${SLOT}
-	>=kde-frameworks/plasma-${KFMIN}:${SLOT}
 	>=kde-frameworks/solid-${KFMIN}:${SLOT}
 	x11-apps/maliit-keyboard
 "

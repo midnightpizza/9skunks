@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Gentoo Authors
+# Copyright 2019-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -24,20 +24,22 @@ SRC_URI="https://hg.openjdk.java.net/${PN}/${SLOT}-dev/rt/archive/${MY_PV}.tar.b
 	https://repo.maven.apache.org/maven2/org/antlr/ST4/4.0.8/ST4-4.0.8.jar
 "
 
+S="${WORKDIR}/rt-${MY_PV}"
+
 LICENSE="GPL-2-with-classpath-exception"
 KEYWORDS="-* ~amd64 ~ppc64"
-
 IUSE="cpu_flags_x86_sse2 debug doc source +media webkit"
+REQUIRED_USE="amd64? ( cpu_flags_x86_sse2 )"
 
 RDEPEND="
+	app-accessibility/at-spi2-core
 	dev-java/swt:4.10[cairo,opengl]
-	dev-libs/atk
 	dev-libs/glib:2
 	dev-libs/libxml2:2
 	dev-libs/libxslt
 	media-libs/freetype:2
 	media-libs/fontconfig:1.0
-	media-video/ffmpeg:0=
+	media-libs/libjpeg-turbo
 	x11-libs/gdk-pixbuf
 	x11-libs/gtk+:2
 	x11-libs/gtk+:3
@@ -46,7 +48,6 @@ RDEPEND="
 	x11-libs/libXtst
 	x11-libs/libXxf86vm
 	x11-libs/pango
-	virtual/jpeg
 	virtual/opengl
 	doc? ( dev-java/openjdk:${SLOT}[doc] )
 	!doc? (
@@ -69,8 +70,6 @@ DEPEND="${RDEPEND}
 	virtual/pkgconfig
 "
 
-REQUIRED_USE="amd64? ( cpu_flags_x86_sse2 )"
-
 PATCHES=(
 	"${FILESDIR}"/11/disable-buildSrc-tests.patch
 	"${FILESDIR}"/11/glibc-compatibility.patch
@@ -80,9 +79,8 @@ PATCHES=(
 	"${FILESDIR}"/11/don-t-force-msse-11.0.11.patch
 	"${FILESDIR}"/11/disable-architecture-verification.patch
 	"${FILESDIR}"/11/gstreamer-CVE-2021-3522.patch
+	"${FILESDIR}"/11/ffmpeg5.patch
 )
-
-S="${WORKDIR}/rt-${MY_PV}"
 
 egradle() {
 	local GRADLE_HOME="${WORKDIR}/gradle-${EGRADLE_VER}"
@@ -102,9 +100,9 @@ egradle() {
 	# FIXME: build.gradle believes $ANT_HOME/bin/ant shoud exist
 	unset ANT_HOME
 
-	einfo "gradle ${gradle_args[*]} ${@}"
+	einfo "gradle "${gradle_args[@]}" ${@}"
 	# TERM needed, otherwise gradle may fail on terms it does not know about
-	TERM="xterm" "${gradle}" "${gradle_args[@]}" "${@}" || die "gradle failed"
+	TERM="xterm" "${gradle}" "${gradle_args[@]}" ${@} || die "gradle failed"
 }
 
 pkg_setup() {
@@ -128,14 +126,13 @@ pkg_setup() {
 		fi
 	done
 
-	if has_version --host-root dev-java/openjdk:${SLOT}; then
+	if has_version -b dev-java/openjdk:${SLOT}; then
 		export JAVA_HOME=${EPREFIX}/usr/$(get_libdir)/openjdk-${SLOT}
 		export JDK_HOME="${JAVA_HOME}"
 		export ANT_RESPECT_JAVA_HOME=true
-
 	else
 		if [[ ${MERGE_TYPE} != "binary" ]]; then
-			JDK_HOME=$(best_version --host-root dev-java/openjdk-bin:${SLOT})
+			JDK_HOME=$(best_version -b dev-java/openjdk-bin:${SLOT})
 			[[ -n ${JDK_HOME} ]] || die "Build VM not found!"
 			JDK_HOME=${JDK_HOME#*/}
 			JDK_HOME=${EPREFIX}/opt/${JDK_HOME%-r*}
@@ -183,7 +180,7 @@ src_configure() {
 	# build is very sensetive to doc presense, take extra steps
 	if use doc; then
 		local jdk_doc
-		if has_version --host-root dev-java/openjdk:${SLOT}[doc]; then
+		if has_version -b dev-java/openjdk:${SLOT}[doc]; then
 			jdk_doc="${EPREFIX}/usr/share/doc/openjdk-${SLOT}/html/api"
 		fi
 		[[ -r ${jdk_doc}/element-list ]] || die "JDK Docs not found, terminating build early"

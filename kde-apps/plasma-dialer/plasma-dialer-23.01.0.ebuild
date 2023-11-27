@@ -3,7 +3,7 @@
 
 EAPI=8
 
-KFMIN=5.101.0
+KFMIN=5.110.0
 QTMIN=5.15.2
 inherit ecm plasma-mobile.kde.org
 
@@ -49,5 +49,5 @@ RDEPEND="${DEPEND}
 	>=dev-qt/qtgraphicaleffects-${QTMIN}:${SLOT}
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	dev-libs/kirigami-addons
-	lockscreen? ( >=kde-plasma/kwin-5.26.4:${SLOT} )
+	lockscreen? ( kde-plasma/kwin:${SLOT} )
 "
