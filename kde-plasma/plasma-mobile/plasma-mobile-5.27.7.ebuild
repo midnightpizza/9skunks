@@ -3,7 +3,7 @@
 
 EAPI=8
 
-KFMIN=5.102.0
+KFMIN=5.110.0
 QTMIN=5.15.2
 inherit ecm plasma.kde.org
 
@@ -36,11 +36,10 @@ DEPEND="
 	>=kde-frameworks/knotifications-${KFMIN}:${SLOT}
 	>=kde-frameworks/kpackage-${KFMIN}:${SLOT}
 	>=kde-frameworks/kservice-${KFMIN}:${SLOT}
-	>=kde-frameworks/kwayland-${KFMIN}:${SLOT}
+	>=kde-plasma/kwayland-${KFMIN}:${SLOT}
 	>=kde-frameworks/kwindowsystem-${KFMIN}:${SLOT}
 	>=kde-frameworks/modemmanager-qt-${KFMIN}:${SLOT}
 	>=kde-frameworks/networkmanager-qt-${KFMIN}:${SLOT}
-	>=kde-frameworks/plasma-${KFMIN}:5[wayland]
 	>=kde-frameworks/solid-${KFMIN}:${SLOT}
 	>=kde-plasma/kde-cli-tools-${PV}:${SLOT}
 	>=kde-plasma/kwin-${PV}:${SLOT}
@@ -57,7 +56,6 @@ RDEPEND="${DEPEND}
 	>=dev-qt/qtquickcontrols-${QTMIN}:${SLOT}
 	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
 	>=kde-frameworks/bluez-qt-${KFMIN}:${SLOT}
-	>=kde-frameworks/kactivities-${KFMIN}:${SLOT}
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	>=kde-frameworks/kitemmodels-${KFMIN}:${SLOT}
 	>=kde-frameworks/knewstuff-${KFMIN}:${SLOT}
