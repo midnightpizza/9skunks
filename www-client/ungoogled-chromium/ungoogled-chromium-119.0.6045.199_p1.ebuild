@@ -56,7 +56,7 @@ REQUIRED_USE="
 	qt6? ( qt5 )
 "
 
-#UGC_COMMIT_ID="0461ff207b3c4c66cd31f82fb92a08e2021f1bf8"
+#UGC_COMMIT_ID="3b9e3d3cd7defb889e87fb8678cd2373b1e4abef"
 # UGC_PR_COMMITS=(
 # 	c917e096342e5b90eeea91ab1f8516447c8756cf
 # 	5794e9d12bf82620d5f24505798fecb45ca5a22d
@@ -413,6 +413,10 @@ src_prepare() {
 			fi
 		done
 		PATCHES+=( "${WORKDIR}/ppc64le" )
+	fi
+
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		PATCHES+=( "${FILESDIR}/chromium-119.0.6045.159-icu-74.patch" )
 	fi
 
 	default
@@ -780,7 +784,6 @@ src_prepare() {
 		third_party/omnibox_proto
 		third_party/one_euro_filter
 		third_party/openscreen
-		third_party/openscreen/src/third_party/mozilla
 		third_party/openscreen/src/third_party/tinycbor/src/src
 		third_party/ots
 		third_party/pdfium

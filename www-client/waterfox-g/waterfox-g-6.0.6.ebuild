@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-115esr-patches-06.tar.xz"
+FIREFOX_PATCHSET="firefox-115esr-patches-08.tar.xz"
 
 LLVM_MAX_SLOT=17
 
@@ -31,7 +31,8 @@ SRC_URI="
 
 DESCRIPTION="Waterfox Web Browser"
 HOMEPAGE="https://www.waterfox.net"
-KEYWORDS="amd64 arm64 ppc64 x86"
+KEYWORDS="amd64 arm64 ppc64 riscv x86"
+
 SLOT="6"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
@@ -438,7 +439,7 @@ pkg_setup() {
 		if use pgo || use lto || use debug ; then
 			CHECKREQS_DISK_BUILD="13500M"
 		else
-			CHECKREQS_DISK_BUILD="6400M"
+			CHECKREQS_DISK_BUILD="6600M"
 		fi
 
 		check-reqs_pkg_setup
@@ -564,17 +565,31 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*ppc64*.patch || die
 	fi
 
-	rm -v "${WORKDIR}"/firefox-patches/*-gcc-binutils-2.41.patch || die
+	if use x86 && use elibc_glibc ; then
+		rm -v "${WORKDIR}"/firefox-patches/*-musl-non-lfs64-api-on-audio_thread_priority-crate.patch || die
+	fi
+
+	# Workaround for bgo#917599
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		eapply "${WORKDIR}"/firefox-patches/0029-bmo-1862601-system-icu-74.patch
+	fi
+	rm -v "${WORKDIR}"/firefox-patches/0029-bmo-1862601-system-icu-74.patch || die
+
+	# Remove patches already applied in Waterfox
+	elog "Removing patches already applied in Waterfox..."
+	# rm -v "${WORKDIR}"/firefox-patches/0028-bgo-911679-gcc-binutils-2.41.patch || die
 
 	eapply "${WORKDIR}/firefox-patches"
 
 
 	## Apply additional polynomial-C patchest
 	elog "Apply Polynomial-C patchset..."
-	# unfuck URLbar
-	#eapply "${FILESDIR}/${PN}6.0b1-URLbar_unfuck.patch"
-	eapply "${FILESDIR}/${PN}-fix_langpack_id.patch"
-	eapply "${FILESDIR}/${PN}6-fix-gtk-icons.patch"
+	# TODO: adapt unfuck URLbar patch
+	eapply "${FILESDIR}/${PN}6.0.2-URLbar_unfuck.patch"
+
+	eapply "${FILESDIR}/waterfox-g-6.0-fix-langpack-id.patch"
+
+	eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
 
 	# [WFX-400] Revert to FF useragent.
 	echo 'MOZ_APP_UA_NAME="Firefox"' >> "${S}/browser/confvars.sh"
@@ -614,6 +629,10 @@ src_prepare() {
 	einfo "Removing pre-built binaries ..."
 
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
+
+	# Clear cargo checksums from crates we have patched
+	# moz_clear_vendor_checksums crate
+	moz_clear_vendor_checksums audio_thread_priority
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -715,7 +734,7 @@ src_configure() {
 		--disable-gpsd \
 		--disable-install-strip \
 		--disable-parental-controls \
-		--disable-strip \
+		--enable-strip \
 		--disable-tests \
 		--disable-updater \
 		--disable-wmf \
@@ -743,7 +762,7 @@ src_configure() {
 		--x-includes="${ESYSROOT}/usr/include" \
 		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
 
-	# # Set update channel
+	# Set update channel
 	# local update_channel=release
 	# [[ -n ${MOZ_ESR} ]] && update_channel=esr
 	# mozconfig_add_options_ac '' --update-channel=${update_channel}
@@ -1030,6 +1049,8 @@ src_configure() {
 	export MOZ_REQUIRE_SIGNING=
 
 	mozconfig_add_options_ac 'for building locales' --with-l10n-base=${MOZ_L10N_SOURCEDIR}
+	mozconfig_add_options_ac 'Fix building locales' --build-backends="RecursiveMake","FasterMake"
+
 	mozconfig_add_options_ac 'Waterfox' --with-app-name=${PN}${SLOT}
 	mozconfig_add_options_ac 'Waterfox' --with-app-basename=${WF_PN}
 	mozconfig_add_options_ac 'Waterfox' --with-branding=waterfox/browser/branding
@@ -1094,7 +1115,7 @@ src_compile() {
 		fi
 	fi
 
-	if ! use X; then
+	if ! use X && use wayland; then
 		local -x GDK_BACKEND=wayland
 	else
 		local -x GDK_BACKEND=x11
@@ -1145,6 +1166,12 @@ src_install() {
 	insinto "${MOZILLA_FIVE_HOME}/distribution"
 	newins "${FILESDIR}"/distribution.ini distribution.ini
 	newins "${FILESDIR}"/disable-auto-update.policy.json policies.json
+
+	# Update version string
+	sed -i \
+		-e "s:@SLOT@:${SLOT}:" \
+		"${ED}${MOZILLA_FIVE_HOME}/distribution/distribution.ini" \
+		|| die
 
 	# Install system-wide preferences
 	local PREFS_DIR="${MOZILLA_FIVE_HOME}/browser/defaults/preferences"
@@ -1261,6 +1288,7 @@ src_install() {
 
 	# Update wrapper
 	sed -i \
+		-e "s:@EXEC@:${exec_command}:" \
 		-e "s:@PREFIX@:${EPREFIX}/usr:" \
 		-e "s:@MOZ_FIVE_HOME@:${MOZILLA_FIVE_HOME}:" \
 		-e "s:@APULSELIB_DIR@:${apulselib}:" \

@@ -1,17 +1,6 @@
-https://bugzilla.mozilla.org/show_bug.cgi?id=333714
-https://bugzilla.mozilla.org/show_bug.cgi?id=1621570
-
-So this has been fucked up for Linux users on purpose. Let's hope someone will
-do to Marco Bonardo what he deserves for this.
-
---- Waterfox-G6.0b1/browser/app/profile/firefox.js
-+++ Waterfox-G6.0b1/browser/app/profile/firefox.js
-@@ -336,16 +336,27 @@
- #ifdef XP_MACOSX
-   pref("browser.fullscreen.autohide", false);
- #else
-   pref("browser.fullscreen.autohide", true);
- #endif
+--- a/browser/app/profile/firefox.js
++++ b/browser/app/profile/firefox.js
+@@ -342,6 +342,17 @@
  
  pref("browser.overlink-delay", 80);
  
@@ -26,22 +15,12 @@ do to Marco Bonardo what he deserves for this.
 +  pref("browser.urlbar.doubleClickSelectsAll", false);
 +#endif
 +
- pref("browser.theme.colorway-closet", true);
+ pref("browser.theme.colorway-closet", false);
  
- // Whether expired built-in colorways themes that are active or retained
- // should be allowed to check for updates and be updated to an AMO hosted
- // theme with the same id (as part of preparing to remove from mozilla-central
- // all the expired built-in colorways themes, after existing users have been
- // migrated to colorways themes hosted on AMO).
- pref("browser.theme.colorway-migration", true);
---- Waterfox-G6.0b1/browser/components/search/content/searchbar.js
-+++ Waterfox-G6.0b1/browser/components/search/content/searchbar.js
-@@ -446,25 +446,26 @@
-       this.destroy();
-       while (this.firstChild) {
-         this.firstChild.remove();
-       }
-     }
+ // Whether using `ctrl` when hitting return/enter in the URL bar
+--- a/browser/components/search/content/searchbar.js
++++ b/browser/components/search/content/searchbar.js
+@@ -443,15 +443,16 @@
  
      /**
       * Determines if we should select all the text in the searchbar based on the
@@ -60,17 +39,7 @@ do to Marco Bonardo what he deserves for this.
        }
      }
  
-     _setupEventListeners() {
-       this.addEventListener("click", event => {
-         this._maybeSelectAll();
-       });
- 
-@@ -559,16 +560,21 @@
-         // Hide popup when icon is clicked while popup is open
-         if (isIconClick && this.textbox.popup.popupOpen) {
-           this.textbox.popup.closePopup();
-         } else if (isIconClick || this._textbox.value) {
-           // Open the suggestions whenever clicking on the search icon or if there
+@@ -556,6 +557,11 @@
            // is text in the textbox.
            this.openSuggestionsPanel(true);
          }
@@ -82,13 +51,8 @@ do to Marco Bonardo what he deserves for this.
        });
      }
  
-     _setupTextboxEventListeners() {
-       this.textbox.addEventListener("input", event => {
-         this.textbox.popup.removeAttribute("showonlysettings");
-       });
- 
---- Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_doubleClickSelectsAll.js
-+++ Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_doubleClickSelectsAll.js
+--- a/browser/components/urlbar/tests/browser/browser_doubleClickSelectsAll.js
++++ b/browser/components/urlbar/tests/browser/browser_doubleClickSelectsAll.js
 @@ -0,0 +1,45 @@
 +/* This Source Code Form is subject to the terms of the Mozilla Public
 + * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,14 +99,9 @@ do to Marco Bonardo what he deserves for this.
 +
 +  win.close();
 +});
---- Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser.ini
-+++ Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser.ini
-@@ -110,16 +110,17 @@
- [browser_customizeMode.js]
- [browser_cutting.js]
- [browser_decode.js]
- [browser_delete.js]
- [browser_deleteAllText.js]
+--- a/browser/components/urlbar/tests/browser/browser.ini
++++ b/browser/components/urlbar/tests/browser/browser.ini
+@@ -86,6 +86,7 @@
  [browser_display_selectedAction_Extensions.js]
  [browser_dns_first_for_single_words.js]
  skip-if = verify && os == 'linux' # Bug 1581635
@@ -150,21 +109,11 @@ do to Marco Bonardo what he deserves for this.
  [browser_downArrowKeySearch.js]
  https_first_disabled = true
  [browser_dragdropURL.js]
- [browser_dynamicResults.js]
- https_first_disabled = true
- support-files =
-   dynamicResult0.css
-   dynamicResult1.css
---- Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_retainedResultsOnFocus.js
-+++ Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_retainedResultsOnFocus.js
-@@ -66,17 +66,20 @@
-   info("Focus with the mouse.");
-   promiseState = checkPanelStatePersists(win, false);
-   EventUtils.synthesizeMouseAtCenter(win.gURLBar.inputField, {}, win);
-   await promiseState;
- }
+--- a/browser/components/urlbar/tests/browser/browser_retainedResultsOnFocus.js
++++ b/browser/components/urlbar/tests/browser/browser_retainedResultsOnFocus.js
+@@ -71,7 +71,10 @@
  
- add_setup(async function () {
+ add_setup(async function() {
    await SpecialPowers.pushPrefEnv({
 -    set: [["browser.urlbar.autoFill", true]],
 +    set: [
@@ -174,28 +123,14 @@ do to Marco Bonardo what he deserves for this.
    });
    // Add some history for the empty panel and autofill.
    await PlacesTestUtils.addVisits([
-     {
-       uri: "https://example.com/",
-       transition: PlacesUtils.history.TRANSITIONS.TYPED,
-     },
-     {
---- Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_urlbar_selection.js
-+++ Waterfox-G6.0b1/browser/components/urlbar/tests/browser/browser_urlbar_selection.js
-@@ -57,103 +57,98 @@
-     toX,
-     toY,
-     { type: "mouseup" },
-     target.ownerGlobal
-   );
+--- a/browser/components/urlbar/tests/browser/browser_urlbar_selection.js
++++ b/browser/components/urlbar/tests/browser/browser_urlbar_selection.js
+@@ -62,27 +62,11 @@
    return promise;
  }
  
 -function resetPrimarySelection(val = "") {
--  if (
--    Services.clipboard.isClipboardTypeSupported(
--      Services.clipboard.kSelectionClipboard
--    )
--  ) {
+-  if (Services.clipboard.supportsSelectionClipboard()) {
 -    // Reset the clipboard.
 -    clipboardHelper.copyStringToClipboard(
 -      val,
@@ -205,20 +140,16 @@ do to Marco Bonardo what he deserves for this.
 -}
 -
 -function checkPrimarySelection(expectedVal = "") {
--  if (
--    Services.clipboard.isClipboardTypeSupported(
--      Services.clipboard.kSelectionClipboard
--    )
--  ) {
+-  if (Services.clipboard.supportsSelectionClipboard()) {
 -    let primaryAsText = SpecialPowers.getClipboardData(
--      "text/plain",
+-      "text/unicode",
 -      SpecialPowers.Ci.nsIClipboard.kSelectionClipboard
 -    );
 -    Assert.equal(primaryAsText, expectedVal);
 -  }
 -}
 -
- add_setup(async function () {
+ add_setup(async function() {
 +  SpecialPowers.pushPrefEnv({
 +    set: [["browser.urlbar.clickSelectsAll", true]],
 +  });
@@ -226,7 +157,7 @@ do to Marco Bonardo what he deserves for this.
    // On macOS, we must "warm up" the Urlbar to get the first test to pass.
    gURLBar.value = "";
    await click(gURLBar.inputField);
-   gURLBar.blur();
+@@ -90,7 +74,6 @@
  });
  
  add_task(async function leftClickSelectsAll() {
@@ -234,13 +165,7 @@ do to Marco Bonardo what he deserves for this.
    gURLBar.value = exampleSearch;
    await click(gURLBar.inputField);
    Assert.equal(
-     gURLBar.selectionStart,
-     0,
-     "The entire search term should be selected."
-   );
-   Assert.equal(
-     gURLBar.selectionEnd,
-     exampleSearch.length,
+@@ -104,11 +87,9 @@
      "The entire search term should be selected."
    );
    gURLBar.blur();
@@ -252,9 +177,7 @@ do to Marco Bonardo what he deserves for this.
    gURLBar.value = exampleUrl;
    await click(gURLBar.inputField);
    Assert.equal(gURLBar.selectionStart, 0, "The entire url should be selected.");
-   Assert.equal(
-     gURLBar.selectionEnd,
-     exampleUrl.length,
+@@ -118,18 +99,42 @@
      "The entire url should be selected."
    );
    gURLBar.blur();
@@ -300,9 +223,7 @@ do to Marco Bonardo what he deserves for this.
    await openContextMenu(gURLBar.inputField);
  
    Assert.equal(gURLBar.selectionStart, 0, "The entire URL should be selected.");
-   Assert.equal(
-     gURLBar.selectionEnd,
-     exampleUrl.length,
+@@ -139,8 +144,6 @@
      "The entire URL should be selected."
    );
  
@@ -311,17 +232,7 @@ do to Marco Bonardo what he deserves for this.
    let contextMenu = gURLBar.querySelector("moz-input-box").menupopup;
  
    // While the context menu is open, test the "Select All" button.
-   let contextMenuItem = contextMenu.firstElementChild;
-   while (
-     contextMenuItem.nextElementSibling &&
-     contextMenuItem.getAttribute("cmd") != "cmd_selectAll"
-   ) {
-@@ -181,106 +176,90 @@
-   Assert.equal(
-     gURLBar.selectionEnd,
-     exampleUrl.length,
-     "The entire URL should be selected after clicking selectAll button."
-   );
+@@ -178,7 +181,6 @@
  
    gURLBar.querySelector("moz-input-box").menupopup.hidePopup();
    gURLBar.blur();
@@ -329,10 +240,7 @@ do to Marco Bonardo what he deserves for this.
    await SpecialPowers.popPrefEnv();
  });
  
- add_task(async function contextMenuDoesNotCancelSelection() {
-   gURLBar.inputField.focus();
-   gURLBar.value = exampleUrl;
- 
+@@ -189,8 +191,6 @@
    gURLBar.selectionStart = 3;
    gURLBar.selectionEnd = 7;
  
@@ -341,15 +249,7 @@ do to Marco Bonardo what he deserves for this.
    await openContextMenu(gURLBar.inputField);
  
    Assert.equal(
-     gURLBar.selectionStart,
-     3,
-     "The selection should not have changed."
-   );
-   Assert.equal(
-     gURLBar.selectionEnd,
-     7,
-     "The selection should not have changed."
-   );
+@@ -206,11 +206,9 @@
  
    gURLBar.querySelector("moz-input-box").menupopup.hidePopup();
    gURLBar.blur();
@@ -361,10 +261,7 @@ do to Marco Bonardo what he deserves for this.
    gURLBar.value = exampleSearch.repeat(10);
    // Drags from an artibrary offset of 30 to test for bug 1562145: that the
    // selection does not start at the beginning.
-   await drag(gURLBar.inputField, 30, 0, 60, 0);
-   Assert.greater(
-     gURLBar.selectionStart,
-     0,
+@@ -221,12 +219,7 @@
      "Selection should not start at the beginning of the string."
    );
  
@@ -377,7 +274,7 @@ do to Marco Bonardo what he deserves for this.
  });
  
  /**
-  * Testing for bug 1571018: that the entire Urlbar isn't selected when the
+@@ -234,7 +227,6 @@
   * Urlbar is dragged following a selectsAll event then a blur.
   */
  add_task(async function dragAfterSelectAll() {
@@ -385,14 +282,7 @@ do to Marco Bonardo what he deserves for this.
    gURLBar.value = exampleSearch.repeat(10);
    await click(gURLBar.inputField);
    Assert.equal(
-     gURLBar.selectionStart,
-     0,
-     "The entire search term should be selected."
-   );
-   Assert.equal(
-     gURLBar.selectionEnd,
-     exampleSearch.repeat(10).length,
-     "The entire search term should be selected."
+@@ -249,7 +241,6 @@
    );
  
    gURLBar.blur();
@@ -400,14 +290,7 @@ do to Marco Bonardo what he deserves for this.
  
    // The offset of 30 is arbitrary.
    await drag(gURLBar.inputField, 30, 0, 60, 0);
- 
-   Assert.notEqual(
-     gURLBar.selectionStart,
-     0,
-     "Only part of the search term should be selected."
-   );
-   Assert.notEqual(
-     gURLBar.selectionEnd,
+@@ -264,10 +255,6 @@
      exampleSearch.repeat(10).length,
      "Only part of the search term should be selected."
    );
@@ -418,33 +301,23 @@ do to Marco Bonardo what he deserves for this.
  });
  
  /**
-  * Testing for bug 1571018: that the entire Urlbar is selected when the Urlbar
-  * is refocused following a partial text selection then a blur.
-  */
- add_task(async function selectAllAfterDrag() {
-   gURLBar.value = exampleSearch;
---- Waterfox-G6.0b1/browser/components/urlbar/UrlbarInput.sys.mjs
-+++ Waterfox-G6.0b1/browser/components/urlbar/UrlbarInput.sys.mjs
-@@ -3161,26 +3161,29 @@
-     if (this.getAttribute("pageproxystate") == "valid") {
-       this.value = "";
-       this.setPageProxyState("invalid", true);
-     }
-   }
+--- a/browser/components/urlbar/UrlbarInput.jsm
++++ b/browser/components/urlbar/UrlbarInput.jsm
+@@ -2810,16 +2810,19 @@
  
    /**
     * Determines if we should select all the text in the Urlbar based on the
 -   *  Urlbar state, and whether the selection is empty.
-+   *  clickSelectsAll pref, Urlbar state, and whether the selection is empty.
-+   *  @param {boolean} [ignoreClickSelectsAllPref]
-+   * 	     If true, the browser.urlbar.clickSelectsAll pref will be ignored.
++   * clickSelectsAll pref, Urlbar state, and whether the selection is empty.
++   * @param {boolean} [ignoreClickSelectsAllPref]
++   *        If true, the browser.urlbar.clickSelectsAll pref will be ignored.
     */
 -  _maybeSelectAll() {
 +  _maybeSelectAll(ignoreClickSelectsAllPref = false) {
      if (
        !this._preventClickSelectsAll &&
 +      (ignoreClickSelectsAllPref || UrlbarPrefs.get("clickSelectsAll")) &&
-       this._compositionState != lazy.UrlbarUtils.COMPOSITION.COMPOSING &&
+       this._compositionState != UrlbarUtils.COMPOSITION.COMPOSING &&
        this.document.activeElement == this.inputField &&
        this.inputField.selectionStart == this.inputField.selectionEnd
      ) {
@@ -453,17 +326,7 @@ do to Marco Bonardo what he deserves for this.
      }
    }
  
-   // Event handlers below.
- 
-   _on_command(event) {
-     // Something is executing a command, likely causing a focus change. This
-     // should not be recorded as an abandonment. If the user is selecting a
-@@ -3299,17 +3302,19 @@
-   _on_contextmenu(event) {
-     this.addSearchEngineHelper.refreshContextMenu(event);
- 
-     // Context menu opened via keyboard shortcut.
-     if (!event.button) {
+@@ -2936,7 +2939,9 @@
        return;
      }
  
@@ -474,17 +337,7 @@ do to Marco Bonardo what he deserves for this.
    }
  
    _on_focus(event) {
-     if (!this._hideFocus) {
-       this.setAttribute("focused", "true");
-     }
- 
-     // When the search term matches the SERP, the URL bar is in a valid
-@@ -3338,17 +3343,17 @@
-         this.inputField.value = this._focusUntrimmedValue =
-           this._untrimmedValue;
-       }
-     }
- 
+@@ -2967,7 +2972,7 @@
      if (this.focusedViaMousedown) {
        this.view.autoOpen({ event });
      } else if (this.inputField.hasAttribute("refocused-by-panel")) {
@@ -493,41 +346,21 @@ do to Marco Bonardo what he deserves for this.
      }
  
      this._updateUrlTooltip();
-     this.formatValue();
- 
-     // Hide popup notifications, to reduce visual noise.
-     if (
-       this.getAttribute("pageproxystate") != "valid" &&
-@@ -3399,17 +3404,20 @@
-         }
- 
-         // Clear any previous selection unless we are focused, to ensure it
-         // doesn't affect drag selection.
-         if (this.focusedViaMousedown) {
-           this.inputField.setSelectionRange(0, 0);
+@@ -3028,7 +3033,10 @@
+           this.selectionStart = this.selectionEnd = 0;
          }
  
 -        if (event.target.id == SEARCH_BUTTON_ID) {
-+        if (event.detail == 2 && UrlbarPrefs.get("doubleClickSelectsAll")) {
++	if (event.detail == 2 && UrlbarPrefs.get("doubleClickSelectsAll")) {
 +          this.editor.selectAll();
 +          event.preventDefault();
 +        } else if (event.target.id == SEARCH_BUTTON_ID) {
            this._preventClickSelectsAll = true;
-           this.search(lazy.UrlbarTokenizer.RESTRICT.SEARCH);
+           this.search(UrlbarTokenizer.RESTRICT.SEARCH);
          } else {
-           // Do not suppress the focus border if we are already focused. If we
-           // did, we'd hide the focus border briefly then show it again if the
-           // user has Top Sites disabled, creating a flashing effect.
-           this.view.autoOpen({
-             event,
---- Waterfox-G6.0b1/browser/components/urlbar/UrlbarPrefs.sys.mjs
-+++ Waterfox-G6.0b1/browser/components/urlbar/UrlbarPrefs.sys.mjs
-@@ -63,16 +63,21 @@
-   // autofilled even if the user hasn't actually visited them.
-   ["autoFill.searchEngines", false],
- 
-   // Affects the frecency threshold of the autofill algorithm.  The threshold is
-   // the mean of all origin frecencies plus one standard deviation multiplied by
+--- a/browser/components/urlbar/UrlbarPrefs.jsm
++++ b/browser/components/urlbar/UrlbarPrefs.jsm
+@@ -70,6 +70,11 @@
    // this value.  See UrlbarProviderPlaces.
    ["autoFill.stddevMultiplier", [0.0, "float"]],
  
@@ -538,18 +371,8 @@ do to Marco Bonardo what he deserves for this.
 +
    // Whether best match results can be blocked. This pref is a fallback for the
    // Nimbus variable `bestMatchBlockingEnabled`.
-   ["bestMatch.blockingEnabled", true],
- 
-   // Whether the best match feature is enabled.
-   ["bestMatch.enabled", true],
- 
-   // Whether to show a link for using the search functionality provided by the
-@@ -94,16 +99,21 @@
-   // "heuristic" result).  We fetch it as fast as possible.
-   ["delay", 50],
- 
-   // Some performance tests disable this because extending the urlbar needs
-   // layout information that we can't get before the first paint. (Or we could
+   ["bestMatch.blockingEnabled", false],
+@@ -97,6 +102,11 @@
    // but this would mean flushing layout.)
    ["disableExtendForTests", false],
  
@@ -561,19 +384,9 @@ do to Marco Bonardo what he deserves for this.
    // Ensure we use trailing dots for DNS lookups for single words that could
    // be hosts.
    ["dnsResolveFullyQualifiedNames", true],
- 
-   // Controls when to DNS resolve single word search strings, after they were
-   // searched for. If the string is resolved as a valid host, show a
-   // "Did you mean to go to 'host'" prompt.
-   // 0 - never resolve; 1 - use heuristics (default); 2 - always resolve
---- Waterfox-G6.0b1/modules/libpref/init/all.js
-+++ Waterfox-G6.0b1/modules/libpref/init/all.js
-@@ -2821,16 +2821,18 @@
-   pref("network.protocol-handler.warn-external.file", false);
-   pref("browser.drag_out_of_frame_style", 1);
- 
-   // Middle-mouse handling
-   pref("middlemouse.paste", true);
+--- a/modules/libpref/init/all.js
++++ b/modules/libpref/init/all.js
+@@ -3124,6 +3124,8 @@
    pref("middlemouse.openNewWindow", true);
    pref("middlemouse.scrollbarPosition", true);
  
@@ -582,8 +395,3 @@ do to Marco Bonardo what he deserves for this.
    // Tab focus model bit field:
    // 1 focuses text controls, 2 focuses other form elements, 4 adds links.
    // Leave this at the default, 7, to match mozilla1.0-era user expectations.
-   // pref("accessibility.tabfocus", 1);
- 
-   pref("helpers.global_mime_types_file", "/etc/mime.types");
-   pref("helpers.global_mailcap_file", "/etc/mailcap");
-   pref("helpers.private_mime_types_file", "~/.mime.types");

@@ -19,9 +19,9 @@ KEYWORDS="~amd64"
 inherit kernel-2
 detect_version
 
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 DESCRIPTION="Full XanMod sources including the Gentoo patchset"
 HOMEPAGE="https://xanmod.org"
-KEYWORDS="~amd64"
 
 LICENSE+=" CDDL"
 
