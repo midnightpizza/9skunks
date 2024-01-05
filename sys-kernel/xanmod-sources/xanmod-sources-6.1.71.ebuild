@@ -4,17 +4,16 @@
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="11"
+K_GENPATCHES_VER="80"
 K_SECURITY_UNSUPPORTED="1"
 K_NOSETEXTRAVERSION="1"
 XANMOD_VERSION="1"
 XANMOD_URI="https://sourceforge.net/projects/xanmod/files/releases/xanmod/${OKV}-xanmod${XANMOD_VER}"
 XANMOD_VER="1"
-XANMOD_BRANCH="main"
+XANMOD_BRANCH="lts"
 
 HOMEPAGE="https://xanmod.org"
 LICENSE+=" CDDL"
-KEYWORDS="~amd64"
 
 inherit kernel-2
 detect_version
