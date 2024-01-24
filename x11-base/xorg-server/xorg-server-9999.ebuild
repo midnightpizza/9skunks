@@ -1,11 +1,11 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 XORG_TARBALL_SUFFIX="xz"
 XORG_EAUTORECONF="no"
-inherit xorg-3 meson
+inherit flag-o-matic xorg-3 meson
 EGIT_REPO_URI="https://gitlab.freedesktop.org/xorg/xserver.git"
 
 DESCRIPTION="X.Org X servers"
@@ -23,7 +23,6 @@ CDEPEND="
 	dev-libs/libbsd
 	dev-libs/openssl:0=
 	>=x11-apps/iceauth-1.0.2
-	>=x11-apps/rgb-1.0.3
 	>=x11-apps/xauth-1.0.3
 	x11-apps/xkbcomp
 	>=x11-libs/libdrm-2.4.89
@@ -44,7 +43,7 @@ CDEPEND="
 		>=x11-libs/libX11-1.1.5
 	)
 	xephyr? (
-		x11-libs/libxcb[xkb]
+		x11-libs/libxcb
 		x11-libs/xcb-util
 		x11-libs/xcb-util-image
 		x11-libs/xcb-util-keysyms
@@ -84,7 +83,7 @@ RDEPEND="${CDEPEND}
 	xorg? ( >=x11-apps/xinit-1.3.3-r1 )
 "
 BDEPEND="
-	sys-devel/flex
+	app-alternatives/lex
 "
 PDEPEND="
 	xorg? ( >=x11-base/xorg-drivers-$(ver_cut 1-2) )"
@@ -103,10 +102,12 @@ PATCHES=(
 )
 
 src_configure() {
+	# bug #835653
+	use x86 && replace-flags -Os -O2
+
 	# localstatedir is used for the log location; we need to override the default
 	#	from ebuild.sh
 	# sysconfdir is used for the xorg.conf location; same applies
-
 	local emesonargs=(
 		--localstatedir "${EPREFIX}/var"
 		--sysconfdir "${EPREFIX}/etc/X11"
