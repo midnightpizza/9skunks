@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -16,12 +16,12 @@ WANT_AUTOCONF="2.1"
 MOZ_PV="${PV/_p*}esr"
 
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/firefox/config?ref_type=heads#L17
-# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/config?ref_type=heads#L91
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/config?ref_type=heads#L99
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="13.0.4"
-TOR_TAG="${TOR_PV%.*}-1-build2"
-NOSCRIPT_VERSION="11.4.28"
-CHANGELOG_TAG="${TOR_PV}-build1"
+TOR_PV="13.0.9"
+TOR_TAG="${TOR_PV%.*}-1-build1"
+NOSCRIPT_VERSION="11.4.29"
+CHANGELOG_TAG="${TOR_PV}-build2"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
@@ -57,11 +57,27 @@ IUSE+=" wayland +X"
 BDEPEND="${PYTHON_DEPS}
 	|| (
 		(
-			sys-devel/clang
-			sys-devel/llvm
+			sys-devel/clang:17
+			sys-devel/llvm:17
 			clang? (
-				sys-devel/lld
-				virtual/rust
+				sys-devel/lld:17
+				virtual/rust:0/llvm-17
+			)
+		)
+		(
+			sys-devel/clang:16
+			sys-devel/llvm:16
+			clang? (
+				sys-devel/lld:16
+				virtual/rust:0/llvm-16
+			)
+		)
+		(
+			sys-devel/clang:15
+			sys-devel/llvm:15
+			clang? (
+				sys-devel/lld:15
+				virtual/rust:0/llvm-15
 			)
 		)
 	)
@@ -758,6 +774,7 @@ src_install() {
 
 		unset SESSION_MANAGER
 		export GSETTINGS_BACKEND=memory
+		export __GL_SHADER_DISK_CACHE=0
 
 		export TOR_SKIP_LAUNCH=1
 		export TOR_SKIP_CONTROLPORTTEST=1
@@ -839,5 +856,4 @@ pkg_postinst() {
 		elog "new identity), Torbrowser needs to access a control port."
 		elog "Set the Variables in /etc/env.d/99torbrowser accordingly."
 	fi
-
 }

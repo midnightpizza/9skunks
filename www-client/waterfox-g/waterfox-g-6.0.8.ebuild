@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -439,7 +439,7 @@ pkg_setup() {
 		if use pgo || use lto || use debug ; then
 			CHECKREQS_DISK_BUILD="13500M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="6400M"
 		fi
 
 		check-reqs_pkg_setup
@@ -697,7 +697,8 @@ src_configure() {
 		strip-unsupported-flags
 	fi
 
-	# Ensure we use correct toolchain
+	# Ensure we use correct toolchain,
+	# AS is used in a non-standard way by upstream, #bmo1654031
 	export HOST_CC="$(tc-getBUILD_CC)"
 	export HOST_CXX="$(tc-getBUILD_CXX)"
 	export AS="$(tc-getCC) -c"
@@ -734,7 +735,7 @@ src_configure() {
 		--disable-gpsd \
 		--disable-install-strip \
 		--disable-parental-controls \
-		--enable-strip \
+		--disable-strip \
 		--disable-tests \
 		--disable-updater \
 		--disable-wmf \
@@ -986,11 +987,6 @@ src_configure() {
 		if [[ -n ${disable_elf_hack} ]] ; then
 			mozconfig_add_options_ac 'elf-hack is broken when using Clang' --disable-elf-hack
 		fi
-	elif tc-is-gcc ; then
-		if ver_test $(gcc-fullversion) -ge 10 ; then
-			einfo "Forcing -fno-tree-loop-vectorize to workaround GCC bug, see bug 758446 ..."
-			append-cxxflags -fno-tree-loop-vectorize
-		fi
 	fi
 
 	if use elibc_musl && use arm64 ; then
@@ -1115,7 +1111,7 @@ src_compile() {
 		fi
 	fi
 
-	if ! use X && use wayland; then
+	if ! use X; then
 		local -x GDK_BACKEND=wayland
 	else
 		local -x GDK_BACKEND=x11
@@ -1359,7 +1355,17 @@ pkg_postinst() {
 		ewarn "You have nouveau drivers installed in your system and 'hwaccel' "
 		ewarn "enabled for Waterfox. Nouveau / your GPU might not support the "
 		ewarn "required EGL, so either disable 'hwaccel' or try the workaround "
-		ewarn "explained in https://bugs.gentoo.org/835078#c5 if Waterfox crashes."
+		ewarn "explained in https://bugs.gentoo.org/835078#c5 if Firefox crashes."
+	fi
+
+	readme.gentoo_print_elog
+
+	optfeature_header "Optional programs for extra features:"
+	optfeature "desktop notifications" x11-libs/libnotify
+	optfeature "fallback mouse cursor theme e.g. on WMs" gnome-base/gsettings-desktop-schemas
+
+	if use hwaccel && has_version "x11-drivers/nvidia-drivers"; then
+		optfeature "hardware acceleration with NVIDIA cards" media-libs/nvidia-vaapi-driver
 	fi
 
 	if ! has_version "sys-libs/glibc"; then
