@@ -402,7 +402,10 @@ multilib_src_configure() {
 		emesonargs+=(-Dintel-clc=disabled)
 	fi
 	if ! use panfork; then
-        emesonargs+=(-Dexpat=enabled)
+        emesonargs+=(-Dexpat=enabled
+        	-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
+        	)
+
     fi
 	emesonargs+=(
 		$(meson_use test build-tests)
