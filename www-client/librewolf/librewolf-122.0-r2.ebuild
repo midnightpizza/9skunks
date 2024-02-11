@@ -640,9 +640,9 @@ src_prepare() {
 	fi
 
 	# Workaround for bgo#917599
-	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
-		eapply "${WORKDIR}"/firefox-patches/0026-bmo-1862601-system-icu-74.patch
-	fi
+	#if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+	#	eapply "${WORKDIR}"/firefox-patches/0026-bmo-1862601-system-icu-74.patch
+	#fi
 	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
 
 	# Workaround for bgo#915651 on musl
