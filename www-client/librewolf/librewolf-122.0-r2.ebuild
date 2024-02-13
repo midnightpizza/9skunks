@@ -153,7 +153,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 		>=media-gfx/graphite2-1.3.13
 		>=media-libs/harfbuzz-2.8.1:0=
 	)
-	system-icu? ( dev-libs/icu )
+	system-icu? ( >=dev-libs/icu-73.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1 )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
@@ -640,9 +640,9 @@ src_prepare() {
 	fi
 
 	# Workaround for bgo#917599
-	#if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
-	#	eapply "${WORKDIR}"/firefox-patches/0026-bmo-1862601-system-icu-74.patch
-	#fi
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
+	fi
 	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
 
 	# Workaround for bgo#915651 on musl
@@ -765,8 +765,8 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
-		CC=${CHOST}-clang
-		CXX=${CHOST}-clang++
+		CC=${CHOST}-clang-${version_clang}
+		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
 	elif ! use clang && ! tc-is-gcc ; then
@@ -835,8 +835,6 @@ src_configure() {
 		--disable-strip \
 		--disable-tests \
 		--disable-updater \
-		--disable-wasm-function-references \
-		--disable-wasm-gc \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
