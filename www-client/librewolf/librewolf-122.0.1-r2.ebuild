@@ -986,10 +986,15 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
+	# LTO is handled via configure
+	filter-lto
+
 	if use lto ; then
 		if use clang ; then
 			# Upstream only supports lld or mold when using clang.
 			if tc-ld-is-mold ; then
+				# mold expects the -flto line from *FLAGS configuration, bgo#923119
+				append-ldflags "-flto=thin"
 				mozconfig_add_options_ac "using ld=mold due to system selection" --enable-linker=mold
 			else
 				mozconfig_add_options_ac "forcing ld=lld due to USE=clang and USE=lto" --enable-linker=lld
