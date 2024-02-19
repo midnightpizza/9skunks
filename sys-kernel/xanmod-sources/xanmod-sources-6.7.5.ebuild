@@ -10,7 +10,7 @@ K_NOSETEXTRAVERSION="1"
 XANMOD_VERSION="1"
 XANMOD_URI="https://sourceforge.net/projects/xanmod/files/releases/xanmod/${OKV}-xanmod${XANMOD_VER}"
 XANMOD_VER="1"
-XANMOD_BRANCH="edge"
+XANMOD_BRANCH="main"
 
 HOMEPAGE="https://xanmod.org"
 LICENSE+=" CDDL"
