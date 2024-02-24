@@ -9,5 +9,5 @@ LICENSE=BSD
 PROPERTIES=live
 RDEPEND=sys-apps/busybox[mdev(+)]
 SLOT=0
-_eclasses_=git-r3	5133e393e8717a3a093660f990801dc1
+_eclasses_=git-r3	86fa1f157b70b9d2ff340c4633b1cf4b
 _md5_=e11f34b608ed43be071bf87795ce6650

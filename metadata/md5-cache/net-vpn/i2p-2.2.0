@@ -12,5 +12,5 @@ RDEPEND=dev-java/java-service-wrapper:0 acct-user/i2p acct-group/i2p virtual/jre
 RESTRICT=!test? ( test )
 SLOT=0
 SRC_URI=https://files.i2p-projekt.de/2.2.0/i2psource_2.2.0.tar.bz2
-_eclasses_=java-utils-2	c04e82b700f977924b211c7cdbc2f096	java-pkg-2	1794573de2f5124d88b64ee5dc9aabb4	multilib	c19072c3cd7ac5cb21de013f7e9832e0	toolchain-funcs	eed10cf5e5a06916e654d31f5a1925cc	java-ant-2	19239227fab7816f57abbc0c7d819396	systemd	c8b03e8df84486aa991d4396686e8942
+_eclasses_=java-utils-2	b346c3901e71ba37137bae0b25b00221	java-pkg-2	b6d755b4f6afabfd933932be28b46368	multilib	c19072c3cd7ac5cb21de013f7e9832e0	toolchain-funcs	e56c7649b804f051623c8bc1a1c44084	java-ant-2	53b9c110af009f9f4548f5b129ae6fe6	systemd	c8b03e8df84486aa991d4396686e8942
 _md5_=6a0a609d88c2d938379cef2b1a315435
