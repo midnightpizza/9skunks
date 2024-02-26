@@ -3,9 +3,9 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-123-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-123-patches-03.tar.xz"
 
-LLVM_COMPAT=( 16 17 )
+LLVM_MAX_SLOT=17
 
 PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -41,7 +41,7 @@ MOZ_P="${MOZ_PN}-${MOZ_PV}"
 MOZ_PV_DISTFILES="${MOZ_PV}${MOZ_PV_SUFFIX}"
 MOZ_P_DISTFILES="${MOZ_PN}-${MOZ_PV_DISTFILES}"
 
-inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm-r1 multiprocessing \
+inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm multiprocessing \
 	optfeature pax-utils python-any-r1 readme.gentoo-r1 toolchain-funcs virtualx xdg
 
 MOZ_SRC_BASE_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
@@ -83,15 +83,17 @@ FF_ONLY_DEPEND="!www-client/firefox:0
 	!www-client/firefox:esr
 	selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
-	$(llvm_gen_dep '
-		sys-devel/clang:${LLVM_SLOT}
-		sys-devel/llvm:${LLVM_SLOT}
-		clang? (
-			sys-devel/lld:${LLVM_SLOT}
-			virtual/rust:0/llvm-${LLVM_SLOT}
+	|| (
+		(
+			sys-devel/clang
+			sys-devel/llvm
+			clang? (
+				sys-devel/lld
+				virtual/rust
+				pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
+			)
 		)
-		pgo? ( sys-libs/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
-	')
+	)
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
@@ -1033,9 +1035,6 @@ src_configure() {
 			fi
 		fi
 	fi
-
-	# LTO flag was handled via configure
-	filter-lto
 
 	mozconfig_use_enable debug
 	if use debug ; then
