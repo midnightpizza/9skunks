@@ -33,6 +33,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 src_unpack() {
 	if use panfork; then
 		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
+		#EGIT_REPO_URI="https://github.com/Saikatsaha1996/mesa-Panfrost-G610"
 	else
 		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
 	fi
@@ -375,6 +376,7 @@ multilib_src_configure() {
 	if ! use panfork; then
         emesonargs+=(-Dexpat=enabled
         	-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
+        	$(meson_native_use_feature video_cards_intel intel-rt)
         	)
 	fi
 	if use opengl && use X; then
@@ -397,7 +399,6 @@ multilib_src_configure() {
 		$(meson_use osmesa)
 		$(meson_use selinux)
 		$(meson_feature unwind libunwind)
-		$(meson_native_use_feature video_cards_intel intel-rt)
 		$(meson_feature zstd)
 		$(meson_use cpu_flags_x86_sse2 sse2)
 		-Dintel-clc=$(usex video_cards_intel system auto)
