@@ -32,9 +32,12 @@ IUSE="${IUSE_VIDEO_CARDS}
 
 src_unpack() {
 	if use panfork; then
+		EGIT_MIN_CLONE_TYPE="shallow"
+		EGIT_BRANCH="Panfrost-G610"
 		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
 		#EGIT_REPO_URI="https://github.com/Saikatsaha1996/mesa-Panfrost-G610"
 	else
+		EGIT_MIN_CLONE_TYPE="shallow"
 		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
 	fi
 	git-r3_src_unpack
