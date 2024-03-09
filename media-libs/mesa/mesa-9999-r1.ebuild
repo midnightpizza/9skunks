@@ -3,7 +3,7 @@
 
 EAPI=8
 
-LLVM_COMPAT=( {15..16} )
+LLVM_COMPAT=( {15..17} )
 LLVM_OPTIONAL=1
 PYTHON_COMPAT=( python3_{10..12} )
 
@@ -14,12 +14,20 @@ MY_P="${P/_/-}"
 DESCRIPTION="OpenGL-like graphic library for Linux"
 HOMEPAGE="https://www.mesa3d.org/ https://mesa.freedesktop.org/"
 
+if [[ ${PV} == 9999 ]]; then
+	EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
+	inherit git-r3
+else
+	SRC_URI="https://archive.mesa3d.org/${MY_P}.tar.xz"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
+fi
+
 LICENSE="MIT SGI-B-2.0"
 SLOT="0"
 RESTRICT="!test? ( test )"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
-VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau +panfrost v3d vc4 virgl vivante vmware"
+VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau panfrost v3d vc4 virgl vivante vmware"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
 done
@@ -28,22 +36,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug gles1 +gles2 +llvm
 	lm-sensors opencl +opengl osmesa +proprietary-codecs selinux
 	test unwind vaapi valgrind vdpau vulkan
-	vulkan-overlay wayland +X xa zink +zstd libglvnd panfork"
-
-src_unpack() {
-	if use panfork; then
-		EGIT_MIN_CLONE_TYPE="shallow"
-		EGIT_BRANCH="Panfrost-G610"
-		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
-		#EGIT_REPO_URI="https://github.com/Saikatsaha1996/mesa-Panfrost-G610"
-	else
-		EGIT_MIN_CLONE_TYPE="shallow"
-		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
-	fi
-	git-r3_src_unpack
-}
-
-
+	vulkan-overlay wayland +X xa zink +zstd libglvnd"
 
 REQUIRED_USE="
 	d3d9? (
@@ -255,9 +248,7 @@ multilib_src_configure() {
 	use X && platforms+="x11"
 	use wayland && platforms+=",wayland"
 	emesonargs+=(-Dplatforms=${platforms#,})
-	if use panfork; then
-    		emesonargs+=(-Dtools=panfrost)
-	fi
+
 	if use video_cards_intel ||
 	   use video_cards_r300 ||
 	   use video_cards_r600 ||
@@ -374,12 +365,6 @@ multilib_src_configure() {
 		)
 	fi
 
-	if ! use panfork; then
-        emesonargs+=(-Dexpat=enabled
-        	-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
-        	$(meson_native_use_feature video_cards_intel intel-rt)
-        	)
-	fi
 	if use opengl && use X; then
 		emesonargs+=(-Dglx=dri)
 	else
@@ -390,6 +375,7 @@ multilib_src_configure() {
 		$(meson_use test build-tests)
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
+		-Dexpat=enabled
 		$(meson_use opengl)
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
@@ -399,13 +385,15 @@ multilib_src_configure() {
 		$(meson_use osmesa)
 		$(meson_use selinux)
 		$(meson_feature unwind libunwind)
+		$(meson_native_use_feature video_cards_intel intel-rt)
 		$(meson_feature zstd)
 		$(meson_use cpu_flags_x86_sse2 sse2)
 		-Dintel-clc=$(usex video_cards_intel system auto)
 		-Dvalgrind=$(usex valgrind auto disabled)
+		-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
-		--buildtype $(usex debug debug plain)
+		-Dbuildtype=$(usex debug debug plain)
 		-Db_ndebug=$(usex debug false true)
 	)
 	meson_src_configure
