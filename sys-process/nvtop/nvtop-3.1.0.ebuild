@@ -5,7 +5,7 @@ EAPI=8
 
 inherit cmake xdg
 
-DESCRIPTION="NVIDIA GPUs htop like monitoring tool"
+DESCRIPTION="Neat Videocard TOP, a (h)top like task monitor for GPUs and accelerators. "
 HOMEPAGE="https://github.com/Syllo/nvtop"
 
 if [[ "${PV}" == "9999" ]] ; then
