@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>myau @ riseup.net</email>
+		<name>Saki Xi</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">Syllo/nvtop</remote-id>
+	</upstream>
+	<longdescription lang="en">
+	NVTOP stands for Neat Videocard TOP, a (h)top like task monitor for GPUs and accelerators. 
+	It can handle multiple GPUs and print information about them in a htop-familiar way.
+	Currently supported vendors are AMD (Linux amdgpu driver), Apple (limited M1 & M2 support), 
+	Huawei (Ascend), Intel (Linux i915 driver), NVIDIA (Linux proprietary divers), Qualcomm Adreno (Linux MSM driver).
+	</longdescription>
+</pkgmetadata>
