@@ -28,7 +28,6 @@ DEPEND="
 	virtual/libcrypt:=
 	kmod? ( >=sys-apps/kmod-16 )
 	selinux? ( >=sys-libs/libselinux-2.1.9 )
-	!sys-apps/gentoo-systemd-integration
 	!sys-apps/systemd
 "
 RDEPEND="
