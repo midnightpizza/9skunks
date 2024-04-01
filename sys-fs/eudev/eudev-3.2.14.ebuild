@@ -50,7 +50,6 @@ RDEPEND="
 	acct-group/tty
 	acct-group/usb
 	acct-group/video
-	!sys-apps/systemd-utils[udev]
 	!sys-fs/udev
 	!sys-apps/systemd
 	!sys-apps/hwids[udev]
