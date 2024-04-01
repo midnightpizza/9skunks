@@ -3,41 +3,35 @@
 
 EAPI=8
 
-LLVM_COMPAT=( {15..16} )
-LLVM_OPTIONAL=1
 PYTHON_COMPAT=( python3_{10..12} )
 
-inherit llvm-r1 meson-multilib pax-utils python-any-r1 linux-info git-r3
+inherit llvm meson-multilib pax-utils python-any-r1 linux-info git-r3
 
 MY_P="${P/_/-}"
 
 DESCRIPTION="OpenGL-like graphic library for Linux"
 HOMEPAGE="https://www.mesa3d.org/ https://mesa.freedesktop.org/"
 
-LICENSE="MIT SGI-B-2.0"
+LICENSE="MIT"
 SLOT="0"
 RESTRICT="!test? ( test )"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
-VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau +panfrost v3d vc4 virgl vivante vmware"
+VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau panfrost v3d vc4 virgl vivante vmware"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
 done
 
 IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug gles1 +gles2 +llvm
-	lm-sensors opencl +opengl osmesa +proprietary-codecs selinux
+	lm-sensors opencl osmesa +proprietary-codecs selinux
 	test unwind vaapi valgrind vdpau vulkan
 	vulkan-overlay wayland +X xa zink +zstd libglvnd panfork"
 
 src_unpack() {
 	if use panfork; then
-		EGIT_MIN_CLONE_TYPE="shallow"
-		#EGIT_BRANCH="Panfrost-G610"
 		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
-		#EGIT_REPO_URI="https://github.com/Saikatsaha1996/mesa-Panfrost-G610"
 	else
-		EGIT_MIN_CLONE_TYPE="shallow"
 		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
 	fi
 	git-r3_src_unpack
@@ -56,31 +50,28 @@ REQUIRED_USE="
 			video_cards_vmware
 		)
 	)
-	llvm? ( ${LLVM_REQUIRED_USE} )
+	vulkan? ( video_cards_radeonsi? ( llvm ) )
 	vulkan-overlay? ( vulkan )
 	video_cards_lavapipe? ( llvm vulkan )
 	video_cards_radeon? ( x86? ( llvm ) amd64? ( llvm ) )
 	video_cards_r300?   ( x86? ( llvm ) amd64? ( llvm ) )
+	video_cards_radeonsi?   ( llvm )
 	vdpau? ( X )
 	xa? ( X )
-	X? ( gles1? ( opengl ) gles2? ( opengl ) )
-	zink? ( vulkan || ( opengl gles1 gles2 ) )
+	zink? ( vulkan )
 "
 
-LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.119"
+
+LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.110"
 RDEPEND="
 	>=dev-libs/expat-2.1.0-r3[${MULTILIB_USEDEP}]
 	>=media-libs/libglvnd-1.3.2[X?,${MULTILIB_USEDEP}]
-	>=sys-libs/zlib-1.2.9[${MULTILIB_USEDEP}]
+	>=sys-libs/zlib-1.2.8[${MULTILIB_USEDEP}]
 	unwind? ( sys-libs/libunwind[${MULTILIB_USEDEP}] )
 	llvm? (
-		$(llvm_gen_dep "
-			sys-devel/llvm:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
-			opencl? (
-				dev-util/spirv-llvm-translator:\${LLVM_SLOT}
-				sys-devel/clang:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
-			)
-		")
+		video_cards_radeonsi? (
+			virtual/libelf:0=[${MULTILIB_USEDEP}]
+		)
 		video_cards_r600? (
 			virtual/libelf:0=[${MULTILIB_USEDEP}]
 		)
@@ -99,7 +90,14 @@ RDEPEND="
 		>=media-libs/libva-1.7.3:=[${MULTILIB_USEDEP}]
 	)
 	vdpau? ( >=x11-libs/libvdpau-1.1:=[${MULTILIB_USEDEP}] )
-	video_cards_radeonsi? ( virtual/libelf:0=[${MULTILIB_USEDEP}] )
+	vulkan? (
+		video_cards_intel? (
+			amd64? (
+				dev-libs/libclc[spirv(-)]
+				>=dev-util/spirv-tools-1.3.231.0
+			)
+		)
+	)
 	selinux? ( sys-libs/libselinux[${MULTILIB_USEDEP}] )
 	wayland? ( >=dev-libs/wayland-1.18.0[${MULTILIB_USEDEP}] )
 	${LIBDRM_DEPSTRING}[video_cards_freedreno?,video_cards_intel?,video_cards_nouveau?,video_cards_vc4?,video_cards_vivante?,video_cards_vmware?,${MULTILIB_USEDEP}]
@@ -124,37 +122,79 @@ RDEPEND="${RDEPEND}
 	video_cards_radeonsi? ( ${LIBDRM_DEPSTRING}[video_cards_amdgpu] )
 "
 
+# Please keep the LLVM dependency block separate. Since LLVM is slotted,
+# we need to *really* make sure we're not pulling one than more slot
+# simultaneously.
+#
+# How to use it:
+# 1. Specify LLVM_MAX_SLOT (inclusive), e.g. 16.
+# 2. Specify LLVM_MIN_SLOT (inclusive), e.g. 15.
+LLVM_MAX_SLOT="16"
+LLVM_MIN_SLOT="15"
+LLVM_USE_DEPS="llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}"
+PER_SLOT_DEPSTR="
+	(
+		!opencl? ( sys-devel/llvm:@SLOT@[${LLVM_USE_DEPS}] )
+		opencl? ( sys-devel/clang:@SLOT@[${LLVM_USE_DEPS}] )
+		opencl? ( dev-util/spirv-llvm-translator:@SLOT@ )
+		vulkan? ( video_cards_intel? ( amd64? ( dev-util/spirv-llvm-translator:@SLOT@ ) ) )
+	)
+"
+LLVM_DEPSTR="
+	|| (
+		$(for ((slot=LLVM_MAX_SLOT; slot>=LLVM_MIN_SLOT; slot--)); do
+			echo "${PER_SLOT_DEPSTR//@SLOT@/${slot}}"
+		done)
+	)
+	!opencl? ( <sys-devel/llvm-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
+	opencl? ( <sys-devel/clang-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
+"
+RDEPEND="${RDEPEND}
+	llvm? ( ${LLVM_DEPSTR} )
+"
+unset LLVM_MIN_SLOT {LLVM,PER_SLOT}_DEPSTR
+
 DEPEND="${RDEPEND}
-	video_cards_d3d12? ( >=dev-util/directx-headers-1.611.0[${MULTILIB_USEDEP}] )
-	valgrind? ( dev-debug/valgrind )
-	wayland? ( >=dev-libs/wayland-protocols-1.30 )
+	video_cards_d3d12? ( >=dev-util/directx-headers-1.610.0[${MULTILIB_USEDEP}] )
+	valgrind? ( dev-util/valgrind )
+	wayland? ( >=dev-libs/wayland-protocols-1.24 )
 	X? (
 		x11-libs/libXrandr[${MULTILIB_USEDEP}]
 		x11-base/xorg-proto
 	)
 "
 BDEPEND="
+	>=dev-util/meson-1.0.0
 	${PYTHON_DEPS}
 	opencl? (
 		>=virtual/rust-1.62.0
 		>=dev-util/bindgen-0.58.0
-		>=dev-build/meson-1.3.1
+		>=dev-util/meson-1.2.0
 	)
-	app-alternatives/yacc
-	app-alternatives/lex
+	sys-devel/bison
+	sys-devel/flex
 	virtual/pkgconfig
 	$(python_gen_any_dep ">=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]")
-	video_cards_intel? (
-		~dev-util/intel_clc-${PV}
-		dev-libs/libclc[spirv(-)]
-		$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
+	llvm? (
+		vulkan? (
+			dev-util/glslang
+			video_cards_intel? (
+				amd64? (
+					$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
+				)
+			)
+		)
 	)
-	vulkan? ( dev-util/glslang )
 	wayland? ( dev-util/wayland-scanner )
 "
 
 S="${WORKDIR}/${MY_P}"
 EGIT_CHECKOUT_DIR=${S}
+
+PATCHES=(
+	# Workaround the CMake dependency lookup returning a different LLVM to llvm-config, bug #907965
+	"${FILESDIR}/clang_config_tool.patch"
+)
 
 QA_WX_LOAD="
 x86? (
@@ -162,6 +202,16 @@ x86? (
 	usr/lib/libOSMesa.so.8.0.0
 	libglvnd? ( usr/lib/libGLX_mesa.so.0.0.0 )
 )"
+
+llvm_check_deps() {
+	if use opencl; then
+		has_version "sys-devel/clang:${LLVM_SLOT}[${LLVM_USE_DEPS}]" || return 1
+	fi
+	if use opencl || { use vulkan && use video_cards_intel && use amd64; }; then
+		has_version "dev-util/spirv-llvm-translator:${LLVM_SLOT}" || return 1
+	fi
+	has_version "sys-devel/llvm:${LLVM_SLOT}[${LLVM_USE_DEPS}]"
+}
 
 pkg_pretend() {
 	if use vulkan; then
@@ -238,14 +288,10 @@ pkg_setup() {
 		linux-info_pkg_setup
 	fi
 
-	use llvm && llvm-r1_pkg_setup
+	if use llvm; then
+		llvm_pkg_setup
+	fi
 	python-any-r1_pkg_setup
-}
-
-src_prepare() {
-	default
-	sed -i -e "/^PLATFORM_SYMBOLS/a '__gentoo_check_ldflags__'," \
-		bin/symbols-check.py || die # bug #830728
 }
 
 multilib_src_configure() {
@@ -303,7 +349,7 @@ multilib_src_configure() {
 
 	if use video_cards_freedreno ||
 	   use video_cards_lima ||
-	   use panfork ||
+	   use video_cards_panfrost ||
 	   use video_cards_v3d ||
 	   use video_cards_vc4 ||
 	   use video_cards_vivante; then
@@ -316,7 +362,7 @@ multilib_src_configure() {
 	gallium_enable video_cards_lima lima
 	gallium_enable video_cards_d3d12 d3d12
 	gallium_enable video_cards_nouveau nouveau
-	gallium_enable panfork panfrost
+	gallium_enable video_cards_panfrost panfrost
 	gallium_enable video_cards_v3d v3d
 	gallium_enable video_cards_vc4 vc4
 	gallium_enable video_cards_virgl virgl
@@ -333,7 +379,7 @@ multilib_src_configure() {
 	fi
 
 	if use llvm && use opencl; then
-		PKG_CONFIG_PATH="$(get_llvm_prefix)/$(get_libdir)/pkgconfig"
+		PKG_CONFIG_PATH="$(get_llvm_prefix "${LLVM_MAX_SLOT}")/$(get_libdir)/pkgconfig"
 		# See https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/docs/rusticl.rst
 		emesonargs+=(
 			$(meson_native_true gallium-rusticl)
@@ -360,37 +406,21 @@ multilib_src_configure() {
 	use vulkan-overlay && vulkan_layers+=",overlay"
 	emesonargs+=(-Dvulkan-layers=${vulkan_layers#,})
 
-	if use opengl || use gles1 || use gles2; then
-		emesonargs+=(
-			-Degl=enabled
-			-Dgbm=enabled
-			-Dglvnd=true
-		)
+	if use llvm && use vulkan && use video_cards_intel; then
+		PKG_CONFIG_PATH="$(get_llvm_prefix "${LLVM_MAX_SLOT}")/$(get_libdir)/pkgconfig"
+		emesonargs+=(-Dintel-clc=enabled)
 	else
-		emesonargs+=(
-			-Degl=disabled
-			-Dgbm=disabled
-			-Dglvnd=false
-		)
-	fi
-
-	if ! use panfork; then
-        emesonargs+=(-Dexpat=enabled
-        	-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
-        	$(meson_native_use_feature video_cards_intel intel-rt)
-        	)
-	fi
-	if use opengl && use X; then
-		emesonargs+=(-Dglx=dri)
-	else
-		emesonargs+=(-Dglx=disabled)
+		emesonargs+=(-Dintel-clc=disabled)
 	fi
 
 	emesonargs+=(
 		$(meson_use test build-tests)
+		-Dglx=$(usex X dri disabled)
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
-		$(meson_use opengl)
+		-Degl=enabled
+		-Dexpat=enabled
+		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
 		$(meson_feature gles2)
@@ -401,8 +431,8 @@ multilib_src_configure() {
 		$(meson_feature unwind libunwind)
 		$(meson_feature zstd)
 		$(meson_use cpu_flags_x86_sse2 sse2)
-		-Dintel-clc=$(usex video_cards_intel system auto)
 		-Dvalgrind=$(usex valgrind auto disabled)
+		-Dvideo-codecs=$(usex proprietary-codecs "h264dec,h264enc,h265dec,h265enc,vc1dec" "")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
 		--buildtype $(usex debug debug plain)
@@ -414,6 +444,7 @@ multilib_src_configure() {
 multilib_src_test() {
 	meson_src_test -t 100
 }
+
 pkg_postinst() {
 	if ! use libglvnd; then
 		# Switch to the xorg implementation.
