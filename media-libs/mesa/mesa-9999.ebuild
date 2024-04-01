@@ -303,7 +303,7 @@ multilib_src_configure() {
 
 	if use video_cards_freedreno ||
 	   use video_cards_lima ||
-	   use video_cards_panfrost ||
+	   use panfork ||
 	   use video_cards_v3d ||
 	   use video_cards_vc4 ||
 	   use video_cards_vivante; then
@@ -316,7 +316,7 @@ multilib_src_configure() {
 	gallium_enable video_cards_lima lima
 	gallium_enable video_cards_d3d12 d3d12
 	gallium_enable video_cards_nouveau nouveau
-	gallium_enable video_cards_panfrost panfrost
+	gallium_enable panfork panfrost
 	gallium_enable video_cards_v3d v3d
 	gallium_enable video_cards_vc4 vc4
 	gallium_enable video_cards_virgl virgl
