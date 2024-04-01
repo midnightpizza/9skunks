@@ -164,12 +164,12 @@ DEPEND="${RDEPEND}
 	)
 "
 BDEPEND="
-	>=dev-util/meson-1.0.0
+	dev-build/meson
 	${PYTHON_DEPS}
 	opencl? (
 		>=virtual/rust-1.62.0
 		>=dev-util/bindgen-0.58.0
-		>=dev-util/meson-1.2.0
+		dev-build/meson
 	)
 	sys-devel/bison
 	sys-devel/flex
@@ -419,7 +419,6 @@ multilib_src_configure() {
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
 		-Degl=enabled
-		-Dexpat=enabled
 		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
 		$(meson_feature gles1)
@@ -435,7 +434,7 @@ multilib_src_configure() {
 		-Dvideo-codecs=$(usex proprietary-codecs "h264dec,h264enc,h265dec,h265enc,vc1dec" "")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
-		--buildtype $(usex debug debug plain)
+		-Dbuildtype=$(usex debug debug plain)
 		-Db_ndebug=$(usex debug false true)
 	)
 	meson_src_configure
