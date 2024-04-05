@@ -7,7 +7,7 @@ LLVM_COMPAT=( {15..17} )
 LLVM_OPTIONAL=1
 PYTHON_COMPAT=( python3_{10..12} )
 
-inherit llvm-r1 meson-multilib pax-utils python-any-r1 linux-info git-r3
+inherit llvm-r1 meson-multilib python-any-r1 linux-info
 
 MY_P="${P/_/-}"
 
@@ -21,10 +21,11 @@ else
 	SRC_URI="https://archive.mesa3d.org/${MY_P}.tar.xz"
 	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
 fi
+S="${WORKDIR}/${MY_P}"
+EGIT_CHECKOUT_DIR=${S}
 
 LICENSE="MIT SGI-B-2.0"
 SLOT="0"
-RESTRICT="!test? ( test )"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
 VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau panfrost v3d vc4 virgl vivante vmware"
@@ -145,9 +146,6 @@ BDEPEND="
 	vulkan? ( dev-util/glslang )
 	wayland? ( dev-util/wayland-scanner )
 "
-
-S="${WORKDIR}/${MY_P}"
-EGIT_CHECKOUT_DIR=${S}
 
 QA_WX_LOAD="
 x86? (
@@ -371,6 +369,8 @@ multilib_src_configure() {
 		emesonargs+=(-Dglx=disabled)
 	fi
 
+	use debug && EMESON_BUILDTYPE=debug
+
 	emesonargs+=(
 		$(meson_use test build-tests)
 		-Dshared-glapi=enabled
@@ -393,7 +393,6 @@ multilib_src_configure() {
 		-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
 		-Dvulkan-drivers=$(driver_list "${VULKAN_DRIVERS[*]}")
-		-Dbuildtype=$(usex debug debug plain)
 		-Db_ndebug=$(usex debug false true)
 	)
 	meson_src_configure
