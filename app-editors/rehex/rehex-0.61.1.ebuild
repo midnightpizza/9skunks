@@ -30,6 +30,7 @@ RDEPEND="
 	dev-libs/capstone
 	dev-libs/jansson
 	dev-lua/busted
+	dev-libs/botan:2
 	x11-libs/wxGTK:${WX_GTK_VER}[X]"
 DEPEND="${RDEPEND} test? ( dev-cpp/gtest )"
 
