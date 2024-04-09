@@ -13,7 +13,7 @@ HOMEPAGE="https://apps.kde.org/kalk"
 
 LICENSE="GPL-3+"
 SLOT="5"
-KEYWORDS="~arm64 amd64"
+KEYWORDS="" #~arm64 amd64"
 IUSE=""
 
 DEPEND="
