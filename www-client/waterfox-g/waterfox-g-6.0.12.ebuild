@@ -581,9 +581,10 @@ src_prepare() {
 	fi
 	rm -v "${WORKDIR}"/firefox-patches/0029-bmo-1862601-system-icu-74.patch || die
 
-	# Remove patches already applied in Waterfox
-	elog "Removing patches already applied in Waterfox..."
-	# rm -v "${WORKDIR}"/firefox-patches/0028-bgo-911679-gcc-binutils-2.41.patch || die
+	# Workaround for bgo#915651 on musl
+	if use elibc_glibc ; then
+		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
+	fi
 
 	eapply "${WORKDIR}/firefox-patches"
 
@@ -616,7 +617,7 @@ src_prepare() {
 		elif use x86 ; then
 			export RUST_TARGET="i686-unknown-linux-musl"
 		else
-			die "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
+			elog "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
 		fi
 	fi
 
@@ -714,7 +715,8 @@ src_configure() {
 		strip-unsupported-flags
 	fi
 
-	# Ensure we use correct toolchain
+	# Ensure we use correct toolchain,
+	# AS is used in a non-standard way by upstream, #bmo1654031
 	export HOST_CC="$(tc-getBUILD_CC)"
 	export HOST_CXX="$(tc-getBUILD_CXX)"
 	export AS="$(tc-getCC) -c"
@@ -751,14 +753,14 @@ src_configure() {
 		--disable-gpsd \
 		--disable-install-strip \
 		--disable-parental-controls \
-		--enable-strip \
+		--disable-strip \
 		--disable-tests \
 		--disable-updater \
 		--disable-wmf \
 		--enable-legacy-profile-creation \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
-		--disable-official-branding \
+		--enable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
@@ -987,31 +989,20 @@ src_configure() {
 		fi
 	fi
 
-	if use clang ; then
-		# https://bugzilla.mozilla.org/show_bug.cgi?id=1482204
-		# https://bugzilla.mozilla.org/show_bug.cgi?id=1483822
-		# toolkit/moz.configure Elfhack section: target.cpu in ('arm', 'x86', 'x86_64')
-		local disable_elf_hack=
-		if use amd64 ; then
-			disable_elf_hack=yes
-		elif use x86 ; then
-			disable_elf_hack=yes
-		elif use arm ; then
-			disable_elf_hack=yes
-		fi
-
-		if [[ -n ${disable_elf_hack} ]] ; then
-			mozconfig_add_options_ac 'elf-hack is broken when using Clang' --disable-elf-hack
-		fi
-	elif tc-is-gcc ; then
-		if ver_test $(gcc-fullversion) -ge 10 ; then
-			einfo "Forcing -fno-tree-loop-vectorize to workaround GCC bug, see bug 758446 ..."
-			append-cxxflags -fno-tree-loop-vectorize
-		fi
+	# With profile 23.0 elf-hack=legacy is broken with gcc.
+	# With Firefox-115esr elf-hack=relr isn't available (only in rapid).
+	# Solution: Disable build system's elf-hack completely, and add "-z,pack-relative-relocs"
+	#  manually with gcc.
+	#
+	# elf-hack configure option isn't available on ppc64/riscv, #916259, #929244, #930046.
+	if use ppc64 || use riscv ; then
+		:;
+	else
+		mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
 	fi
 
-	if use elibc_musl && use arm64 ; then
-		mozconfig_add_options_ac 'elf-hack is broken when using musl/arm64' --disable-elf-hack
+	if use amd64 || use x86 ; then
+		! use clang && append-ldflags "-z,pack-relative-relocs"
 	fi
 
 	# Additional ARCH support
