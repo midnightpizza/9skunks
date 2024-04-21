@@ -1,19 +1,20 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="8"
 ETYPE="sources"
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="80"
+K_GENPATCHES_VER="10"
 K_SECURITY_UNSUPPORTED="1"
 K_NOSETEXTRAVERSION="1"
 XANMOD_VERSION="1"
 XANMOD_URI="https://sourceforge.net/projects/xanmod/files/releases/xanmod/${OKV}-xanmod${XANMOD_VER}"
 XANMOD_VER="1"
-XANMOD_BRANCH="lts"
+XANMOD_BRANCH="main"
 
 HOMEPAGE="https://xanmod.org"
 LICENSE+=" CDDL"
+KEYWORDS="~amd64"
 
 inherit kernel-2
 detect_version
@@ -39,6 +40,8 @@ SRC_URI="
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
+UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2*iwlwifi-rfkill-fix.patch"
+
 
 pkg_postinst() {
 	elog "The XanMod team strongly suggests the use of updated CPU microcodes with its"
