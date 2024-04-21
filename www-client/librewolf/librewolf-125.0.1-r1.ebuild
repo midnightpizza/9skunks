@@ -79,9 +79,7 @@ REQUIRED_USE="|| ( X wayland )
 	pgo? ( lto )
 	wifi? ( dbus )"
 
-FF_ONLY_DEPEND="!www-client/firefox:0
-	!www-client/firefox:esr
-	selinux? ( sec-policy/selinux-mozilla )"
+FF_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
 	$(llvm_gen_dep '
 		sys-devel/clang:${LLVM_SLOT}
