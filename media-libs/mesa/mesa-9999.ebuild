@@ -30,7 +30,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 
 src_unpack() {
 	if use panfork; then
-		EGIT_REPO_URI="https://gitlab.com/panfork/mesa.git"
+		EGIT_REPO_URI="https://gitlab.freedesktop.org/icecream95/mesa"
 	else
 		EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
 	fi
