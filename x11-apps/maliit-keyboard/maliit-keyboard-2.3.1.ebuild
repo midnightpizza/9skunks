@@ -25,6 +25,7 @@ DEPEND="
 	dev-qt/qtmultimedia:5
 	dev-qt/qtquickcontrols2
 	sys-devel/gettext
+	dev-util/wayland-scanner
 	>=x11-libs/maliit-2.3.0
 	cjk? (
 		app-i18n/anthy
