@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,19 +15,19 @@ HOMEPAGE="https://okular.kde.org https://apps.kde.org/okular/"
 
 LICENSE="GPL-2" # TODO: CHECK
 SLOT="5"
-KEYWORDS="~arm64 amd64"
-IUSE="crypt djvu epub +image-backend markdown mobi mobile +pdf +plucker +postscript qml share speech +tiff"
+KEYWORDS="amd64 arm64 ~ppc64 ~riscv x86"
+IUSE="crypt djvu epub +image-backend markdown mobi +pdf phonon +plucker +postscript qml share speech +tiff"
 
 # slot op: Uses Qt5::CorePrivate
 DEPEND="
 	>=dev-qt/qtcore-${QTMIN}:5=
 	>=dev-qt/qtdbus-${QTMIN}:5
+	>=dev-qt/qtdeclarative-${QTMIN}:5
 	>=dev-qt/qtgui-${QTMIN}:5
 	>=dev-qt/qtprintsupport-${QTMIN}:5
 	>=dev-qt/qtsvg-${QTMIN}:5
 	>=dev-qt/qtwidgets-${QTMIN}:5
 	>=dev-qt/qtx11extras-${QTMIN}:5
-	>=kde-frameworks/kactivities-${KFMIN}:5
 	>=kde-frameworks/karchive-${KFMIN}:5
 	>=kde-frameworks/kbookmarks-${KFMIN}:5
 	>=kde-frameworks/kcompletion-${KFMIN}:5
@@ -37,13 +37,12 @@ DEPEND="
 	>=kde-frameworks/kcrash-${KFMIN}:5
 	>=kde-frameworks/ki18n-${KFMIN}:5
 	>=kde-frameworks/kio-${KFMIN}:5
-	>=kde-frameworks/kjs-${KFMIN}:5
 	>=kde-frameworks/kparts-${KFMIN}:5
 	>=kde-frameworks/kpty-${KFMIN}:5
 	>=kde-frameworks/ktextwidgets-${KFMIN}:5
 	>=kde-frameworks/threadweaver-${KFMIN}:5
+	>=kde-plasma/plasma-activities-${KFMIN}:5
 	media-libs/freetype
-	>=media-libs/phonon-4.11.0
 	sys-libs/zlib
 	crypt? ( >=kde-frameworks/kwallet-${KFMIN}:5 )
 	djvu? ( app-text/djvu )
@@ -55,6 +54,7 @@ DEPEND="
 	markdown? ( >=app-text/discount-2.2.7-r1:= )
 	mobi? ( >=kde-apps/kdegraphics-mobipocket-${PVCUT}:5 )
 	pdf? ( >=app-text/poppler-21.10.0[nss,qt5] )
+	phonon? ( >=media-libs/phonon-4.11.0[qt5(+)] )
 	plucker? ( media-libs/libjpeg-turbo:= )
 	postscript? ( app-text/libspectre )
 	share? ( >=kde-frameworks/purpose-${KFMIN}:5 )
@@ -71,6 +71,7 @@ RDEPEND="${DEPEND}
 
 PATCHES=(
 	"${FILESDIR}/${PN}-21.11.80-tests.patch" # bug 734138
+	"${FILESDIR}/${P}-implicit-vasprintf.patch" # bug 922345; pending upstream
 )
 
 src_configure() {
@@ -87,6 +88,7 @@ src_configure() {
 		$(cmake_use_find_package markdown Discount)
 		$(cmake_use_find_package mobi QMobipocket)
 		$(cmake_use_find_package pdf Poppler)
+		$(cmake_use_find_package phonon Phonon4Qt5)
 		$(cmake_use_find_package plucker JPEG)
 		$(cmake_use_find_package postscript LibSpectre)
 		$(cmake_use_find_package share KF5Purpose)
