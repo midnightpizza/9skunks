@@ -145,12 +145,14 @@ DEPEND="${RDEPEND}
 		x11-base/xorg-proto
 	)
 "
+# meson-1.4.0 contains a regression, so it fails to compile nouveau/NVK
+# see https://gitlab.freedesktop.org/mesa/mesa/-/issues/10855
 BDEPEND="
 	${PYTHON_DEPS}
 	opencl? (
 		>=virtual/rust-1.62.0
 		>=dev-util/bindgen-0.58.0
-		dev-build/meson
+		>=dev-build/meson-1.3.1
 	)
 	app-alternatives/yacc
 	app-alternatives/lex
@@ -179,6 +181,11 @@ x86? (
 	usr/lib/libOSMesa.so.8.0.0
 	libglvnd? ( usr/lib/libGLX_mesa.so.0.0.0 )
 )"
+
+src_unpack() {
+	[[ ${PV} == 9999 ]] && git-r3_src_unpack
+	unpack ${A}
+}
 
 pkg_pretend() {
 	if use vulkan; then
