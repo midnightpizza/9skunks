@@ -46,7 +46,7 @@ LICENSE="MIT SGI-B-2.0"
 SLOT="0"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
-VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau panfrost v3d vc4 virgl vivante vmware nvk"
+VIDEO_CARDS="${RADEON_CARDS} d3d12 freedreno intel lavapipe lima nouveau nvk panfrost v3d vc4 virgl vivante vmware"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
 done
