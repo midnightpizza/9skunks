@@ -18,10 +18,10 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/firefox/config?ref_type=heads#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/config?ref_type=heads#L99
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="13.0.10"
-TOR_TAG="${TOR_PV%.*}-1-build1"
+TOR_PV="13.0.15"
+TOR_TAG="${TOR_PV%.*}-1-build2"
 NOSCRIPT_VERSION="11.4.29"
-CHANGELOG_TAG="${TOR_PV}-build1"
+CHANGELOG_TAG="${TOR_PV}-build2"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
@@ -554,7 +554,6 @@ src_configure() {
 	export MOZILLA_OFFICIAL=1
 	mozconfig_add_options_ac 'torbrowser' \
 		--enable-official-branding \
-
 		--enable-optimize \
 		--enable-rust-simd \
 		--disable-unverified-updates \
@@ -605,26 +604,14 @@ src_configure() {
 	# Optimization flag was handled via configure
 	filter-flags '-O*'
 
-	if use clang ; then
-		# https://bugzilla.mozilla.org/show_bug.cgi?id=1482204
-		# https://bugzilla.mozilla.org/show_bug.cgi?id=1483822
-		# toolkit/moz.configure Elfhack section: target.cpu in ('arm', 'x86', 'x86_64')
-		local disable_elf_hack=
-		if use amd64 ; then
-			disable_elf_hack=yes
-		elif use x86 ; then
-			disable_elf_hack=yes
-		elif use arm ; then
-			disable_elf_hack=yes
-		fi
+	# With profile 23.0 elf-hack=legacy is broken with gcc.
+	# With Firefox-115esr elf-hack=relr isn't available (only in rapid).
+	# Solution: Disable build system's elf-hack completely, and add "-z,pack-relative-relocs"
+	#  manually with gcc.
+	mozconfig_add_options_ac 'elf-hack disabled' --disable-elf-hack
 
-		if [[ -n ${disable_elf_hack} ]] ; then
-			mozconfig_add_options_ac 'elf-hack is broken when using Clang' --disable-elf-hack
-		fi
-	fi
-
-	if ! use elibc_glibc ; then
-		mozconfig_add_options_ac '!elibc_glibc' --disable-jemalloc
+	if use amd64 || use x86 ; then
+		! use clang && append-ldflags "-z,pack-relative-relocs"
 	fi
 
 	# Allow elfhack to work in combination with unstripped binaries
@@ -769,7 +756,7 @@ src_install() {
 	newbin - torbrowser <<-EOF
 		#!/bin/bash
 
-		export FONTCONFIG_PATH="/usr/share/torbrowser/fontconfig"
+		export FONTCONFIG_PATH="/usr/share/torbrowser"
 		export FONTCONFIG_FILE="fonts.conf"
 
 		unset SESSION_MANAGER
@@ -801,10 +788,10 @@ src_install() {
 
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser#L340
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tree/main/projects/fonts
-	sed -i -e 's|<dir>fonts</dir>|<dir>/usr/share/torbrowser/fonts</dir>|' \
+	sed -i -e 's|<dir prefix="cwd">fonts</dir>|<dir prefix="relative">fonts</dir>|' \
 		"${WORKDIR}"/tor-browser/Browser/fontconfig/fonts.conf || die
 	insinto /usr/share/torbrowser/
-	doins -r "${WORKDIR}/tor-browser/Browser/fontconfig"
+	doins "${WORKDIR}/tor-browser/Browser/fontconfig/fonts.conf"
 	doins -r "${WORKDIR}/tor-browser/Browser/fonts"
 
 	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/Bundle-Data/Docs/ChangeLog.txt
