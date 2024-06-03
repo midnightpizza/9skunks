@@ -3,11 +3,11 @@
 
 EAPI=8
 
-LLVM_COMPAT=( {15..17} )
+LLVM_COMPAT=( {15..18} )
 LLVM_OPTIONAL=1
 PYTHON_COMPAT=( python3_{10..12} )
 
-inherit llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain
+inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain toolchain-funcs
 
 MY_P="${P/_/-}"
 
@@ -290,6 +290,9 @@ src_prepare() {
 multilib_src_configure() {
 	local emesonargs=()
 
+	# bug #932591 and https://gitlab.freedesktop.org/mesa/mesa/-/issues/11140
+	tc-is-gcc && [[ $(gcc-major-version) -ge 14 ]] && filter-lto
+
 	local platforms
 	use X && platforms+="x11"
 	use wayland && platforms+=",wayland"
@@ -406,30 +409,14 @@ multilib_src_configure() {
 	use vulkan-overlay && vulkan_layers+=",overlay"
 	emesonargs+=(-Dvulkan-layers=${vulkan_layers#,})
 
-	if use llvm && use vulkan && use video_cards_intel && use amd64; then
-		emesonargs+=(-Dintel-clc=system)
-	else
-		emesonargs+=(-Dintel-clc=disabled)
-	fi
-
-	if use opengl || use gles1 || use gles2; then
-		emesonargs+=(
-			-Degl=enabled
-			-Dgbm=enabled
-			$(meson_use libglvnd glvnd)
-		)
-	else
-		emesonargs+=(
-			-Degl=disabled
-			-Dgbm=disabled
-			-Dglvnd=false
-		)
-	fi
-
 	if use opengl && use X; then
 		emesonargs+=(-Dglx=dri)
 	else
 		emesonargs+=(-Dglx=disabled)
+	fi
+
+	if [[ "${ABI}" == amd64 ]]; then
+		emesonargs+=($(meson_feature video_cards_intel intel-rt))
 	fi
 
 	use debug && EMESON_BUILDTYPE=debug
@@ -440,15 +427,16 @@ multilib_src_configure() {
 		-Ddri3=enabled
 		-Dexpat=enabled
 		$(meson_use opengl)
+		$(meson_feature opengl gbm)
 		$(meson_feature gles1)
 		$(meson_feature gles2)
+		$(meson_feature opengl egl)
 		$(meson_feature llvm)
 		$(meson_use libglvnd glvnd)
 		$(meson_feature lm-sensors lmsensors)
 		$(meson_use osmesa)
 		$(meson_use selinux)
 		$(meson_feature unwind libunwind)
-		$(meson_native_use_feature video_cards_intel intel-rt)
 		$(meson_feature zstd)
 		$(meson_use cpu_flags_x86_sse2 sse2)
 		-Dintel-clc=$(usex video_cards_intel system auto)
