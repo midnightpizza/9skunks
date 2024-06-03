@@ -94,10 +94,9 @@ BDEPEND="${PYTHON_DEPS}
 	net-libs/nodejs
 	virtual/pkgconfig
 	!clang? (
-		>=virtual/rust-1.74
-		<virtual/rust-1.78
+		virtual/rust
 	)
-	!elibc_glibc? ( <dev-lang/rust-1.78 )
+	!elibc_glibc? ( dev-lang/rust )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
 	pgo? (
