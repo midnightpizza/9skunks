@@ -9,6 +9,6 @@ KEYWORDS=amd64 x86 arm64
 LICENSE=GPL-2
 RDEPEND=sys-libs/ncurses:= !sys-apps/ccs-tools
 SLOT=0
-SRC_URI=mirror://sourceforge.net/tomoyo/53357/tomoyo-tools-2.6.1.20210910.tar.gz
+SRC_URI=https://downloads.sourceforge.net/tomoyo/tomoyo-tools/tomoyo-tools-2.6.1-20210910.tar.gz
 _eclasses_=toolchain-funcs	e56c7649b804f051623c8bc1a1c44084	multilib	c19072c3cd7ac5cb21de013f7e9832e0
-_md5_=45a19ccc306989db1ef09ab4104f75ed
+_md5_=d5e5d242d4316d46b4d5041e1be06748
