@@ -3,9 +3,11 @@
 
 EAPI=8
 
+inherit toolchain-funcs
+
 DESCRIPTION="Intelligent predictive text entry platform"
 HOMEPAGE="https://presage.sourceforge.io/"
-SRC_URI="mirror://sourceforge/${PN}/${P}.tar.gz"
+SRC_URI="https://downloads.sourceforge.net/${PN}/${P}.tar.gz"
 
 LICENSE="GPL-2+"
 SLOT="0"
