@@ -4,16 +4,16 @@
 EAPI=8
 inherit autotools
 
-DESCRIPTION="Embedded SSL library."
-HOMEPAGE="https://www.wolfssl.com/ https://github.com/wolfSSL/wolfssl"
-SRC_URI="https://www.wolfssl.com/${P}.zip"
+DESCRIPTION="Embedded SSH Server."
+HOMEPAGE="https://www.wolfssl.com/ https://github.com/wolfSSL/wolfssh"
+SRC_URI="https://github.com/wolfSSL/wolfssh/archive/refs/tags/v${PV}-stable.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~ppc64 ~x86"
-IUSE="debug cpu_flags_x86_aes sniffer +ssh +keygen"
+KEYWORDS="~amd64 ~ppc64 ~x86 ~arm64"
+IUSE="debug cpu_flags_x86_aes +ssh +keygen"
 
-DEPEND="sniffer? ( net-libs/libpcap )"
+DEPEND="ssh? ( dev-libs/wolfssl )"
 RDEPEND="${DEPEND}"
 
 src_prepare() {
@@ -23,10 +23,10 @@ src_prepare() {
 
 src_configure() {
 	econf \
+		--with-wolfssl=/usr/
 		$(use_enable cpu_flags_x86_aes aesni) \
-		$(use_enable sniffer) \
+		$(use_enable keygen) \
 		$(use_enable debug) \
 		$(use_enable ssh) \
-		$(use_enable keygen) \
 		--enable-writedup # Needed for RPCS3
 }

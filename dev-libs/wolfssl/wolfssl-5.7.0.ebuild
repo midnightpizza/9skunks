@@ -6,7 +6,7 @@ inherit autotools
 
 DESCRIPTION="Embedded SSL library."
 HOMEPAGE="https://www.wolfssl.com/ https://github.com/wolfSSL/wolfssl"
-SRC_URI="https://www.wolfssl.com/${P}.zip"
+SRC_URI="https://github.com/wolfSSL/wolfssl/archive/refs/tags/v${PV}-stable.zip"
 
 LICENSE="GPL-2"
 SLOT="0"
