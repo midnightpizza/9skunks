@@ -5,7 +5,7 @@ EAPI=8
 
 FIREFOX_PATCHSET="firefox-115esr-patches-09.tar.xz"
 
-LLVM_MAX_SLOT=17
+LLVM_MAX_SLOT=18
 
 PYTHON_COMPAT=( python3_{10..11} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -71,7 +71,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.65 )
+	!clang? ( virtual/rust )
 	!elibc_glibc? (
 		|| (
 			dev-lang/rust
