@@ -1,9 +1,0 @@
-DEFINED_PHASES=compile install
-DESCRIPTION=A virtual keyboard for sway.
-EAPI=8
-HOMEPAGE=https://github.com/jjsullivan5196/wvkbd
-KEYWORDS=~amd64
-LICENSE=GPL-3
-SLOT=0
-SRC_URI=https://github.com/jjsullivan5196/wvkbd/archive/refs/tags/v0.15.tar.gz -> wvkbd-0.15.tar.gz
-_md5_=c219cbffc0eb94fed8fda2834ae31d2c
