@@ -18,7 +18,7 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/firefox/config?ref_type=heads#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.0/projects/browser/config?ref_type=heads#L99
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="13.0.14"
+TOR_PV="13.0.16"
 TOR_TAG="${TOR_PV%.*}-1-build1"
 NOSCRIPT_VERSION="11.4.29"
 CHANGELOG_TAG="${TOR_PV}-build1"
@@ -87,7 +87,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.65 )
+	!clang? ( virtual/rust )
 	>=dev-lang/nasm-2.14"
 
 COMMON_DEPEND="
