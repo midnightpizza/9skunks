@@ -3,9 +3,9 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-126-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-127-patches-02.tar.xz"
 
-LLVM_COMPAT=( 17 )
+LLVM_COMPAT=( 17 18 )
 
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -71,8 +71,6 @@ IUSE+=" +telemetry valgrind wayland wifi +X"
 # Firefox-only IUSE
 IUSE+=" geckodriver +gmp-autoupdate"
 
-# "-jumbo-build +system-icu": build failure on firefox-120:
-#   firefox-120.0/intl/components/src/TimeZone.cpp:345:3: error: use of undeclared identifier 'MOZ_TRY'
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( lto )
@@ -95,7 +93,9 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.26.0
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.74 )
+	!clang? (
+		virtual/rust
+	)
 	!elibc_glibc? ( dev-lang/rust )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )
@@ -106,7 +106,10 @@ BDEPEND="${PYTHON_DEPS}
 			x11-apps/xhost
 		)
 		!X? (
-			>=gui-libs/wlroots-0.15.1-r1[tinywl]
+			|| (
+				gui-wm/tinywl
+				<gui-libs/wlroots-0.17.3[tinywl(-)]
+			)
 			x11-misc/xkeyboard-config
 		)
 	)"
@@ -115,7 +118,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.99
+	>=dev-libs/nss-3.100
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -628,6 +631,8 @@ src_prepare() {
 			export RUST_TARGET="x86_64-unknown-linux-musl"
 		elif use x86 ; then
 			export RUST_TARGET="i686-unknown-linux-musl"
+		elif use arm64 ; then
+			export RUST_TARGET="aarch64-unknown-linux-musl"
 		else
 			elog "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
 		fi
