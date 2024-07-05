@@ -71,7 +71,7 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.65 )
+	!clang? ( virtual/rust )
 	!elibc_glibc? (
 		|| (
 			dev-lang/rust
