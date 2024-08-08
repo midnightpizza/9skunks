@@ -49,5 +49,4 @@ src_install() {
 	cmake_src_install
 
 	insinto /usr/share/metainfo
-	newins "${FILESDIR}/${PN}.appdata.xml" "${PN}.appdata.xml"
 }
