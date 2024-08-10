@@ -39,6 +39,7 @@ SRC_URI="
 # excluding all minor kernel revision patches; XanMod will take care of that
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 
+UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *jump-label-fix.patch"
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2*iwlwifi-rfkill-fix.patch"
 
