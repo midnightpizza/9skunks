@@ -438,9 +438,9 @@ multilib_src_configure() {
 	use debug && EMESON_BUILDTYPE=debug
 
 	if use libglvnd ; then
-		emesonargs+=(-Dglvnd=disabled)
-	else
 		emesonargs+=(-Dglvnd=enabled)
+	else
+		emesonargs+=(-Dglvnd=disabled)
 	fi
 
 
