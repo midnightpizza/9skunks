@@ -3,11 +3,10 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-115esr-patches-09.tar.xz"
+FIREFOX_PATCHSET="firefox-115esr-patches-13.tar.xz"
 
 LLVM_MAX_SLOT=18
-
-PYTHON_COMPAT=( python3_{10..11} )
+PYTHON_COMPAT=( python3_{8,9,10,11,12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 WANT_AUTOCONF="2.1"
@@ -38,12 +37,9 @@ LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
 
 IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
-IUSE+=" jack libproxy lto openh264 pgo pulseaudio sndio selinux"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png system-python-libs +system-webp"
-IUSE+=" wayland wifi +X"
-
-# Firefox-only IUSE
-IUSE+=" geckodriver +gmp-autoupdate screencast"
+IUSE+=" jack libproxy lto +openh264 pgo pulseaudio sndio selinux"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx +system-png system-python-libs +system-webp"
+IUSE+=" wayland wifi geckodriver +gmp-autoupdate screencast X"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
@@ -56,18 +52,55 @@ WATERFOX_ONLY_DEPEND="!www-client/waterfox-g5
 BDEPEND="${PYTHON_DEPS}
 	|| (
 		(
-			sys-devel/clang
-			sys-devel/llvm
+			sys-devel/clang:18
+			sys-devel/llvm:18
 			clang? (
-				sys-devel/lld
-				virtual/rust
-				pgo? ( sys-libs/compiler-rt-sanitizers[profile] )
+				sys-devel/lld:18
+				virtual/rust:0/llvm-18
+				pgo? ( =sys-libs/compiler-rt-sanitizers-18*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:17
+			sys-devel/llvm:17
+			clang? (
+				|| (
+					sys-devel/lld:17
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-17
+				pgo? ( =sys-libs/compiler-rt-sanitizers-17*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:16
+			sys-devel/llvm:16
+			clang? (
+				|| (
+					sys-devel/lld:16
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-16
+				pgo? ( =sys-libs/compiler-rt-sanitizers-16*[profile] )
+			)
+		)
+		(
+			sys-devel/clang:15
+			sys-devel/llvm:15
+			clang? (
+				|| (
+					sys-devel/lld:15
+					sys-devel/mold
+				)
+				virtual/rust:0/llvm-15
+				pgo? ( =sys-libs/compiler-rt-sanitizers-15*[profile] )
 			)
 		)
 	)
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
+	>=dev-lang/nasm-2.15.05
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
@@ -87,7 +120,10 @@ BDEPEND="${PYTHON_DEPS}
 			x11-apps/xhost
 		)
 		!X? (
-			>=gui-libs/wlroots-0.15.1-r1[tinywl]
+			|| (
+				gui-wm/tinywl
+				<gui-libs/wlroots-0.17.3[tinywl(-)]
+			)
 			x11-misc/xkeyboard-config
 		)
 	)"
@@ -206,7 +242,8 @@ llvm_check_deps() {
 
 		if use pgo ; then
 			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
-				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!"
+				einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 				return 1
 			fi
 		fi
@@ -398,8 +435,6 @@ virtwl() {
 	[[ -n $XDG_RUNTIME_DIR ]] || die "${FUNCNAME} needs XDG_RUNTIME_DIR to be set; try xdg_environment_reset"
 	tinywl -h >/dev/null || die 'tinywl -h failed'
 
-	# TODO: don't run addpredict in utility function. WLR_RENDERER=pixman doesn't work
-	addpredict /dev/dri
 	local VIRTWL VIRTWL_PID
 	coproc VIRTWL { WLR_BACKENDS=headless exec tinywl -s 'echo $WAYLAND_DISPLAY; read _; kill $PPID'; }
 	local -x WAYLAND_DISPLAY
@@ -495,34 +530,8 @@ pkg_setup() {
 			# (PORTAGE_SCHEDULING_POLICY) update...
 			addpredict /proc
 
-			# May need a wider addpredict when using wayland+pgo.
-			addpredict /dev/dri
-
-			# Allow access to GPU during PGO run
-			local ati_cards mesa_cards nvidia_cards render_cards
-			shopt -s nullglob
-
-			ati_cards=$(echo -n /dev/ati/card* | sed 's/ /:/g')
-			if [[ -n "${ati_cards}" ]] ; then
-				addpredict "${ati_cards}"
-			fi
-
-			mesa_cards=$(echo -n /dev/dri/card* | sed 's/ /:/g')
-			if [[ -n "${mesa_cards}" ]] ; then
-				addpredict "${mesa_cards}"
-			fi
-
-			nvidia_cards=$(echo -n /dev/nvidia* | sed 's/ /:/g')
-			if [[ -n "${nvidia_cards}" ]] ; then
-				addpredict "${nvidia_cards}"
-			fi
-
-			render_cards=$(echo -n /dev/dri/renderD128* | sed 's/ /:/g')
-			if [[ -n "${render_cards}" ]] ; then
-				addpredict "${render_cards}"
-			fi
-
-			shopt -u nullglob
+			# Clear tons of conditions, since PGO is hardware-dependant.
+			addpredict /dev
 		fi
 
 		if ! mountpoint -q /dev/shm ; then
@@ -563,6 +572,19 @@ src_unpack() {
 }
 
 src_prepare() {
+	# Fix for visibility changes in libc++-18 (see GitHub/llvm bug #79027)
+	if use clang ; then
+		local version_clang=$(clang --version 2>/dev/null | grep -F -- 'clang version' | awk '{ print $3 }')
+		if [[ -n "$(grep 'libcxx' -F -- <<< ${version_clang})" ]]; then
+			[[ -n ${version_clang} ]] && version_clang=$(ver_cut 1 "${version_clang}")
+			[[ -z ${version_clang} ]] && die "Failed to read clang version!"
+			if [[ ${version_clang} -ge 18 ]]; then
+				einfo "Patcing for changes in libc++-18 due to symbol hiding in Firefox..."
+				eapply "${FILESDIR}/libcxx-18-visibility.patch"
+			fi
+		fi
+	fi
+
 	if use lto; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
@@ -586,8 +608,11 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 	fi
 
-	eapply "${WORKDIR}/firefox-patches"
+	# Remove patches already applied in Waterfox
+	elog "Removing patches already applied in Waterfox..."
+	rm -v "${WORKDIR}"/firefox-patches/0034-bgo-936072-update-crates-for-rust-1.78-patch-from-bugs.freebsd.org-bug278989.patch || die
 
+	eapply "${WORKDIR}/firefox-patches"
 
 	## Apply additional polynomial-C patchest
 	elog "Apply Polynomial-C patchset..."
@@ -616,6 +641,8 @@ src_prepare() {
 			export RUST_TARGET="x86_64-unknown-linux-musl"
 		elif use x86 ; then
 			export RUST_TARGET="i686-unknown-linux-musl"
+		elif use arm64 ; then
+			export RUST_TARGET="aarch64-unknown-linux-musl"
 		else
 			elog "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
 		fi
@@ -645,12 +672,16 @@ src_prepare() {
 		|| die "sed failed to disable ccache stats call"
 
 	einfo "Removing pre-built binaries ..."
-
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
 	# Clear cargo checksums from crates we have patched
 	# moz_clear_vendor_checksums crate
 	moz_clear_vendor_checksums audio_thread_priority
+
+	moz_clear_vendor_checksums bindgen
+	moz_clear_vendor_checksums encoding_rs
+	moz_clear_vendor_checksums any_all_workaround
+	moz_clear_vendor_checksums packed_simd
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -693,11 +724,11 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
+		AS=llvm-as
 		CC=${CHOST}-clang-${version_clang}
 		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
 		RANLIB=llvm-ranlib
-
 	elif ! use clang && ! tc-is-gcc ; then
 		# Force gcc
 		have_switched_compiler=yes
@@ -760,7 +791,7 @@ src_configure() {
 		--enable-legacy-profile-creation \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
-		--enable-official-branding \
+		--disable-official-branding \
 		--enable-release \
 		--enable-system-ffi \
 		--enable-system-pixman \
@@ -890,7 +921,6 @@ src_configure() {
 			fi
 
 			mozconfig_add_options_ac '+lto' --enable-lto=cross
-
 		else
 			# ThinLTO is currently broken, see bmo#1644409.
 			# mold does not support gcc+lto combination.
@@ -1123,7 +1153,7 @@ src_compile() {
 		fi
 	fi
 
-	if ! use X; then
+	if ! use X && use wayland; then
 		local -x GDK_BACKEND=wayland
 	else
 		local -x GDK_BACKEND=x11
@@ -1133,22 +1163,6 @@ src_compile() {
 
 	${virtx_cmd} ./mach build --verbose || die
 
-	local loc mymozconfig
-	for loc in ${LINGUAS} ; do
-		if has ${loc} "${MOZ_LANGS[@]}" ; then
-			mymozconfig=".mozconfig_${loc}"
-			cp .mozconfig ${mymozconfig} || die
-			sed "/MOZ_OBJDIR/s:=.*#:=${S}/../${P}-${loc}_build #:" \
-				-i ${mymozconfig} || die
-			export MOZCONFIG="${S}/${mymozconfig}"
-			# returns non-zero exit code so we just die
-			# later in src_install in case the langpacks
-			# failed to build
-			${virtx_cmd} ./mach build --verbose \
-				config/nsinstall langpack-${loc}
-		fi
-	done
-	export MOZCONFIG="${S}/.mozconfig"
 }
 
 src_install() {
@@ -1161,8 +1175,8 @@ src_install() {
 	DESTDIR="${D}" ./mach install || die
 
 	# Remove waterfox-g6-bin if available; do not create symlink.
-	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" ]] ; then
-		rm "${ED}${MOZILLA_FIVE_HOME}/${PN}-bin" || die
+	if [[ -f "${ED}${MOZILLA_FIVE_HOME}/${PN}${SLOT}-bin" ]] ; then
+		rm "${ED}${MOZILLA_FIVE_HOME}/${PN}${SLOT}-bin" || die
 	fi
 
 	# Don't install llvm-symbolizer from sys-devel/llvm package
@@ -1383,5 +1397,11 @@ pkg_postinst() {
 		elog "glibc not found! You won't be able to play DRM content."
 		elog "See Gentoo bug #910309 or upstream bug #1843683."
 		elog
+	fi
+
+	if use geckodriver ; then
+		ewarn "You have enabled the 'geckodriver' USE flag. Geckodriver is now"
+		ewarn "packaged separately as net-misc/geckodriver and the use flag will be"
+		ewarn "dropped from main Firefox package by Firefox 128.0 release."
 	fi
 }
