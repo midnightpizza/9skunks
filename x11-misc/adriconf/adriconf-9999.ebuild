@@ -16,7 +16,7 @@ IUSE="wayland"
 
 RDEPEND="
 	dev-cpp/glibmm:2
-	dev-cpp/gtkmm:3.0
+	dev-cpp/gtkmm:4.0
 	dev-libs/pugixml
 	dev-libs/boost:=
 	dev-libs/glib:2
