@@ -3,7 +3,7 @@
 
 EAPI=8
 
-QTMIN=5.15.2
+QTMIN=5.15.14
 KFMIN=5.89.0
 
 inherit ecm gear.kde.org
@@ -19,14 +19,14 @@ IUSE=""
 DEPEND="
 	dev-libs/gmp
 	dev-libs/mpfr
-	>=dev-qt/qtcore-${QTMIN}:6
+	>=dev-qt/qtcore-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:6
-	>=dev-qt/qtgraphicaleffects-${QTMIN}:6
-	>=dev-qt/qtgui-${QTMIN}:6
-	>=dev-qt/qtnetwork-${QTMIN}:6
-	>=dev-qt/qtquickcontrols2-${QTMIN}:6
-	>=dev-qt/qttest-${QTMIN}:6
-	>=dev-qt/qtwidgets-${QTMIN}:6
+	>=dev-qt/qtgraphicaleffects-${QTMIN}:5
+	>=dev-qt/qtgui-${QTMIN}:5
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
+	>=dev-qt/qttest-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
 	>=kde-frameworks/kconfig-${KFMIN}:6
 	>=kde-frameworks/kcoreaddons-${KFMIN}:6
 	>=kde-frameworks/ki18n-${KFMIN}:6
