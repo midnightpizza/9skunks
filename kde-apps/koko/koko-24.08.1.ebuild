@@ -13,7 +13,7 @@ HOMEPAGE="https://apps.kde.org/koko/"
 
 LICENSE="LGPL-2+ LGPL-2.1 LGPL-2.1+ LGPL-3 BSD CC0-1.0 CC-BY-SA-4.0"
 SLOT="5"
-KEYWORDS="" #~arm64 amd64"
+KEYWORDS="~arm64 amd64"
 IUSE="gstreamer"
 
 DEPEND="
