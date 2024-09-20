@@ -12,15 +12,15 @@ HOMEPAGE="https://invent.kde.org/plasma/plasma-nano"
 SRC_URI="mirror://kde/stable/plasma/${PV}/${P}.tar.xz"
 
 LICENSE="GPL-2+ LGPL-2+ MIT"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 ~amd64"
 IUSE=""
 
 DEPEND="
 	sys-devel/gettext
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
+	>=dev-qt/qtgui-${QTMIN}:5
 	>=kde-frameworks/kwindowsystem-${KFMIN}:${SLOT}
 	>=kde-plasma/kwayland-${KFMIN}:${SLOT}
 	>=kde-frameworks/kpackage-${KFMIN}:${SLOT}
@@ -31,8 +31,8 @@ DEPEND="
 "
 
 RDEPEND="${DEPEND}
-	>=dev-qt/qtgraphicaleffects-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtgraphicaleffects-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=kde-frameworks/kdeclarative-${KFMIN}:${SLOT}
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	kde-plasma/plasma-workspace:${SLOT}

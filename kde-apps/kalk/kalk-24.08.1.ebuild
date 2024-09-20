@@ -12,7 +12,7 @@ DESCRIPTION="Cross-platform calculator application built with the Kirigami frame
 HOMEPAGE="https://apps.kde.org/kalk"
 
 LICENSE="GPL-3+"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 

@@ -11,17 +11,17 @@ DESCRIPTION="General UI components for Plasma Phone"
 HOMEPAGE="https://plasma-mobile.org"
 
 LICENSE="GPL-2+ LGPL-2+ || ( GPL-2 GPL-3 ) || ( LGPL-2.1 LGPL-3 )"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 ~amd64"
 
 DEPEND="
 	dev-libs/glib:2
 	>=dev-libs/kirigami-addons-0.6
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
-	>=dev-qt/qtdbus-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
+	>=dev-qt/qtdbus-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
+	>=dev-qt/qtgui-${QTMIN}:5
+	>=dev-qt/qtnetwork-${QTMIN}:5
 	>=kde-frameworks/bluez-qt-${KFMIN}:${SLOT}
 	>=kde-frameworks/kcmutils-${KFMIN}:${SLOT}
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
@@ -52,9 +52,9 @@ DEPEND="
 "
 
 RDEPEND="${DEPEND}
-	>=dev-qt/qtgraphicaleffects-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtgraphicaleffects-${QTMIN}:5
+	>=dev-qt/qtquickcontrols-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=kde-frameworks/bluez-qt-${KFMIN}:${SLOT}
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	>=kde-frameworks/kitemmodels-${KFMIN}:${SLOT}

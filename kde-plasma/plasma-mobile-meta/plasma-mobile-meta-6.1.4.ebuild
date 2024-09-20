@@ -3,7 +3,7 @@
 
 EAPI=7
 
-GEAR_MIN=23.04.3
+GEAR_MIN=24.08.1
 
 inherit optfeature
 
@@ -11,7 +11,7 @@ DESCRIPTION="Meta package for a complete Plasma Mobile environment for smartphon
 HOMEPAGE="https://www.plasma-mobile.org/"
 
 LICENSE="metapackage"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 ~amd64"
 IUSE="+bluetooth +desktop-portal +dialer +gtk haptic +pulseaudio +sms kwallet"
 
@@ -32,12 +32,12 @@ RDEPEND="
 	>=kde-misc/kweather-${GEAR_MIN}:${SLOT}
 	>=kde-plasma/discover-${PV}:${SLOT}
 	>=kde-plasma/kscreen-${PV}:${SLOT}
-	>=kde-plasma/kwayland-integration-${PV}:${SLOT}
+	>=kde-plasma/kwayland-integration-${PV}:5
 	>=kde-plasma/oxygen-${PV}:${SLOT}
 	>=kde-plasma/oxygen-sounds-${PV}:${SLOT}
 	>=kde-plasma/plasma-mobile-${PV}:${SLOT}
 	kde-plasma/plasma-mobile-sounds
-	kde-plasma/plasma-settings:${SLOT}
+	kde-plasma/plasma-settings:5
 	>=kde-plasma/powerdevil-${PV}:${SLOT}
 	>=media-sound/kasts-${GEAR_MIN}
 	>=media-sound/elisa-${GEAR_MIN}:${SLOT}
@@ -52,7 +52,7 @@ RDEPEND="
 	haptic? ( app-mobilephone/hfd-service )
 	kwallet? ( >=kde-plasma/kwallet-pam-${PV}:${SLOT} )
 	pulseaudio? ( >=kde-plasma/plasma-pa-${PV}:${SLOT} )
-	sms? ( app-mobilephone/spacebar:${SLOT} )
+	sms? ( app-mobilephone/spacebar:5 )
 "
 
 pkg_postinst() {

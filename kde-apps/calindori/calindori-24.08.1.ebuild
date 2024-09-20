@@ -12,20 +12,20 @@ DESCRIPTION="Calendar application for Plasma Mobile"
 HOMEPAGE="https://apps.kde.org/calindori/"
 
 LICENSE="GPL-3+ LGPL-3+ BSD-2 CC0-1.0 CC-BY-SA-4.0"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 
 DEPEND="
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
+	>=dev-qt/qtgui-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=dev-qt/qtsvg-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
-	>=dev-qt/qttest-${QTMIN}:${SLOT}
-	>=dev-qt/qtwidgets-${QTMIN}:${SLOT}
-	>=dev-qt/qtdbus-${QTMIN}:${SLOT}
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qttest-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
+	>=dev-qt/qtdbus-${QTMIN}:5
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	>=kde-frameworks/ki18n-${KFMIN}:${SLOT}
@@ -38,4 +38,4 @@ DEPEND="
 
 RDEPEND="${DEPEND}"
 
-BDEPEND=">=dev-qt/linguist-tools-${QTMIN}:${SLOT}"
+BDEPEND=">=dev-qt/linguist-tools-${QTMIN}:5"

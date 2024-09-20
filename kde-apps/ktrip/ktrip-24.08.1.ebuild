@@ -11,18 +11,18 @@ DESCRIPTION="Public Transport Assistance for Mobile Devices"
 HOMEPAGE="https://apps.kde.org/ktrip"
 
 LICENSE="GPL-2+"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 
 DEPEND="
 	sys-devel/gettext
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
+	>=dev-qt/qtgui-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
-	>=dev-qt/qtwidgets-${QTMIN}:${SLOT}
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
 	>=kde-frameworks/kcodecs-${KFMIN}:${SLOT}
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
 	>=kde-frameworks/kcoreaddons-${KFMIN}:${SLOT}
@@ -33,6 +33,6 @@ DEPEND="
 
 RDEPEND="${DEPEND}
 	>=dev-libs/kirigami-addons-0.2
-	>=dev-qt/qtquickcontrols-${QTMIN}:${SLOT}
+	>=dev-qt/qtquickcontrols-${QTMIN}:5
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 "

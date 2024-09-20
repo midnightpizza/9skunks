@@ -12,7 +12,7 @@ DESCRIPTION="Kirigami YouTube video player based on QtMultimedia and youtube-dl"
 HOMEPAGE="https://apps.kde.org/plasmatube/"
 
 LICENSE="GPL-3+"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
@@ -20,14 +20,14 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 BDEPEND="dev-util/pkgconf"
 
 DEPEND="${PYTHON_DEPS}
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtgui-${QTMIN}:5
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=dev-qt/qtsvg-${QTMIN}:${SLOT}
-	>=dev-qt/qttest-${QTMIN}:${SLOT}
-	>=dev-qt/qtwidgets-${QTMIN}:${SLOT}
+	>=dev-qt/qttest-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
 	media-video/mpv
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
 	>=kde-frameworks/kcoreaddons-${KFMIN}:${SLOT}
@@ -36,7 +36,7 @@ DEPEND="${PYTHON_DEPS}
 "
 
 RDEPEND="${DEPEND}
-	>=dev-qt/qtgraphicaleffects-${QTMIN}:${SLOT}
+	>=dev-qt/qtgraphicaleffects-${QTMIN}:5
 	>=dev-qt/qtmultimedia-${QTMIN}:${SLOT}
 	$(python_gen_cond_dep '
 		net-misc/yt-dlp[${PYTHON_USEDEP}]

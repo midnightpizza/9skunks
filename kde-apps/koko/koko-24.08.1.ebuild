@@ -12,22 +12,22 @@ DESCRIPTION="Image gallery application designed for desktop and touch devices"
 HOMEPAGE="https://apps.kde.org/koko/"
 
 LICENSE="LGPL-2+ LGPL-2.1 LGPL-2.1+ LGPL-3 BSD CC0-1.0 CC-BY-SA-4.0"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE="gstreamer"
 
 DEPEND="
 	media-gfx/exiv2:=
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
-	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qttest-${QTMIN}:${SLOT}
-	>=dev-qt/qtsql-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
+	>=dev-qt/qtdeclarative-${QTMIN}:5
+	>=dev-qt/qttest-${QTMIN}:5
+	>=dev-qt/qtsql-${QTMIN}:5
 	>=dev-qt/qtpositioning-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
-	>=dev-qt/qtwidgets-${QTMIN}:${SLOT}
-	>=dev-qt/qtgraphicaleffects-${QTMIN}:${SLOT}
-	>=dev-qt/qtx11extras-${QTMIN}:${SLOT}
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qtgui-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
+	>=dev-qt/qtgraphicaleffects-${QTMIN}:5
+	>=dev-qt/qtx11extras-${QTMIN}:5
 	>=kde-frameworks/ki18n-${KFMIN}:${SLOT}
 	>=kde-frameworks/kdeclarative-${KFMIN}:${SLOT}
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
@@ -57,8 +57,8 @@ RDEPEND="${DEPEND}
 	dev-libs/kirigami-addons
 	media-libs/kquickimageeditor
 	>=dev-qt/qtmultimedia-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtquickcontrols-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=kde-frameworks/kirigami-${KFMIN}:${SLOT}
 	>=kde-frameworks/purpose-${KFMIN}:${SLOT}"
 

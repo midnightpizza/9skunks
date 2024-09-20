@@ -11,20 +11,20 @@ DESCRIPTION="Terminal app for Plasma Mobile"
 HOMEPAGE="https://apps.kde.org/qmlkonsole/"
 
 LICENSE="GPL-2+"
-SLOT="5"
+SLOT="6"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 
 DEPEND="
 	>=dev-libs/kirigami-addons-0.6
-	>=dev-qt/qtcore-${QTMIN}:${SLOT}
+	>=dev-qt/qtcore-${QTMIN}:5
 	>=dev-qt/qtdeclarative-${QTMIN}:${SLOT}
-	>=dev-qt/qtgui-${QTMIN}:${SLOT}
-	>=dev-qt/qtnetwork-${QTMIN}:${SLOT}
-	>=dev-qt/qtquickcontrols2-${QTMIN}:${SLOT}
+	>=dev-qt/qtgui-${QTMIN}:5
+	>=dev-qt/qtnetwork-${QTMIN}:5
+	>=dev-qt/qtquickcontrols2-${QTMIN}:5
 	>=dev-qt/qtsvg-${QTMIN}:${SLOT}
-	>=dev-qt/qttest-${QTMIN}:${SLOT}
-	>=dev-qt/qtwidgets-${QTMIN}:${SLOT}
+	>=dev-qt/qttest-${QTMIN}:5
+	>=dev-qt/qtwidgets-${QTMIN}:5
 	>=kde-frameworks/kconfig-${KFMIN}:${SLOT}
 	>=kde-frameworks/kcoreaddons-${KFMIN}:${SLOT}
 	>=kde-frameworks/ki18n-${KFMIN}:${SLOT}
