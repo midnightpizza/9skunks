@@ -32,6 +32,7 @@ DEPEND="
 	>=kde-frameworks/ki18n-${KFMIN}:6
 	>=kde-frameworks/kirigami-${KFMIN}:6
 	>=kde-frameworks/kunitconversion-${KFMIN}:6
+	sci-libs/libqalculate
 "
 
 RDEPEND="${DEPEND}
