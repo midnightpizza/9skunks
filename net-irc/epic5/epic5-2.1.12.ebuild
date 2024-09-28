@@ -29,7 +29,7 @@ RDEPEND="
 	socks5? ( net-proxy/dante )
 "
 DEPEND="${RDEPEND}
-	valgrind? ( dev-util/valgrind )
+	valgrind? ( dev-debug/valgrind )
 "
 
 S="${WORKDIR}/${P}"
