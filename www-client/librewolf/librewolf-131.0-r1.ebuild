@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-129-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-131-patches-01.tar.xz"
 
 LLVM_COMPAT=( 17 18 )
 
@@ -63,17 +63,20 @@ SLOT="rapid"
 SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
-IUSE="+clang cpu_flags_arm_neon dbus debug eme-free hardened hwaccel"
-IUSE+=" jack +jumbo-build libproxy lto openh264 pgo pulseaudio sndio selinux"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx system-png +system-webp"
-IUSE+=" +telemetry valgrind wayland wifi +X"
+IUSE="+clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy lto openh264 pgo"
+IUSE+=" pulseaudio sndio selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg"
+IUSE+=" +system-jpeg +system-libevent +system-libvpx system-png +system-webp +telemetry valgrind"
+IUSE+=" wayland wifi +X"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate"
+IUSE+=" +gmp-autoupdate gnome-shell"
 
+# !jumbo-build? ( clang ) -> bmo#1914774, bgo#939004 - causes seemingly random compile crashes with gcc.
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
+	!jumbo-build? ( clang )
 	pgo? ( lto )
+	wayland? ( dbus )
 	wifi? ( dbus )"
 
 FF_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
@@ -116,7 +119,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.102
+	>=dev-libs/nss-3.104
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -163,7 +166,10 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	)
 	wifi? (
 		kernel_linux? (
-			net-misc/networkmanager
+			|| (
+				net-misc/networkmanager
+				net-misc/connman[networkmanager]
+			)
 			sys-apps/dbus
 		)
 	)
@@ -313,8 +319,7 @@ moz_clear_vendor_checksums() {
 
 	sed -i \
 		-e 's/\("files":{\)[^}]*/\1/' \
-		"${S}"/third_party/rust/${1}/.cargo-checksum.json \
-		|| die
+		"${S}"/third_party/rust/${1}/.cargo-checksum.json || die
 }
 
 moz_install_xpi() {
@@ -405,40 +410,6 @@ mozconfig_use_with() {
 
 	local flag=$(use_with "${@}")
 	mozconfig_add_options_ac "$(use ${1} && echo +${1} || echo -${1})" "${flag}"
-}
-
-# This is a straight copypaste from toolchain-funcs.eclass's 'tc-ld-is-lld', and is temporarily
-# placed here until toolchain-funcs.eclass gets an official support for mold linker.
-# Please see:
-# https://github.com/gentoo/gentoo/pull/28366 ||
-# https://github.com/gentoo/gentoo/pull/28355
-tc-ld-is-mold() {
-	local out
-
-	# Ensure ld output is in English.
-	local -x LC_ALL=C
-
-	# First check the linker directly.
-	out=$($(tc-getLD "$@") --version 2>&1)
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# Then see if they're selecting mold via compiler flags.
-	# Note: We're assuming they're using LDFLAGS to hold the
-	# options and not CFLAGS/CXXFLAGS.
-	local base="${T}/test-tc-linker"
-	cat <<-EOF > "${base}.c"
-	int main() { return 0; }
-	EOF
-	out=$($(tc-getCC "$@") ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} -Wl,--version "${base}.c" -o "${base}" 2>&1)
-	rm -f "${base}"*
-	if [[ ${out} == *"mold"* ]] ; then
-		return 0
-	fi
-
-	# No mold here!
-	return 1
 }
 
 virtwl() {
@@ -607,8 +578,7 @@ src_prepare() {
 		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
 	fi
 	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
-	rm -v "${WORKDIR}"/firefox-patches/*-nvidia-wayland-egl-sync.patch || die
-	
+
 	# Workaround for bgo#915651 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
@@ -641,14 +611,6 @@ src_prepare() {
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/build/moz.configure/lto-pgo.configure || die "Failed sedding multiprocessing.cpu_count"
 
-	# Make ICU respect MAKEOPTS
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/intl/icu_sources_data.py || die "Failed sedding multiprocessing.cpu_count"
-
-	# Respect MAKEOPTS all around (maybe some find+sed is better)
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/base.py || die "Failed sedding multiprocessing.cpu_count"
-
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/third_party/libwebrtc/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
 
@@ -659,19 +621,14 @@ src_prepare() {
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/third_party/python/gyp/pylib/gyp/input.py || die "Failed sedding multiprocessing.cpu_count"
 
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/code_analysis/mach_commands.py || die "Failed sedding multiprocessing.cpu_count"
-
 	# sed-in toolchain prefix
 	sed -i \
 		-e "s/objdump/${CHOST}-objdump/" \
-		"${S}"/python/mozbuild/mozbuild/configure/check_debug_ranges.py \
-		|| die "sed failed to set toolchain prefix"
+		"${S}"/python/mozbuild/mozbuild/configure/check_debug_ranges.py || die "sed failed to set toolchain prefix"
 
 	sed -i \
 		-e 's/ccache_stats = None/return None/' \
-		"${S}"/python/mozbuild/mozbuild/controller/building.py \
-		|| die "sed failed to disable ccache stats call"
+		"${S}"/python/mozbuild/mozbuild/controller/building.py || die "sed failed to disable ccache stats call"
 
 	einfo "Removing pre-built binaries ..."
 
@@ -800,7 +757,6 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-disk-remnant-avoidance \
 		--disable-geckodriver \
-		--disable-gpsd \
 		--disable-install-strip \
 		--disable-legacy-profile-creation \
 		--disable-parental-controls \
@@ -850,7 +806,7 @@ src_configure() {
 	[[ -n ${MOZ_ESR} ]] && update_channel=esr
 	mozconfig_add_options_ac '' --update-channel=${update_channel}
 
-	if ! use x86 && [[ ${CHOST} != armv*h* ]] ; then
+	if ! use x86 ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
 	fi
 
@@ -1039,29 +995,6 @@ src_configure() {
 	# Optimization flag was handled via configure
 	filter-flags '-O*'
 
-	# Modifications to better support ARM, bug #553364
-	if use cpu_flags_arm_neon ; then
-		mozconfig_add_options_ac '+cpu_flags_arm_neon' --with-fpu=neon
-
-		if ! tc-is-clang ; then
-			# thumb options aren't supported when using clang, bug 666966
-			mozconfig_add_options_ac '+cpu_flags_arm_neon' \
-				--with-thumb=yes \
-				--with-thumb-interwork=no
-		fi
-	fi
-
-	if [[ ${CHOST} == armv*h* ]] ; then
-		mozconfig_add_options_ac 'CHOST=armv*h*' --with-float-abi=hard
-
-		if ! use system-libvpx ; then
-			sed -i \
-				-e "s|softfp|hard|" \
-				"${S}"/media/libvpx/moz.build \
-				|| die
-		fi
-	fi
-
 	# elf-hack
 	# Filter "-z,pack-relative-relocs" and let the build system handle it instead.
 	if use amd64 || use x86 ; then
@@ -1080,21 +1013,6 @@ src_configure() {
 	else
 		mozconfig_add_options_ac 'disable elf-hack on non-supported arches' --disable-elf-hack
 	fi
-
-	# Additional ARCH support
-	case "${ARCH}" in
-		arm)
-			# Reduce the memory requirements for linking
-			if use clang ; then
-				# Nothing to do
-				:;
-			elif use lto ; then
-				append-ldflags -Wl,--no-keep-memory
-			else
-				append-ldflags -Wl,--no-keep-memory -Wl,--reduce-memory-overheads
-			fi
-			;;
-	esac
 
 	if ! use elibc_glibc; then
 		mozconfig_add_options_ac '!elibc_glibc' --disable-jemalloc
