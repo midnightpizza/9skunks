@@ -18,10 +18,10 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.5/projects/firefox/config?ref_type=heads#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.5/projects/browser/config?ref_type=heads#L107
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="13.5.4"
-TOR_TAG="${TOR_PV%.*}-1-build4"
-NOSCRIPT_VERSION="11.4.37"
-CHANGELOG_TAG="${TOR_PV}-build1"
+TOR_PV="13.5.7"
+TOR_TAG="${TOR_PV%.*}-1-build3"
+NOSCRIPT_VERSION="11.4.40"
+CHANGELOG_TAG="${TOR_PV}-build3"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info \
 	llvm multiprocessing pax-utils python-any-r1 toolchain-funcs xdg
@@ -95,7 +95,10 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.24.3
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( virtual/rust )
+	!clang? (
+		>=virtual/rust-1.65
+		<virtual/rust-1.78
+	)
 	>=dev-lang/nasm-2.14"
 
 COMMON_DEPEND="
@@ -159,6 +162,8 @@ COMMON_DEPEND="
 		x11-libs/libXtst
 		x11-libs/libxcb:=
 	)"
+RDEPEND="${COMMON_DEPEND}
+	!www-client/torbrowser-launcher"
 
 DEPEND="${COMMON_DEPEND}
 	X? (
