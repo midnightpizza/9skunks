@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "">
+<pkgmetadata>
+ <maintainer type="person">
+  <email>myau at riseup.net</email>
+  <name>Myau</name>
+ </maintainer>
+ 
+ <use>
+  <flag name="X">Add support for X11</flag>
+ </use>
+</pkgmetadata>
