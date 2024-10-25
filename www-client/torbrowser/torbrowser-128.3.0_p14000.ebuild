@@ -127,9 +127,6 @@ COMMON_DEPEND="
 		x11-libs/libXrandr
 		x11-libs/libxcb:=
 	)"
-RDEPEND="${COMMON_DEPEND}
-	!www-client/torbrowser-launcher"
-
 DEPEND="${COMMON_DEPEND}
 	X? (
 		x11-base/xorg-proto
