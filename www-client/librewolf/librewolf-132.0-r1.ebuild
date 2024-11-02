@@ -3,9 +3,9 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-131-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-132-patches-01.tar.xz"
 
-LLVM_COMPAT=( 17 18 )
+LLVM_COMPAT=( 17 18 19 )
 
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -119,7 +119,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.104
+	>=dev-libs/nss-3.105
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -907,7 +907,10 @@ src_configure() {
 	fi
 
 	# LTO is handled via configure
+	# -Werror=lto-type-mismatch -Werror=odr are going to fail with GCC, 
+	# bmo#1516758, bgo#942288
 	filter-lto
+	filter-flags -Werror=lto-type-mismatch -Werror=odr
 
 	if use lto ; then
 		if use clang ; then
@@ -1024,10 +1027,6 @@ src_configure() {
 
 	# System-av1 fix
 	use system-av1 && append-ldflags "-Wl,--undefined-version"
-
-	# Allow elfhack to work in combination with unstripped binaries
-	# when they would normally be larger than 2GiB.
-	append-ldflags "-Wl,--compress-debug-sections=zlib"
 
 	# Make revdep-rebuild.sh happy; Also required for musl
 	append-ldflags -Wl,-rpath="${MOZILLA_FIVE_HOME}",--enable-new-dtags
