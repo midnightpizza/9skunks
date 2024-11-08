@@ -5,7 +5,7 @@ EAPI=8
 
 JAVA_PKG_IUSE="test"
 
-inherit java-pkg-2 java-ant-2 systemd toolchain-funcs
+inherit java-pkg-2 systemd toolchain-funcs
 
 DESCRIPTION="A privacy-centric, anonymous network"
 HOMEPAGE="https://geti2p.net"
@@ -25,13 +25,10 @@ CP_DEPEND="
 	dev-java/bcprov:0
 	dev-java/hashcash:1
 	dev-java/httpcomponents-client:4
-	dev-java/identicon:1
 	dev-java/java-getopt:1
 	dev-java/java-service-wrapper:0
 	dev-java/jbcrypt:0
 	dev-java/json-simple:2.3
-	dev-java/json-smart:1
-	dev-java/jsonrpc2-base:1
 	dev-java/jsonrpc2-server:1
 	dev-java/jstl:0
 	dev-java/jstl-api:0
@@ -44,65 +41,44 @@ CP_DEPEND="
 DEPEND="
 	dev-libs/gmp:0=
 	${CP_DEPEND}
-	>=virtual/jdk-1.8:*
+	>=virtual/jdk-11:*
 	test? (
-		dev-java/ant:0[junit4]
 		dev-java/hamcrest:0
 		dev-java/junit:4
 		dev-java/mockito:4
+	)
+"
+BDEPEND="
+	>=dev-java/ant-1.10.14-r3:0
+	test? (
+		>=dev-java/ant-1.10.14-r3:0[junit4]
 	)
 "
 RDEPEND="
 	${CP_DEPEND}
 	acct-user/i2p
 	acct-group/i2p
-	>=virtual/jre-1.8:*
+	>=virtual/jre-11:*
 "
 
-PATCHES=(
-	"${FILESDIR}/fix-junit-classpath.patch"
-)
-
-EANT_BUILD_TARGET="preppkg-base"
-# no scala as depending on antlib.xml not installed by dev-lang/scala
-EANT_TEST_TARGET="junit.test"
-JAVA_ANT_ENCODING="UTF-8"
-JAVA_ANT_CLASSPATH_TAGS="javac java"
-# built locally
-EANT_GENTOO_CLASSPATH_EXTRA="${S}/core/java/build/i2p.jar"
-EANT_GENTOO_CLASSPATH_EXTRA+=":${S}/router/java/build/router.jar"
-EANT_GENTOO_CLASSPATH_EXTRA+=":${S}/apps/ministreaming/java/build/mstreaming.jar"
+PATCHES=( "${FILESDIR}/${PV}-force-gentoo-classpath.patch" )
 
 DOCS=( README.md history.txt )
 
-pkg_pretend() {
-	# see https://bugs.gentoo.org/831290
-	if [[ "`java-config --show-active-vm`" = *-8 ]] &&
-		[[ "`java-config --query MERGE_VM --package=ant-core`" != *-8 ]]
-	then
-		eerror "dev-java/ant-core was emerged with a newer version of the JDK."
-		eerror "It will fail to build with virtual/jdk:1.8 due to #831290."
-		eerror "Please switch to a newer JDK"
-		eerror "  eselect java-vm set system ..."
-		eerror "Or remerge dev-java/ant-core with virtual/jdk:1.8"
-		eerror "  emerge dev-java/ant-core"
-		die 'bad JDK for ant-core'
-	fi
-}
-
 src_prepare() {
 	default # apply PATCHES
-	java-pkg-2_src_prepare
 
-	# add our classpath
-	for f in `find -name build.xml`
-	do
-		java-ant_rewrite-classpath "$f"
-	done
+	# remove hardcoded javac's source & target
+	find -name build.xml \
+		-exec sed -Ei 's,(source|target)="\$\{javac\.version\}",,g' {} + ||
+		die "remove javac's source & target in build files"
+
+	java-pkg-2_src_prepare
 
 	# remove most bundled, excepted the next ones.
 	# apps/addressbook/java/src/net/metanotion too much code drift
 	# apps/i2psnark/java/src/org/klomp/snark too much code drift
+	# apps/imagegen/identicon too much code drift
 	# apps/jrobin need rrd4j ebuild
 	# apps/routerconsole/java/src/{com,edu} too much code drift
 	# {core,router}/java/src/com/southernstorm/noise use internal symbols
@@ -114,6 +90,7 @@ src_prepare() {
 	# router/java/src/org/xlattice changed interface
 	java-pkg_clean ! \
 		-path "./apps/jetty/jetty-distribution-*" # need to package jetty
+	rm -r installer/lib || die 'unbundle installer libs'
 	( cat >> override.properties || die 'set unbundled properties' ) <<- EOF
 		require.gettext=true
 		with-libgetopt-java=true
@@ -127,9 +104,8 @@ src_prepare() {
 
 	# bcprov
 	rm -r core/java/src/net/i2p/crypto/elgamal || die 'unbundle bcprov'
-	sed -e 's,net\.i2p\.crypto\.elgamal\.impl,org.bouncycastle.jce.provider,' \
-		-e 's,net\.i2p\.crypto\.elgamal\.spec,org.bouncycastle.jce.spec,' \
-		-i core/java/src/net/i2p/crypto/{provider/I2PProvider,CryptoConstants}.java ||
+	sed -e 's,net\.i2p\.crypto\.elgamal\.spec,org.bouncycastle.jce.spec,' \
+		-i core/java/src/net/i2p/crypto/CryptoConstants.java ||
 		die 'redirect imports of bcprov'
 	# getopt, gettext
 	rm -r core/java/src/gnu/{getopt,gettext} || die 'unbundle GNU code'
@@ -139,12 +115,9 @@ src_prepare() {
 		-i core/java/src/net/i2p/util/{Addresses,I2PSSLSocketFactory}.java \
 			apps/i2pcontrol/java/net/i2p/i2pcontrol/HostCheckHandler.java ||
 		die 'redirect imports of httpcomponents-client'
-	# identicon, zxing
-	rm -r apps/imagegen/{identicon,zxing} || die 'unbundle identicon & zxing'
-	sed -e '/LICENSE-Identicon.txt/d' -i build.xml &&
-	sed -E '/dir="[^"]*(identicon|zxing)/d' -i apps/imagegen{/imagegen,}/build.xml &&
-	sed -E '/(todir="build\/WEB-INF\/classes"|<\/copy>)/d' -i apps/imagegen/imagegen/build.xml ||
-		die 'do not depend on unbundled'
+	# zxing
+	rm -r apps/imagegen/zxing || die 'unbundle zxing'
+	sed -E '/dir="[^"]*zxing/d' -i apps/imagegen{/imagegen,}/build.xml &&
 	# hashcash
 	rm core/java/src/com/nettgryppa/security/HashCash.java ||
 		die 'unbundle hashcash'
@@ -153,8 +126,12 @@ src_prepare() {
 	# jstl*
 	sed -E '/"apps\/susidns\/src\/lib\/(jstl|standard).jar"/d' -i build.xml ||
 		die 'unbundle jstl*'
+	java-pkg_jar-from --into apps/susidns/src/lib jstl jstl-impl.jar standard.jar
+	java-pkg_jar-from --into apps/susidns/src/lib jstl-api jstl-api.jar jstl.jar
 	# minidns-core, json-simple
 	rm -r core/java/src/org || die 'unbundle minidns-core & json-simple'
+	mkdir core/java/build || die 'create built core dependencies'
+	java-pkg_jar-from --into core/java/build json-simple-2.3
 
 	# keep only enabled locales
 	local lang
@@ -175,7 +152,11 @@ src_prepare() {
 }
 
 src_configure() {
-	java-ant-2_src_configure
+	# build for our JDK
+	cat >> override.properties <<-EOF || die 'set JDK infos'
+		ant.build.javac.source=$(java-pkg_get-source)
+		ant.build.javac.target=$(java-pkg_get-target)
+	EOF
 
 	# deamon shouldn't start GUI
 	sed -i 's|\(clientApp.4.startOnLoad\)=true|\1=false|' \
@@ -183,32 +164,38 @@ src_configure() {
 		die 'avoid auto starting browser'
 
 	# yep, that's us
-	echo "build.built-by=Gentoo" >> override.properties ||
+	echo 'build.built-by=Gentoo' >> override.properties ||
 		die 'bragging failed'
+
+	# support no-UTF-8 build systems
+	echo 'file.encoding=UTF-8' >> override.properties ||
+		die 'set files encoding'
 }
 
 src_compile() {
-	java-pkg-2_src_compile
+	local libs='bcprov,gettext,hashcash-1,httpcomponents-client-4'
+	libs+=',java-getopt-1,java-service-wrapper,jbcrypt,jsonrpc2-server-1'
+	libs+=',tomcat-9,minidns-core-1,zxing-javase-3'
+	eant \
+		-Dgentoo.classpath=`java-pkg_getjars --with-dependencies "${libs}"` \
+		preppkg-base
 
 	local compile_lib
 	compile_lib() {
 		local name="${1}"
-		local file="${2}"
-		shift 2
+		shift 1
 
-		"$(tc-getCC)" "${@}" ${CFLAGS} $(java-pkg_get-jni-cflags) \
+		"$(tc-getCC)" "${@}" -Iinclude ${CFLAGS} $(java-pkg_get-jni-cflags) \
 			${LDFLAGS} -shared -fPIC "-Wl,-soname,lib${name}.so" \
-			"${file}" -o "lib${name}.so"
+			"src/${name}.c" -o "lib${name}.so"
 	}
 
 	cd "${S}/core/c/jbigi/jbigi" || die "unable to cd to jbigi"
-	compile_lib jbigi src/jbigi.c -Iinclude -lgmp ||
-		die "unable to build jbigi"
+	compile_lib jbigi -lgmp || die "unable to build jbigi"
 
 	if use amd64 || use x86; then
 		cd "${S}/core/c/jcpuid" || die "unable to cd to jcpuid"
-		compile_lib jcpuid src/jcpuid.c -Iinclude ||
-			die "unable to build jcpuid"
+		compile_lib jcpuid || die "unable to build jcpuid"
 	fi
 }
 
@@ -222,8 +209,18 @@ src_test() {
 		-execdir sed -e 's/<junit /\0haltonerror="yes" /' -i {} + ||
 		die 'ensure test failures propagate'
 
-	EANT_GENTOO_CLASSPATH+=",hamcrest,junit-4,mockito-4"
-	java-pkg-2_src_test
+	# redirect to built jbigi
+	sed -e 's,installer/lib/jbigi,core/c/jbigi/jbigi,' -i build.xml ||
+		die 'redirect to built library'
+
+	local libs='bcprov,gettext,hashcash-1,httpcomponents-client-4'
+	libs+=',java-getopt-1,java-service-wrapper,jbcrypt,jsonrpc2-server-1'
+	libs+=',tomcat-9,minidns-core-1,zxing-javase-3'
+	libs+=',hamcrest,junit-4,mockito-4'
+	# no scala as depending on antlib.xml not installed by dev-lang/scala
+	eant \
+		-Dgentoo.classpath=`java-pkg_getjars --build-only --with-dependencies "${libs}"` \
+		junit.test
 }
 
 src_install() {
@@ -261,31 +258,4 @@ src_install() {
 			-Di2p.dir.log=${EPREFIX}/var/log/i2p \
 			-DloggerFilenameOverride=${EPREFIX}/var/log/i2p/router-@"
 	java-pkg_dolauncher eepget --main net.i2p.util.EepGet --jar i2p.jar
-}
-
-pkg_postinst() {
-	local i2pdir="${EPREFIX}/var/lib/i2p"
-
-	[ -d "${i2pdir}/app" -a -d "${i2pdir}/config" -a -d "${i2pdir}/router" ] || return
-
-	elog "Separated user directories is not fully supported by upstream."
-	elog "${i2pdir}/{app,config,router} will be merged"
-	elog "in ${i2pdir} accordingly."
-
-	ebegin "Migrating"
-	rm -fr "${i2pdir}/config/addressbook" # prefer router's addressbook
-	local ret=0
-	mv "${i2pdir}"/{app,config,router}/* "${i2pdir}" || ret=1
-	rmdir "${i2pdir}"/{app,config,router} || ret=1
-	find "${i2pdir}" '(' -name '*.config' -o -name '*.xml' ')' \
-		-execdir sed -E "s,${i2pdir}/(app|config|router),${i2pdir}," -i {} + || ret=1
-
-	if ! eend $ret
-	then
-		ewarn "Unable to merge user directories automatically."
-		ewarn "Please merge them by hand and update all configured paths"
-		ewarn "to point to ${i2pdir} before starting the router."
-		ewarn
-		ewarn "Otherwise, consider starting with a fresh router by removing ${i2pdir}."
-	fi
 }
