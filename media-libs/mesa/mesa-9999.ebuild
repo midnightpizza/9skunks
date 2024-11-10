@@ -4,8 +4,11 @@
 EAPI=8
 
 PYTHON_COMPAT=( python3_{10..12} )
+LLVM_COMPAT=( {15..18} )
+LLVM_OPTIONAL=1
+CARGO_OPTIONAL=1
 
-inherit llvm meson-multilib pax-utils python-any-r1 linux-info git-r3
+inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain
 
 MY_P="${P/_/-}"
 
@@ -168,22 +171,29 @@ DEPEND="${RDEPEND}
 BDEPEND="
 	${PYTHON_DEPS}
 	opencl? (
-		>=virtual/rust-1.62.0
+		${RUST_DEPEND}
 		>=dev-util/bindgen-0.58.0
-		>=dev-build/meson-1.3.1
 	)
+	>=dev-build/meson-1.4.1
 	app-alternatives/yacc
 	app-alternatives/lex
 	virtual/pkgconfig
-	$(python_gen_any_dep ">=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]")
-	llvm? (
-		vulkan? (
-			dev-util/glslang
-			video_cards_intel? (
-				amd64? (
-					$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
-				)
-			)
+	$(python_gen_any_dep "
+		>=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]
+		dev-python/packaging[\${PYTHON_USEDEP}]
+		dev-python/pyyaml[\${PYTHON_USEDEP}]
+	")
+	video_cards_intel? (
+		~dev-util/intel_clc-${PV}
+		dev-libs/libclc[spirv(-)]
+		$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
+	)
+	vulkan? (
+		dev-util/glslang
+		video_cards_nvk? (
+			>=dev-util/bindgen-0.68.1
+			>=dev-util/cbindgen-0.26.0
+			${RUST_DEPEND}
 		)
 	)
 	wayland? ( dev-util/wayland-scanner )
@@ -262,7 +272,9 @@ pkg_pretend() {
 }
 
 python_check_deps() {
-	python_has_version -b ">=dev-python/mako-0.8.0[${PYTHON_USEDEP}]" || return 1
+	python_has_version -b ">=dev-python/mako-0.8.0[${PYTHON_USEDEP}]" &&
+	python_has_version -b "dev-python/packaging[${PYTHON_USEDEP}]" &&
+	python_has_version -b "dev-python/pyyaml[${PYTHON_USEDEP}]" || return 1
 	if use llvm && use vulkan && use video_cards_intel && use amd64; then
 		python_has_version -b "dev-python/ply[${PYTHON_USEDEP}]" || return 1
 	fi
@@ -289,10 +301,18 @@ pkg_setup() {
 		linux-info_pkg_setup
 	fi
 
-	if use llvm; then
-		llvm_pkg_setup
-	fi
+	use llvm && llvm-r1_pkg_setup
 	python-any-r1_pkg_setup
+
+	if use opencl || (use vulkan && use video_cards_nvk); then
+		rust_pkg_setup
+	fi
+}
+
+src_prepare() {
+	default
+	sed -i -e "/^PLATFORM_SYMBOLS/a '__gentoo_check_ldflags__'," \
+		bin/symbols-check.py || die # bug #830728
 }
 
 multilib_src_configure() {
