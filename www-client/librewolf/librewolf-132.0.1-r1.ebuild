@@ -75,9 +75,9 @@ IUSE+=" +gmp-autoupdate gnome-shell"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
-	pgo? ( lto )
 	wayland? ( dbus )
-	wifi? ( dbus )"
+	wifi? ( dbus )
+"
 
 FF_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
