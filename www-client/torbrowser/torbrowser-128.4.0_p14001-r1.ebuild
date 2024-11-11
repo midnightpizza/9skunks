@@ -10,6 +10,8 @@ LLVM_COMPAT=( 17 18 19 )
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
+RUST_NEEDS_LLVM=1
+
 WANT_AUTOCONF="2.1"
 
 # Convert the ebuild version to the upstream Mozilla version
@@ -25,7 +27,7 @@ NOSCRIPT_ID="4377088"
 CHANGELOG_TAG="${TOR_PV}-build2"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
-	pax-utils python-any-r1 toolchain-funcs xdg
+	pax-utils python-any-r1 rust toolchain-funcs xdg
 
 TOR_SRC_BASE_URI="https://dist.torproject.org/torbrowser/${TOR_PV}"
 TOR_SRC_ARCHIVE_URI="https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_PV}"
@@ -48,7 +50,7 @@ SRC_URI="
 S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64"
 
 IUSE="clang dbus hardened +jumbo-build"
 IUSE+=" pulseaudio +system-av1 +system-harfbuzz +system-icu +system-jpeg"
@@ -63,7 +65,6 @@ BDEPEND="${PYTHON_DEPS}
 		sys-devel/llvm:${LLVM_SLOT}
 		clang? (
 			sys-devel/lld:${LLVM_SLOT}
-			virtual/rust:0/llvm-${LLVM_SLOT}
 		)
 	')
 	app-alternatives/awk
@@ -72,7 +73,6 @@ BDEPEND="${PYTHON_DEPS}
 	>=dev-util/cbindgen-0.26.0
 	net-libs/nodejs
 	virtual/pkgconfig
-	!clang? ( >=virtual/rust-1.76 )
 	amd64? ( >=dev-lang/nasm-2.14 )
 	x86? ( >=dev-lang/nasm-2.14 )"
 
@@ -133,6 +133,8 @@ COMMON_DEPEND="
 		x11-libs/libXrandr
 		x11-libs/libxcb:=
 	)"
+RDEPEND="${COMMON_DEPEND}
+	!www-client/torbrowser-launcher"
 
 DEPEND="${COMMON_DEPEND}
 	X? (
@@ -150,11 +152,6 @@ llvm_check_deps() {
 	if use clang && ! tc-ld-is-mold ; then
 		if ! has_version -b "sys-devel/lld:${LLVM_SLOT}" ; then
 			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
-			return 1
-		fi
-
-		if ! has_version -b "virtual/rust:0/llvm-${LLVM_SLOT}" ; then
-			einfo "virtual/rust:0/llvm-${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
 	fi
@@ -244,6 +241,7 @@ pkg_setup() {
 	check-reqs_pkg_setup
 
 	llvm-r1_pkg_setup
+	rust_pkg_setup
 
 	python-any-r1_pkg_setup
 
@@ -662,12 +660,6 @@ src_configure() {
 	done
 	echo "=========================================================="
 	echo
-
-    if [[ ${ARCH} == "arm64" ]]; then
-        einfo "Removing --disable-eme for arm64"
-        sed -i 's/ac_add_options --disable-eme//g' "${S}"/.mozconfig || die "sed failed"
-    fi
-
 
 	./mach configure || die
 }
