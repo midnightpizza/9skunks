@@ -50,7 +50,8 @@ SRC_URI="
 S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="~amd64 ~x86 ~arm64"
+
 
 IUSE="clang dbus hardened +jumbo-build"
 IUSE+=" pulseaudio +system-av1 +system-harfbuzz +system-icu +system-jpeg"
@@ -133,8 +134,6 @@ COMMON_DEPEND="
 		x11-libs/libXrandr
 		x11-libs/libxcb:=
 	)"
-RDEPEND="${COMMON_DEPEND}
-	!www-client/torbrowser-launcher"
 
 DEPEND="${COMMON_DEPEND}
 	X? (
@@ -660,7 +659,10 @@ src_configure() {
 	done
 	echo "=========================================================="
 	echo
-
+    if [[ ${ARCH} == "arm64" ]]; then
+        einfo "Removing --disable-eme for arm64"
+        sed -i 's/ac_add_options --disable-eme//g' "${S}"/.mozconfig || die "sed failed"
+    fi
 	./mach configure || die
 }
 
