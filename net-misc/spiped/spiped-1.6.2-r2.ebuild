@@ -24,16 +24,15 @@ RDEPEND="
 	!net-mail/qlogtools"
 
 src_install() {
-	newexe "${MY_PN}/${MY_PN}" "${MY_PN}"
-	newexe "${PN}/${PN}" "${PN}"
+	dobin "${MY_PN}/${MY_PN}"
+	dosbin "${PN}/${PN}"
 
 	doman "${MY_PN}/${MY_PN}.1" "${PN}/${PN}.1"
 
 	newinitd "${FILESDIR}/${PN}.initd" "${PN}"
 	newconfd "${FILESDIR}/${PN}.confd" "${PN}"
 
-	insinto "/etc/${PN}"
-	doins "${FILESDIR}/${PN}.conf"
+	dodir "etc/${PN}"
 }
 
 pkg_postinst() {
