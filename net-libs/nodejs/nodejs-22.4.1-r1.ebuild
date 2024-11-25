@@ -7,7 +7,7 @@ CONFIG_CHECK="~ADVISE_SYSCALLS"
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="threads(+)"
 
-inherit bash-completion-r1 check-reqs flag-o-matic linux-info ninja-utils pax-utils python-any-r1 xdg-utils
+inherit bash-completion-r1 check-reqs flag-o-matic linux-info ninja-utils pax-utils python-any-r1 toolchain-funcs xdg-utils
 
 DESCRIPTION="A JavaScript runtime built on Chrome's V8 JavaScript engine"
 HOMEPAGE="https://nodejs.org/"
@@ -20,7 +20,7 @@ if [[ ${PV} == *9999 ]]; then
 else
 	SRC_URI="https://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz"
 	SLOT="0/$(ver_cut 1)"
-	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc64 ~riscv ~x86 ~amd64-linux ~x64-macos"
+	KEYWORDS="amd64 arm arm64 ~loong ppc64 ~riscv x86 ~amd64-linux ~x64-macos"
 	S="${WORKDIR}/node-v${PV}"
 fi
 
@@ -120,6 +120,8 @@ src_configure() {
 	# causing it to fail to catch exceptions sometimes
 	# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=116057
 	tc-is-gcc && append-cxxflags -fno-tree-vectorize
+	# https://bugs.gentoo.org/931514 #mac Only bug, disable!
+	# use arm64 && append-flags $(test-flags-CXX -mbranch-protection=none) 
 	# nodejs unconditionally links to libatomic #869992
 	# specifically it requires __atomic_is_lock_free which
 	# is not yet implemented by sys-libs/compiler-rt (see
