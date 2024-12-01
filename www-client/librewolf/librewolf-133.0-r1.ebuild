@@ -3,18 +3,20 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-132-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-133-patches-01.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
+
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
+
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.77.1
 
 PYTHON_COMPAT=( python3_{10..12} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
-WANT_AUTOCONF="2.1"
+WANT_AUTOCONF="2.71"
 
 VIRTUALX_REQUIRED="manual"
 
@@ -67,13 +69,12 @@ SLOT="rapid"
 SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 
-IUSE="clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy openh264 pgo"
-IUSE+=" pulseaudio sndio selinux +system-av1 +system-harfbuzz +system-icu +system-jpeg"
-IUSE+=" +system-jpeg +system-libevent +system-libvpx system-png +system-webp +telemetry valgrind"
-IUSE+=" wayland wifi +X"
+IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio sndio selinux"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-jpeg +system-libevent"
+IUSE+=" +system-libvpx system-png +system-webp valgrind wayland wifi +X"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell"
+IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264 wasm"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
@@ -88,8 +89,9 @@ BDEPEND="${PYTHON_DEPS}
 		sys-devel/llvm:${LLVM_SLOT}
 		clang? (
 			sys-devel/lld:${LLVM_SLOT}
+			pgo? ( sys-libs/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
 		)
-		pgo? ( sys-libs/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
+		wasm? ( sys-devel/lld:${LLVM_SLOT} )
 	')
 	app-alternatives/awk
 	app-arch/unzip
@@ -118,7 +120,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.105
+	>=dev-libs/nss-3.106
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -149,8 +151,8 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 		>=media-libs/libaom-1.0.0:=
 	)
 	system-harfbuzz? (
-		>=media-gfx/graphite2-1.3.13
 		>=media-libs/harfbuzz-2.8.1:0=
+		!wasm? ( >=media-gfx/graphite2-1.3.13 )
 	)
 	system-icu? ( >=dev-libs/icu-73.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
@@ -217,13 +219,13 @@ llvm_check_deps() {
 			einfo "sys-devel/lld:${LLVM_SLOT} is missing! Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
 			return 1
 		fi
+	fi
 
-		if use pgo ; then
-			if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
-				einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
-				einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
-				return 1
-			fi
+	if use pgo ; then
+		if ! has_version -b "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile]" ; then
+			einfo "=sys-libs/compiler-rt-sanitizers-${LLVM_SLOT}*[profile] is missing!" >&2
+			einfo "Cannot use LLVM slot ${LLVM_SLOT} ..." >&2
+			return 1
 		fi
 	fi
 
@@ -436,10 +438,12 @@ pkg_pretend() {
 		fi
 
 		# Ensure we have enough disk space to compile
-		if use pgo || tc-is-lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif tc-is-lto ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -460,11 +464,6 @@ pkg_setup() {
 		fi
 
 		if use pgo ; then
-			if [[ ${use_lto} == "no" ]] ; then
-				elog "Building ${PN} with USE=pgo requires LTO, however this was not detected in your environment."
-				elog "Forcing LTO, however it is recommended to enable LTO explicitly."
-				use_lto=yes
-			fi
 			if ! has userpriv ${FEATURES} ; then
 				eerror "Building ${PN} with USE=pgo and FEATURES=-userpriv is not supported!"
 			fi
@@ -477,10 +476,12 @@ pkg_setup() {
 		fi
 
 		# Ensure we have enough disk space to compile
-		if [[ ${use_lto} == "yes" ]] || use pgo || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif [[ ${use_lto} == "yes" ]] ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6400M"
+			CHECKREQS_DISK_BUILD="6800M"
 		fi
 
 		check-reqs_pkg_setup
@@ -598,9 +599,33 @@ src_prepare() {
 			export RUST_TARGET="aarch64-unknown-linux-musl"
 		elif use ppc64 ; then
 			export RUST_TARGET="powerpc64le-unknown-linux-musl"
+		elif use riscv ; then
+			# We can pretty safely rule out any 32-bit riscvs, but 64-bit riscvs also have tons of
+			# different ABIs available. riscv64gc-unknown-linux-musl seems to be the best working
+			# guess right now though.
+			elog "riscv detected, forcing a riscv64 target for now."
+			export RUST_TARGET="riscv64gc-unknown-linux-musl"
 		else
 			elog "Unknown musl chost, please post your rustc -vV along with emerge --info on Gentoo's bug #915651"
 		fi
+	fi
+
+	# Pre-built wasm path manipulation.
+	if use wasm ; then
+		if use amd64 ; then
+			export wasi_arch="x86_64"
+		elif use arm64 ; then
+			export wasi_arch="arm64"
+		else
+			die "wasm enabled on unknown/unsupported arch!"
+		fi
+
+		sed -i \
+			-e "s:%%PORTAGE_WORKDIR%%:${WORKDIR}:" \
+			-e "s:%%WASI_ARCH%%:${wasi_arch}:" \
+			-e "s:%%WASI_SDK_VER%%:${WASI_SDK_VER}:" \
+			-e "s:%%WASI_SDK_LLVM_VER%%:${WASI_SDK_LLVM_VER}:" \
+			toolkit/moz.configure || die "Failed to update wasi-related paths."
 	fi
 
 	# Make LTO respect MAKEOPTS
@@ -608,11 +633,7 @@ src_prepare() {
 		"${S}"/build/moz.configure/lto-pgo.configure || die "Failed sedding multiprocessing.cpu_count"
 
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_concurrent_links.py ||
-			die "Failed sedding multiprocessing.cpu_count"
+		"${S}"/third_party/chromium/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
 
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/third_party/python/gyp/pylib/gyp/input.py || die "Failed sedding multiprocessing.cpu_count"
@@ -743,9 +764,6 @@ src_configure() {
 	mozconfig_add_options_ac '' --enable-project=browser
 
 	# Set Gentoo defaults
-	if use telemetry; then
-		export MOZILLA_OFFICIAL=1
-	fi
 
 	mozconfig_add_options_ac 'Gentoo default' \
 		--allow-addon-sideload \
@@ -772,7 +790,6 @@ src_configure() {
 		--prefix="${EPREFIX}/usr" \
 		--target="${CHOST}" \
 		--without-ccache \
-		--without-wasm-sandboxed-libraries \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
 		--with-system-nspr \
@@ -860,7 +877,6 @@ src_configure() {
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
-	mozconfig_use_with system-harfbuzz system-graphite2
 	mozconfig_use_with system-icu
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent
@@ -902,6 +918,16 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
+	# wasm
+	# Since graphite2 is one of the sandboxed libraries, system-graphite2 obviously can't work with +wasm.
+	if use wasm ; then
+		mozconfig_add_options_ac '+wasm' --with-wasi-sysroot="${WORKDIR}/wasi-sdk-${WASI_SDK_VER}-${wasi_arch}-linux/share/wasi-sysroot/"
+	else
+		mozconfig_add_options_ac 'no wasm-sandbox' --without-wasm-sandboxed-libraries
+		mozconfig_use_with system-harfbuzz system-graphite2
+	fi
+
+
 	if [[ ${use_lto} == "yes" ]] ; then
 		if use clang ; then
 			# Upstream only supports lld or mold when using clang.
@@ -922,14 +948,6 @@ src_configure() {
 			mozconfig_add_options_ac "linker is set to bfd" --enable-linker=bfd
 		fi
 
-		if use pgo ; then
-			mozconfig_add_options_ac '+pgo' MOZ_PGO=1
-
-			if use clang ; then
-				# Used in build/pgo/profileserver.py
-				export LLVM_PROFDATA="llvm-profdata"
-			fi
-		fi
 	else
 		# Avoid auto-magic on linker
 		if use clang ; then
@@ -946,6 +964,16 @@ src_configure() {
 			else
 				mozconfig_add_options_ac "linker is set to bfd due to USE=-clang" --enable-linker=bfd
 			fi
+		fi
+	fi
+
+	# PGO was moved outside lto block to allow building pgo without lto.
+	if use pgo ; then
+		mozconfig_add_options_ac '+pgo' MOZ_PGO=1
+
+		if use clang ; then
+			# Used in build/pgo/profileserver.py
+			export LLVM_PROFDATA="llvm-profdata"
 		fi
 	fi
 
@@ -1029,12 +1057,6 @@ src_configure() {
 
 	export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="none"
 
-	if ! use telemetry; then
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_CRASHREPORTER=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_DATA_REPORTING=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_SERVICES_HEALTHREPORT=0"
-		mozconfig_add_options_mk '-telemetry setting' "MOZ_TELEMETRY_REPORTING=0"
-	fi
 
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
@@ -1199,16 +1221,6 @@ src_install() {
 	if use system-harfbuzz ; then
 		cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set gfx.font_rendering.graphite.enabled pref"
 		sticky_pref("gfx.font_rendering.graphite.enabled", true);
-		EOF
-	fi
-
-	# Add telemetry config prefs, just in case something happens in future and telemetry build
-	# options stop working.
-	if ! use telemetry ; then
-		cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set telemetry prefs"
-		sticky_pref("toolkit.telemetry.dap_enabled", false);
-		pref("toolkit.telemetry.dap_helper", "");
-		pref("toolkit.telemetry.dap_leader", "");
 		EOF
 	fi
 
