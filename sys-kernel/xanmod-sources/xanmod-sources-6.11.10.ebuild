@@ -42,7 +42,7 @@ UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} *jump-label-fix.patch"
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 5*_*cpu-optimization*.patch"
 UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2*iwlwifi-rfkill-fix.patch"
-
+UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 2*HID-revert-Y900P-fix-ThinkPad-L15-touchpad*"
 
 pkg_postinst() {
 	elog "The XanMod team strongly suggests the use of updated CPU microcodes with its"
