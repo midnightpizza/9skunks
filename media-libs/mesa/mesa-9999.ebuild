@@ -139,8 +139,8 @@ LLVM_MIN_SLOT="15"
 LLVM_USE_DEPS="llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}"
 PER_SLOT_DEPSTR="
 	(
-		!opencl? ( sys-devel/llvm:@SLOT@[${LLVM_USE_DEPS}] )
-		opencl? ( sys-devel/clang:@SLOT@[${LLVM_USE_DEPS}] )
+		!opencl? ( llvm-core/llvm:@SLOT@[${LLVM_USE_DEPS}] )
+		opencl? ( llvm-core/clang:@SLOT@[${LLVM_USE_DEPS}] )
 		opencl? ( dev-util/spirv-llvm-translator:@SLOT@ )
 		vulkan? ( video_cards_intel? ( amd64? ( dev-util/spirv-llvm-translator:@SLOT@ ) ) )
 	)
@@ -151,8 +151,8 @@ LLVM_DEPSTR="
 			echo "${PER_SLOT_DEPSTR//@SLOT@/${slot}}"
 		done)
 	)
-	!opencl? ( <sys-devel/llvm-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
-	opencl? ( <sys-devel/clang-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
+	!opencl? ( <llvm-core/llvm-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
+	opencl? ( <llvm-core/clang-$((LLVM_MAX_SLOT + 1)):=[${LLVM_USE_DEPS}] )
 "
 RDEPEND="${RDEPEND}
 	llvm? ( ${LLVM_DEPSTR} )
@@ -216,12 +216,12 @@ x86? (
 
 llvm_check_deps() {
 	if use opencl; then
-		has_version "sys-devel/clang:${LLVM_SLOT}[${LLVM_USE_DEPS}]" || return 1
+		has_version "llvm-core/clang:${LLVM_SLOT}[${LLVM_USE_DEPS}]" || return 1
 	fi
 	if use opencl || { use vulkan && use video_cards_intel && use amd64; }; then
 		has_version "dev-util/spirv-llvm-translator:${LLVM_SLOT}" || return 1
 	fi
-	has_version "sys-devel/llvm:${LLVM_SLOT}[${LLVM_USE_DEPS}]"
+	has_version "llvm-core/llvm:${LLVM_SLOT}[${LLVM_USE_DEPS}]"
 }
 
 pkg_pretend() {
@@ -282,8 +282,8 @@ python_check_deps() {
 
 pkg_setup() {
 	# warning message for bug 459306
-	if use llvm && has_version sys-devel/llvm[!debug=]; then
-		ewarn "Mismatch between debug USE flags in media-libs/mesa and sys-devel/llvm"
+	if use llvm && has_version llvm-core/llvm[!debug=]; then
+		ewarn "Mismatch between debug USE flags in media-libs/mesa and llvm-core/llvm"
 		ewarn "detected! This can cause problems. For details, see bug 459306."
 	fi
 
