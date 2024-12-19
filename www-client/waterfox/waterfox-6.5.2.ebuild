@@ -5,9 +5,9 @@ EAPI=8
 
 FIREFOX_PATCHSET="firefox-128esr-patches-07.tar.xz"
 
+LLVM_MAX_SLOT=19
 LLVM_COMPAT=( 17 18 19 )
-
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{9,10,11,12,13} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
@@ -453,8 +453,34 @@ pkg_setup() {
 			# (PORTAGE_SCHEDULING_POLICY) update...
 			addpredict /proc
 
-			# Clear tons of conditions, since PGO is hardware-dependant.
-			addpredict /dev
+			# May need a wider addpredict when using wayland+pgo.
+			addpredict /dev/dri
+
+			# Allow access to GPU during PGO run
+			local ati_cards mesa_cards nvidia_cards render_cards
+			shopt -s nullglob
+
+			ati_cards=$(echo -n /dev/ati/card* | sed 's/ /:/g')
+			if [[ -n "${ati_cards}" ]] ; then
+				addpredict "${ati_cards}"
+			fi
+
+			mesa_cards=$(echo -n /dev/dri/card* | sed 's/ /:/g')
+			if [[ -n "${mesa_cards}" ]] ; then
+				addpredict "${mesa_cards}"
+			fi
+
+			nvidia_cards=$(echo -n /dev/nvidia* | sed 's/ /:/g')
+			if [[ -n "${nvidia_cards}" ]] ; then
+				addpredict "${nvidia_cards}"
+			fi
+
+			render_cards=$(echo -n /dev/dri/renderD128* | sed 's/ /:/g')
+			if [[ -n "${render_cards}" ]] ; then
+				addpredict "${render_cards}"
+			fi
+
+			shopt -u nullglob
 		fi
 
 		if ! mountpoint -q /dev/shm ; then
@@ -504,6 +530,12 @@ src_prepare() {
 	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
+
+	# Workaround for bgo#917599
+	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
+		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
+	fi
+	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
 
 	if use x86 && use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*-musl-non-lfs64-api-on-audio_thread_priority-crate.patch || die
@@ -612,6 +644,24 @@ src_prepare() {
 	moz_clear_vendor_checksums encoding_rs
 	moz_clear_vendor_checksums any_all_workaround
 
+	# Respect choice for "jumbo-build"
+	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
+	if [[ -n ${FILES_PER_UNIFIED_FILE} ]] && use jumbo-build; then
+		local my_files_per_unified_file=${FILES_PER_UNIFIED_FILE:=16}
+		elog ""
+		elog "jumbo-build defaults modified to ${my_files_per_unified_file}."
+		elog "if you get a build failure, try undefining FILES_PER_UNIFIED_FILE,"
+		elog "if that fails try -jumbo-build before opening a bug report."
+		elog ""
+
+		sed -i -e "s/\"FILES_PER_UNIFIED_FILE\", 16/\"FILES_PER_UNIFIED_FILE\", "${my_files_per_unified_file}"/" \
+			python/mozbuild/mozbuild/frontend/data.py ||
+				die "Failed to adjust FILES_PER_UNIFIED_FILE in python/mozbuild/mozbuild/frontend/data.py"
+		sed -i -e "s/FILES_PER_UNIFIED_FILE = 6/FILES_PER_UNIFIED_FILE = "${my_files_per_unified_file}"/" \
+			js/src/moz.build ||
+				die "Failed to adjust FILES_PER_UNIFIED_FILE in js/src/moz.build"
+	fi
+
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
 	mkdir -p "${BUILD_DIR}" || die
@@ -653,6 +703,7 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
+		AS=llvm-as
 		CC=${CHOST}-clang-${version_clang}
 		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
