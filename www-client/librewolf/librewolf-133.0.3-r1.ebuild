@@ -1106,7 +1106,10 @@ src_configure() {
 	if use valgrind; then
 		sed -i -e 's/--enable-optimize=-O[0-9s]/--enable-optimize="-g -O2"/' .mozconfig || die
 	fi
-
+    if [[ ${ARCH} == "arm64" ]]; then
+        einfo "Removing --disable-eme for arm64"
+        sed -i 's/ac_add_options --disable-eme//g' "${S}"/.mozconfig || die "sed failed"
+    fi
 	./mach configure || die
 }
 
