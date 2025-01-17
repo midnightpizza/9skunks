@@ -1,9 +1,9 @@
-# Copyright 2022-2024 Gentoo Authors
+# Copyright 2022-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-07.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-08.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
 
@@ -41,7 +41,7 @@ SRC_URI="
 	${WF_SRC_BASE_URI}/${WF_PV}.tar.gz -> ${P}.tar.gz
 	https://github.com/BrowserWorks/l10n/archive/${L10N_COMMIT}.tar.gz -> ${PN}-L10N-${L10N_COMMIT}.tar.gz
 	${PATCH_URIS[@]}
-	wasm? (
+	wasm-sandbox? (
 		amd64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-x86_64-linux.tar.gz )
 		arm64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-arm64-linux.tar.gz )
 	)
@@ -57,7 +57,7 @@ IUSE+=" pulseaudio selinux sndio +system-av1 +system-harfbuzz +system-icu +syste
 IUSE+=" +system-libevent +system-libvpx system-png +system-webp wayland wifi +X system-python-libs"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264  system-python-libs wasm"
+IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264  system-python-libs wasm-sandbox"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
@@ -74,7 +74,7 @@ BDEPEND="${PYTHON_DEPS}
 			llvm-core/lld:${LLVM_SLOT}
 			pgo? ( llvm-runtimes/compiler-rt-sanitizers:${LLVM_SLOT}[profile] )
 		)
-		wasm? ( llvm-core/lld:${LLVM_SLOT} )
+		wasm-sandbox? ( llvm-core/lld:${LLVM_SLOT} )
 	')
 	app-alternatives/awk
 	app-arch/unzip
@@ -135,7 +135,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
-		!wasm? ( >=media-gfx/graphite2-1.3.13 )
+		!wasm-sandbox? ( >=media-gfx/graphite2-1.3.13 )
 	)
 	system-icu? ( >=dev-libs/icu-73.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
@@ -454,34 +454,8 @@ pkg_setup() {
 			# (PORTAGE_SCHEDULING_POLICY) update...
 			addpredict /proc
 
-			# May need a wider addpredict when using wayland+pgo.
-			addpredict /dev/dri
-
-			# Allow access to GPU during PGO run
-			local ati_cards mesa_cards nvidia_cards render_cards
-			shopt -s nullglob
-
-			ati_cards=$(echo -n /dev/ati/card* | sed 's/ /:/g')
-			if [[ -n "${ati_cards}" ]] ; then
-				addpredict "${ati_cards}"
-			fi
-
-			mesa_cards=$(echo -n /dev/dri/card* | sed 's/ /:/g')
-			if [[ -n "${mesa_cards}" ]] ; then
-				addpredict "${mesa_cards}"
-			fi
-
-			nvidia_cards=$(echo -n /dev/nvidia* | sed 's/ /:/g')
-			if [[ -n "${nvidia_cards}" ]] ; then
-				addpredict "${nvidia_cards}"
-			fi
-
-			render_cards=$(echo -n /dev/dri/renderD128* | sed 's/ /:/g')
-			if [[ -n "${render_cards}" ]] ; then
-				addpredict "${render_cards}"
-			fi
-
-			shopt -u nullglob
+			# Clear tons of conditions, since PGO is hardware-dependant.
+			addpredict /dev
 		fi
 
 		if ! mountpoint -q /dev/shm ; then
@@ -586,14 +560,14 @@ src_prepare() {
 		fi
 	fi
 
-	# Pre-built wasm path manipulation.
-	if use wasm ; then
+	# Pre-built wasm-sandbox path manipulation.
+	if use wasm-sandbox ; then
 		if use amd64 ; then
 			export wasi_arch="x86_64"
 		elif use arm64 ; then
 			export wasi_arch="arm64"
 		else
-			die "wasm enabled on unknown/unsupported arch!"
+			die "wasm-sandbox enabled on unknown/unsupported arch!"
 		fi
 
 		sed -i \
@@ -706,7 +680,6 @@ src_configure() {
 		fi
 
 		AR=llvm-ar
-		AS=llvm-as
 		CC=${CHOST}-clang-${version_clang}
 		CXX=${CHOST}-clang++-${version_clang}
 		NM=llvm-nm
@@ -901,10 +874,10 @@ src_configure() {
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3-x11-only
 	fi
 
-	# wasm
-	# Since graphite2 is one of the sandboxed libraries, system-graphite2 obviously can't work with +wasm.
-	if use wasm ; then
-		mozconfig_add_options_ac '+wasm' --with-wasi-sysroot="${WORKDIR}/wasi-sdk-${WASI_SDK_VER}-${wasi_arch}-linux/share/wasi-sysroot/"
+	# wasm-sandbox
+	# Since graphite2 is one of the sandboxed libraries, system-graphite2 obviously can't work with +wasm-sandbox.
+	if use wasm-sandbox ; then
+		mozconfig_add_options_ac '+wasm-sandbox' --with-wasi-sysroot="${WORKDIR}/wasi-sdk-${WASI_SDK_VER}-${wasi_arch}-linux/share/wasi-sysroot/"
 	else
 		mozconfig_add_options_ac 'no wasm-sandbox' --without-wasm-sandboxed-libraries
 		mozconfig_use_with system-harfbuzz system-graphite2
