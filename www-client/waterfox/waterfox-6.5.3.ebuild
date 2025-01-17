@@ -521,7 +521,7 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 	fi
 
-	rm -v "${WORKDIR}"/firefox-patches/*-python-3.12.8-mach-fix.patch || die
+	#//rm -v "${WORKDIR}"/firefox-patches/*-python-3.12.8-mach-fix.patch || die
 
 	eapply "${FILESDIR}/waterfox-6.0-fix-langpack-id.patch"
 	eapply "${WORKDIR}/firefox-patches"
