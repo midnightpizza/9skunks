@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,8 +7,9 @@ PYTHON_COMPAT=( python3_{10..12} )
 LLVM_COMPAT=( {15..18} )
 LLVM_OPTIONAL=1
 CARGO_OPTIONAL=1
+PYTHON_COMPAT=( python3_{10..13} )
 
-inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain
+inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain git-r3
 
 MY_P="${P/_/-}"
 
