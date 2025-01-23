@@ -13,7 +13,7 @@ EGIT_REPO_URI="https://github.com/ptitSeb/${PN}"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS=""
-IUSE="static"
+IUSE="static +rk3588"
 
 # Ensure the system is compatible with the package
 pkg_setup() {
@@ -48,6 +48,7 @@ src_configure() {
 
 	# Enable architecture-specific optimizations
 	use arm || use arm64 && mycmakeargs+=( -DARM64=1 -DARM_DYNAREC=1 )
+	use rk3588 && mycmakeargs+=( -DARM64=1 -DARM_DYNAREC=1  -DRK3588=1)
 	use riscv && mycmakeargs+=( -DRV64=1 -DRV64_DYNAREC=1 )
 	use ppc64 && mycmakeargs+=( -DPPC64LE=1 )
 	use loong && mycmakeargs+=( -DLARCH64=1 )
