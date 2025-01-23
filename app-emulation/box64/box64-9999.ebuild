@@ -41,6 +41,9 @@ src_configure() {
 		-DNOGIT=0
 		-DARM_DYNAREC=0
 		-DRV64_DYNAREC=0
+		-DBOX32=1
+		-DBOX32_BINFMT=1
+		-DBOX64=1
 	)
 
 	# Enable architecture-specific optimizations
