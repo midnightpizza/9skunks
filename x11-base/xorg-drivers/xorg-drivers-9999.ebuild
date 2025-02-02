@@ -83,7 +83,7 @@ PDEPEND="
 	video_cards_nvidia?        ( x11-drivers/nvidia-drivers )
 	video_cards_r128?          ( >=x11-drivers/xf86-video-r128-6.10.2 )
 	video_cards_radeon?        ( >=x11-drivers/xf86-video-ati-18.0.1-r1 )
-	video_cards_radeonsi?      ( >=x11-drivers/xf86-video-ati-18.0.1-r1 )
+	video_cards_radeonsi?      ( >=x11-drivers/xf86-video-amdgpu-18.0.1-r1 )
 	video_cards_siliconmotion? ( >=x11-drivers/xf86-video-siliconmotion-1.7.9 )
 	video_cards_tegra?         ( >=x11-base/xorg-server-${PV}[-minimal] )
 	video_cards_vc4?           ( >=x11-base/xorg-server-${PV}[-minimal] )
