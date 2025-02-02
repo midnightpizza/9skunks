@@ -3,7 +3,6 @@
 
 EAPI=8
 
-XORG_TARBALL_SUFFIX="xz"
 XORG_EAUTORECONF="no"
 inherit flag-o-matic xorg-3 meson
 EGIT_REPO_URI="https://gitlab.freedesktop.org/xorg/xserver.git"
@@ -11,11 +10,11 @@ EGIT_REPO_URI="https://gitlab.freedesktop.org/xorg/xserver.git"
 DESCRIPTION="X.Org X servers"
 SLOT="0/${PV}"
 if [[ ${PV} != 9999* ]]; then
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
 fi
 
 IUSE_SERVERS="xephyr xnest xorg xvfb"
-IUSE="${IUSE_SERVERS} debug elogind minimal selinux suid systemd test +udev unwind xcsecurity"
+IUSE="${IUSE_SERVERS} debug +elogind minimal selinux suid systemd test +udev unwind xcsecurity"
 RESTRICT="!test? ( test )"
 
 CDEPEND="
@@ -104,6 +103,7 @@ PATCHES=(
 src_configure() {
 	# bug #835653
 	use x86 && replace-flags -Os -O2
+	use x86 && replace-flags -Oz -O2
 
 	use debug && EMESON_BUILDTYPE=debug
 
