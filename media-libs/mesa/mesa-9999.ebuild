@@ -28,7 +28,7 @@ done
 
 IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug gles1 +gles2 +llvm
-	lm-sensors opencl osmesa +proprietary-codecs selinux
+	lm-sensors +opengl opencl osmesa +proprietary-codecs selinux
 	test unwind vaapi valgrind vdpau vulkan
 	vulkan-overlay wayland +X xa zink +zstd libglvnd panfork"
 
@@ -433,6 +433,7 @@ multilib_src_configure() {
 		-Dglx=$(usex X dri disabled)
 		-Dshared-glapi=enabled
 		-Ddri3=enabled
+		$(meson_use opengl)
 		-Degl=enabled
 		-Dgbm=enabled
 		$(meson_use libglvnd glvnd)
