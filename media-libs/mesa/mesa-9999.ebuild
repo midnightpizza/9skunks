@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 LLVM_COMPAT=( {15..18} )
 LLVM_OPTIONAL=1
 CARGO_OPTIONAL=1
@@ -185,7 +185,7 @@ BDEPEND="
 		dev-python/pyyaml[\${PYTHON_USEDEP}]
 	")
 	video_cards_intel? (
-		~dev-util/intel_clc-${PV}
+		~dev-util/mesa_clc-${PV}
 		llvm-core/libclc[spirv(-)]
 		$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
 	)
