@@ -88,7 +88,7 @@ RDEPEND="
 	lm-sensors? ( sys-apps/lm-sensors:=[${MULTILIB_USEDEP}] )
 	opencl? (
 		>=virtual/opencl-3
-		dev-libs/libclc[spirv(-)]
+		llvm-core/libclc[spirv(-)]
 		>=dev-util/spirv-tools-1.3.231.0
 		virtual/libelf:0=
 	)
@@ -99,7 +99,7 @@ RDEPEND="
 	vulkan? (
 		video_cards_intel? (
 			amd64? (
-				dev-libs/libclc[spirv(-)]
+				llvm-core/libclc[spirv(-)]
 				>=dev-util/spirv-tools-1.3.231.0
 			)
 		)
