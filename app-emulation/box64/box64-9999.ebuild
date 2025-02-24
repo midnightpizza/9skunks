@@ -63,8 +63,8 @@ src_configure() {
 src_install() {
 	cmake_src_install
 
-	# Strip unnecessary symbols from installed libraries for space savings
-	find "${D}" -type f -name "*.so*" -exec dosym {} +
+	# Strip debug symbols from installed binaries
+	dostrip -x "/usr/lib/x86_64-linux-gnu/*"
 }
 
 # Post-installation messages for users

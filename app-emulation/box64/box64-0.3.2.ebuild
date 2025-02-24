@@ -12,58 +12,59 @@ SRC_URI="https://github.com/ptitSeb/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~arm64 ~ppc64"
-IUSE="static"
+IUSE="static +rk3588"
 
 pkg_setup() {
-	# Check for big endian systems
+	# Check for unsupported architectures
 	if [[ $(tc-endian) == big ]]; then
-        eerror "box86/box64 does not support big endian systems."
-        die "Big endian not supported!"
-    fi
+		eerror "Box86/Box64 does not support big-endian architectures."
+		die "Big-endian systems are not supported."
+	fi
 
-	# Ensure the build system is GNU/Linux with glibc
-	if [[ ${CHOST} != *gnu* || ${CHOST} != *linux* ]]; then
-        eerror "box86/64 requires GNU/Linux with glibc. Musl support is experimental, PRs welcome upstream!"
-        die "Incompatible system: Not GNU/Linux"
-    fi
+	# Check for non-Linux systems
+	if [[ ${CHOST} != *linux* ]]; then
+		eerror "Box86/Box64 requires a GNU/Linux system."
+		die "Unsupported non-Linux system detected."
+	fi
+
+	# Warn about non-glibc systems (e.g., musl)
+	if [[ ${CHOST} != *gnu* ]]; then
+		ewarn "Box86/Box64 may not build or run properly on non-glibc systems."
+	fi
 }
 
 src_configure() {
 	local mycmakeargs=(
-		-DCMAKE_BUILD_TYPE=Release
-        -DNOGIT=1          # Disable Git versioning
-        -DARM_DYNAREC=0    # Default disable ARM dynamic recompiler
-        -DRV64_DYNAREC=0   # Default disable RISC-V dynamic recompiler
+		-DNOGIT=0
+		-DARM_DYNAREC=0
+		-DRV64_DYNAREC=0
 		-DBOX32=1
 		-DBOX32_BINFMT=1
 		-DBOX64=1
-    )
+	)
 
-i	# Conditional configurations based on USE flags
-	(use arm || use arm64) && mycmakeargs+=( -DARM64=1 -DARM_DYNAREC=1 )
+	# Enable architecture-specific optimizations
+	use arm || use arm64 && mycmakeargs+=( -DARM64=1 -DARM_DYNAREC=1 )
+	use rk3588 && mycmakeargs+=( -DARM64=1 -DARM_DYNAREC=1  -DRK3588=1)
 	use riscv && mycmakeargs+=( -DRV64=1 -DRV64_DYNAREC=1 )
 	use ppc64 && mycmakeargs+=( -DPPC64LE=1 )
 	use loong && mycmakeargs+=( -DLARCH64=1 )
 	use amd64 && mycmakeargs+=( -DLD80BITS=1 -DNOALIGN=1 )
 	use static && mycmakeargs+=( -DSTATICBUILD=1 )
 
+	# Call cmake's configure function with custom arguments
 	cmake_src_configure
 }
 
+# Install the built files
 src_install() {
-	# Standard CMake install process
 	cmake_src_install
 
 	# Strip debug symbols from installed binaries
 	dostrip -x "/usr/lib/x86_64-linux-gnu/*"
 }
 
+# Post-installation messages for users
 pkg_postinst() {
-	# Optional dependency for GLES support
-	optfeature "OpenGL for GLES devices" "media-libs/gl4es"
-	
-	# Notify about static build constraints if enabled
-	if use static; then
-	    ewarn "Static builds may have limited compatibility with certain runtime features."
-	fi
+	optfeature "OpenGL support for GLES devices" "media-libs/gl4es"
 }
