@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-08.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-09.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
 
@@ -21,8 +21,8 @@ VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
 WF_PV="${PV/_beta/b}"
-WASI_SDK_VER=24.0
-WASI_SDK_LLVM_VER=18
+WASI_SDK_VER=25.0
+WASI_SDK_LLVM_VER=19
 
 WF_SRC_BASE_URI="https://github.com/BrowserWorks/Waterfox/archive/refs/tags/"
 
@@ -59,9 +59,14 @@ IUSE+=" +system-libevent +system-libvpx system-png +system-webp wayland wifi +X 
 # Firefox-only IUSE
 IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264  system-python-libs wasm-sandbox"
 
+# "wasm-sandbox? ( llvm_slot_19 )" - most likely due to wasi-sdk-25.0 being llvm-19 based, and
+# llvm/clang-19 turning on reference types for wasm targets. Luckily clang-19 is already stable in
+# Gentoo so it should be widely adopted already - however, it might be possible to workaround
+# the constraint simply by modifying CFLAGS when using clang-17/18. Will need to investigate (bmo#1905251)
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( jumbo-build )
+	wasm-sandbox? ( llvm_slot_19 )
 	wayland? ( dbus )
 	wifi? ( dbus )"
 
@@ -547,6 +552,10 @@ src_prepare() {
 			export RUST_TARGET="i686-unknown-linux-musl"
 		elif use arm64 ; then
 			export RUST_TARGET="aarch64-unknown-linux-musl"
+		elif use loong; then
+			# Only the LP64D ABI of LoongArch64 is actively supported among
+			# the wider Linux ecosystem, so the assumption is safe.
+			export RUST_TARGET="loongarch64-unknown-linux-musl"
 		elif use ppc64 ; then
 			export RUST_TARGET="powerpc64le-unknown-linux-musl"
 		elif use riscv ; then
@@ -613,6 +622,7 @@ src_prepare() {
 		"${S}"/python/mozbuild/mozbuild/controller/building.py || die "sed failed to disable ccache stats call"
 
 	einfo "Removing pre-built binaries ..."
+
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
 	# Clear cargo checksums from crates we have patched
@@ -777,7 +787,7 @@ src_configure() {
 	local update_channel=release
 	mozconfig_add_options_ac '' --update-channel=${update_channel}
 
-	if ! use x86 ; then
+	if use amd64 || use arm64 || use ppc64 || use riscv ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
 	fi
 
@@ -785,7 +795,7 @@ src_configure() {
 	# amd64, arm, arm64 & x86.
 	# Might want to flip the logic around if Firefox is to support more arches.
 	# bug 833001, bug 903411#c8
-	if use ppc64 || use riscv; then
+	if use loong || use ppc64 || use riscv; then
 		mozconfig_add_options_ac '' --disable-sandbox
 	else
 		mozconfig_add_options_ac '' --enable-sandbox
@@ -982,8 +992,8 @@ src_configure() {
 		else
 			mozconfig_add_options_ac 'relr elf-hack' --enable-elf-hack=relr
 		fi
-	elif use ppc64 || use riscv ; then
-		# '--disable-elf-hack' is not recognized on ppc64/riscv,
+	elif use loong || use ppc64 || use riscv ; then
+		# '--disable-elf-hack' is not recognized on loong/ppc64/riscv,
 		# see bgo #917049, #930046
 		:;
 	else
