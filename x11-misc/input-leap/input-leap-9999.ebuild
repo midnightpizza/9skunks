@@ -25,7 +25,10 @@ RDEPEND="
     x11-libs/libXinerama
     x11-libs/libXrandr
     x11-libs/libXtst
-    wayland? ( dev-libs/libei )
+    wayland? (
+        dev-libs/libei
+        dev-libs/libportal
+    )
 "
 DEPEND="
     ${RDEPEND}
