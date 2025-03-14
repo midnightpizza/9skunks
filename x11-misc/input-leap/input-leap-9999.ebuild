@@ -11,7 +11,7 @@ EGIT_REPO_URI="https://github.com/input-leap/input-leap.git"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="gui test"
+IUSE="gui test wayland"
 RESTRICT="!test? ( test )"
 KEYWORDS="~amd64 ~x86"
 
@@ -25,6 +25,7 @@ RDEPEND="
     x11-libs/libXinerama
     x11-libs/libXrandr
     x11-libs/libXtst
+    wayland? ( dev-libs/libei )
 "
 DEPEND="
     ${RDEPEND}
@@ -59,6 +60,12 @@ src_configure() {
     else
         mycmakeargs+=(
             -DINPUTLEAP_BUILD_GUI=OFF
+        )
+    fi
+
+    if use wayland; then
+        mycmakeargs+=(
+            -DINPUTLEAP_BUILD_LIBEI=TRUE
         )
     fi
 
