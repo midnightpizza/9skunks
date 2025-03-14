@@ -159,6 +159,7 @@ IUSE="
 	${FFMPEG_UNSLOTTED:+chromium}
 	${FFMPEG_SOC_PATCH:+soc}
 	rkmpp
+	vaporsynth
 "
 REQUIRED_USE="
 	cuda? ( nvenc )
@@ -489,6 +490,7 @@ multilib_src_configure() {
 		# --disable/enable-<cpufeature>: safer to detect at runtime
 	)
 	use rkmpp && conf+=( --enable-rkmpp --enable-version3 --extra-libs=-lm)
+	use vaporsynth && conf+=( --enable-vapoursynth)
 
 	in_iuse soc && use soc &&
 		conf+=(
