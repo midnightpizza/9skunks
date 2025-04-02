@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Gentoo Authors
+# Copyright 2009-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -63,7 +63,7 @@ REQUIRED_USE="
 # 	5794e9d12bf82620d5f24505798fecb45ca5a22d
 # )
 
-CROMITE_COMMIT_ID="387be3e56b1132799a2508ab8ab5a7e5e2635a7e"
+CROMITE_COMMIT_ID="f13b33b73e22ecaa1ae9a567a8e0c74caf446678"
 
 declare -A CHROMIUM_COMMITS=(
 	["-da443d7bd3777a5dd0587ecff1fbad1722b106b5"]="."
