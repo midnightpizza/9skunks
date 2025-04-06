@@ -21,7 +21,7 @@ VIRTUALX_REQUIRED="manual"
 
 # Librewolf version (please rev-bump if changed)
 # Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-1"
+LIBREWOLF_PV="${PV}-3"
 WASI_SDK_VER=25.0
 WASI_SDK_LLVM_VER=19
 
