@@ -3,16 +3,16 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-136-patches-04.tar.xz"
-FIREFOX_LOONG_PATCHSET="firefox-136-loong-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-137-patches-02.tar.xz"
+FIREFOX_LOONG_PATCHSET="firefox-137-loong-patches-01.tar.xz"
 
-LLVM_COMPAT=( 17 18 19 )
+LLVM_COMPAT=( 19 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
 
 # If not building with clang we need at least rust 1.76
-RUST_MIN_VER=1.77.1
+RUST_MIN_VER=1.82.0
 
 PYTHON_COMPAT=( python3_{10..13} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -132,7 +132,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.108
+	>=dev-libs/nss-3.109
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -841,9 +841,11 @@ src_configure() {
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
-	# Enable JIT on riscv64 explicitly
-	# Can be removed once upstream enable it by default in the future.
-	use riscv && mozconfig_add_options_ac 'Enable JIT for RISC-V 64' --enable-jit
+	# riscv-related options, bgo#947337, bgo#947338
+	if use riscv ; then
+		mozconfig_add_options_ac 'Disable JIT for RISC-V 64' --disable-jit
+		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
+	fi
 
 	if [[ -s "${S}/api-google.key" ]] ; then
 		local key_origin="Gentoo default"
