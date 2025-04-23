@@ -3,6 +3,8 @@
 
 EAPI=8
 
+DISTUTILS_USE_PEP517=setuptools
+
 PYTHON_COMPAT=( python3_{10,11,12} )
 
 inherit distutils-r1 gnome2-utils
@@ -13,9 +15,7 @@ SRC_URI="https://github.com/linuxdeepin/${PN}/archive/${PV}.tar.gz -> ${P}.tar.g
 
 LICENSE="GPL-3+ BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
-
-DISTUTILS_USE_SETUPTOOLS="no"
+KEYWORDS="~amd64 ~x86 ~arm64 ~arm"
 
 COMMON_DEPEND="
     app-text/hunspell:=
@@ -37,9 +37,11 @@ COMMON_DEPEND="
     x11-libs/libwnck:3
     x11-libs/pango
 "
+
 DEPEND="${COMMON_DEPEND}
     dev-util/intltool
 "
+
 RDEPEND="${COMMON_DEPEND}
     app-accessibility/at-spi2-core
     app-text/iso-codes
@@ -55,7 +57,10 @@ src_prepare() {
 }
 
 src_install() {
-    distutils-r1_src_install
+    # Run the PEP 517 wheel build & install pipeline
+    default
+
+    # gnome2-utils will take care of icons & schemas at pre/post install
 }
 
 pkg_preinst() {
