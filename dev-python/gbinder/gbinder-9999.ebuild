@@ -1,9 +1,12 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{11..12} )
+
+DISTUTILS_USE_PEP517="setuptools"
+DISTUTILS_EXT=1
 
 inherit distutils-r1
 
@@ -12,8 +15,7 @@ if [[ ${PV} != *9999* ]]; then
 	MY_P="${MY_PN}-${PV}"
 	S="${WORKDIR}/${MY_P}"
 	SRC_URI="https://github.com/erfanoabdi/gbinder-python/archive/${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64"
-	PATCHES=( "${FILESDIR}/${P}-setuppy-extensions.patch" )
+	KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 else
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/erfanoabdi/gbinder-python.git"
@@ -24,13 +26,20 @@ HOMEPAGE="https://github.com/erfanoabdi/gbinder-python"
 LICENSE="GPL-3"
 SLOT="0"
 
-DEPEND="dev-libs/gbinder"
+DEPEND="
+	dev-libs/gbinder
+	dev-libs/libglibutil
+"
 RDEPEND="${DEPEND}"
 BDEPEND="
 	virtual/pkgconfig
 	dev-python/cython[${PYTHON_USEDEP}]
 "
 
-python_compile() {
-	distutils-r1_python_compile --cython
+PATCHES=(
+	"${FILESDIR}"/gbinder-1.1.1-setuptools.patch
+)
+
+python_configure_all() {
+	DISTUTILS_ARGS=( --cython )
 }
