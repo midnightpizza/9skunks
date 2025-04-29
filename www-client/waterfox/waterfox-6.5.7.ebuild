@@ -625,11 +625,8 @@ src_prepare() {
 
 	find "${S}"/third_party -type f \( -name '*.so' -o -name '*.o' \) -print -delete || die
 
-	# Clear cargo checksums from crates we have patched
-	moz_clear_vendor_checksums audio_thread_priority
-	moz_clear_vendor_checksums bindgen
-	moz_clear_vendor_checksums encoding_rs
-	moz_clear_vendor_checksums any_all_workaround
+	# Clear checksums from cargo crates we've manually patched.
+	# moz_clear_vendor_checksums xyz
 
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
