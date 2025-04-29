@@ -20,14 +20,14 @@ WANT_AUTOCONF="2.1"
 # Convert the ebuild version to the upstream Mozilla version
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.0/projects/firefox/config?ref_type=heads#L17
-# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.0/projects/browser/config?ref_type=heads#L111
+# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/firefox/config?ref_type=heads#L17
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/config?ref_type=heads#L114
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="14.0.9"
-TOR_TAG="${TOR_PV%.*}-2-build2"
+TOR_PV="14.5.1"
+TOR_TAG="${TOR_PV%.*}-1-build2"
 NOSCRIPT_VERSION="12.1.1"
 NOSCRIPT_ID="4411102"
-CHANGELOG_TAG="${TOR_PV}-build1"
+CHANGELOG_TAG="${TOR_PV}-build2"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
 	pax-utils python-any-r1 rust toolchain-funcs xdg
@@ -525,20 +525,21 @@ src_configure() {
 	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/issues/40745
 	export MOZ_APP_BASENAME="TorBrowser"
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.0/projects/firefox/build?ref_type=heads#L169
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/firefox/build#L112
 	mozconfig_add_options_ac 'torbrowser' \
 		--with-base-browser-version=${TOR_PV} \
 		--enable-update-channel=release \
-		--with-branding=browser/branding/tb-release
+		--with-branding=browser/branding/tb-release \
+		--without-wasm-sandboxed-libraries
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.3.0esr-14.0-1/browser/config/mozconfigs/tor-browser
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.9.0esr-14.5-1/browser/config/mozconfigs/tor-browser
 	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
 	mozconfig_add_options_ac 'torbrowser' \
 		--without-relative-data-dir \
 		--with-user-appdir=.torproject \
 		--with-distribution-id=org.torproject
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.3.0esr-14.0-1/browser/config/mozconfigs/base-browser?ref_type=heads
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.9.0esr-14.5-1/browser/config/mozconfigs/base-browser
 	export MOZILLA_OFFICIAL=1
 	mozconfig_add_options_ac 'torbrowser' \
 		--enable-official-branding \
@@ -728,7 +729,7 @@ src_install() {
 	done
 
 	# Install menu
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.5/projects/browser/RelativeLink/start-browser.desktop?ref_type=heads
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/RelativeLink/start-browser.desktop
 	domenu "${FILESDIR}"/torbrowser.desktop
 
 	# Install wrapper
@@ -738,9 +739,6 @@ src_install() {
 
 	newbin - torbrowser <<-EOF
 		#!/bin/bash
-
-		export FONTCONFIG_PATH="/usr/share/torbrowser"
-		export FONTCONFIG_FILE="fonts.conf"
 
 		unset SESSION_MANAGER
 		export GSETTINGS_BACKEND=memory
@@ -755,7 +753,7 @@ src_install() {
 			fi
 		fi
 
-		exec /usr/$(get_libdir)/torbrowser/torbrowser --class "Tor Browser" --name "Tor Browser" "\${@}"
+		exec /usr/$(get_libdir)/torbrowser/torbrowser "\${@}"
 	EOF
 
 	# Update wrapper
@@ -769,18 +767,12 @@ src_install() {
 	rm "${ED}"${MOZILLA_FIVE_HOME}/torbrowser-bin || die
 	dosym torbrowser ${MOZILLA_FIVE_HOME}/torbrowser-bin
 
-	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.5/projects/browser/build?ref_type=heads#L71
+	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/build#L71
 	insinto ${MOZILLA_FIVE_HOME}/browser/extensions
 	newins "${DISTDIR}/noscript-${NOSCRIPT_VERSION}.xpi" {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi
 
-	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser#L340
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tree/main/projects/fonts
-	# Todo for 14.5: https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/43140
-	# Todo for 14.5: https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/41799
-	sed -i -e 's|<dir prefix="cwd">fonts</dir>|<dir prefix="relative">fonts</dir>|' \
-		"${WORKDIR}"/tor-browser/Browser/fontconfig/fonts.conf || die
-	insinto /usr/share/torbrowser/
-	doins "${WORKDIR}/tor-browser/Browser/fontconfig/fonts.conf"
+	insinto /usr/$(get_libdir)/torbrowser/
 	doins -r "${WORKDIR}/tor-browser/Browser/fonts"
 
 	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/Bundle-Data/Docs/ChangeLog.txt
