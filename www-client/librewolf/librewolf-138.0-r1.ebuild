@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-137-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-138-patches-01.tar.xz"
 FIREFOX_LOONG_PATCHSET="firefox-137-loong-patches-01.tar.xz"
 
 LLVM_COMPAT=( 19 )
@@ -75,6 +75,7 @@ SLOT_TMP="0/$(ver_cut 1)"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 
+RESTRICT="mirror"
 IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-jpeg +system-libevent"
 IUSE+=" +system-libvpx system-png +system-webp valgrind wayland wifi +X"
@@ -108,7 +109,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.26.0
+	>=dev-util/cbindgen-0.28.0
 	net-libs/nodejs
 	virtual/pkgconfig
 	amd64? ( >=dev-lang/nasm-2.14 )
@@ -132,7 +133,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.109
+	>=dev-libs/nss-3.110
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -265,6 +266,7 @@ MOZ_LANGS+=( es-CL )
 MOZ_LANGS+=( es-MX )
 MOZ_LANGS+=( fa )
 MOZ_LANGS+=( ff )
+MOZ_LANGS+=( fur )
 MOZ_LANGS+=( gn )
 MOZ_LANGS+=( gu-IN )
 MOZ_LANGS+=( hi-IN )
@@ -278,9 +280,12 @@ MOZ_LANGS+=( mr )
 MOZ_LANGS+=( my )
 MOZ_LANGS+=( ne-NP )
 MOZ_LANGS+=( oc )
+MOZ_LANGS+=( sc )
 MOZ_LANGS+=( sco )
 MOZ_LANGS+=( si )
+MOZ_LANGS+=( skr )
 MOZ_LANGS+=( son )
+MOZ_LANGS+=( szl )
 MOZ_LANGS+=( ta )
 MOZ_LANGS+=( te )
 MOZ_LANGS+=( tl )
@@ -658,7 +663,6 @@ src_prepare() {
 
 	# Clear checksums from cargo crates we've manually patched.
 	# moz_clear_vendor_checksums xyz
-	moz_clear_vendor_checksums proc-macro2
 
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
@@ -677,9 +681,6 @@ src_prepare() {
 			js/src/moz.build ||
 				die "Failed to adjust FILES_PER_UNIFIED_FILE in js/src/moz.build"
 	fi
-
-	# Clearing crate checksums where we have applied patches
-	moz_clear_vendor_checksums bindgen
 
 	# Create build dir
 	BUILD_DIR="${WORKDIR}/${PN}_build"
@@ -780,14 +781,12 @@ src_configure() {
 		--disable-legacy-profile-creation \
 		--disable-parental-controls \
 		--disable-strip \
-		--disable-tests \
 		--disable-updater \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
 		--enable-official-branding \
 		--enable-release \
-		--enable-system-pixman \
 		--enable-system-policies \
 		--host="${CBUILD:-${CHOST}}" \
 		--libdir="${EPREFIX}/usr/$(get_libdir)" \
@@ -799,6 +798,7 @@ src_configure() {
 		--with-system-ffi \
 		--with-system-nspr \
 		--with-system-nss \
+		--with-system-pixman \
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
 		--with-unsigned-addon-scopes=app,system \
@@ -808,8 +808,9 @@ src_configure() {
 	# Librewolf
 	mozconfig_add_options_ac 'LibreWolf Branding' \
 		--with-app-name="librewolf" \
-		--with-app-basename="LibreWolf" \
+		--with-app-basename="librewolf" \
 		--with-branding=browser/branding/librewolf
+	export MOZ_APP_REMOTINGNAME=LibreWolf
 
 	mozconfig_add_options_mk 'Librewolf Disable Telemetry' \
 		MOZ_CRASHREPORTER=0 \
@@ -1290,8 +1291,7 @@ src_install() {
 		-e "s:@MOZ_FIVE_HOME@:${MOZILLA_FIVE_HOME}:" \
 		-e "s:@APULSELIB_DIR@:${apulselib}:" \
 		-e "s:@DEFAULT_WAYLAND@:${use_wayland}:" \
-		"${ED}/usr/bin/${PN}" \
-		|| die
+		"${ED}/usr/bin/${PN}" || die
 
 }
 
@@ -1325,13 +1325,6 @@ pkg_postinst() {
 		for plugin in "${MOZ_GMP_PLUGIN_LIST[@]}" ; do
 			elog "\t ${plugin}"
 		done
-		elog
-	fi
-
-	if use pulseaudio && has_version ">=media-sound/apulse-0.1.12-r4" ; then
-		elog "Apulse was detected at merge time on this system and so it will always be"
-		elog "used for sound.  If you wish to use pulseaudio instead please unmerge"
-		elog "media-sound/apulse."
 		elog
 	fi
 
