@@ -35,7 +35,7 @@ SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chro
 
 LICENSE="BSD cromite? ( GPL-3 )"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 ~ppc64 ~x86"
+KEYWORDS="amd64 ~arm64 ~ppc64 ~x86"
 IUSE_SYSTEM_LIBS="abseil-cpp av1 brotli crc32c double-conversion ffmpeg +harfbuzz +icu jsoncpp +libusb libvpx +openh264 openjpeg +png re2 snappy woff2 +zstd"
 IUSE="+X bluetooth cfi +clang convert-dict cups cpu_flags_arm_neon custom-cflags debug enable-driver gtk4 hangouts headless kerberos libcxx nvidia +official optimize-thinlto optimize-webui override-data-dir pax-kernel pgo +proprietary-codecs pulseaudio qt5 qt6 screencast selinux thinlto cromite vaapi wayland widevine cpu_flags_ppc_vsx3"
 RESTRICT="
@@ -55,20 +55,24 @@ REQUIRED_USE="
 	vaapi? ( !system-av1 !system-libvpx )
 "
 
-UGC_COMMIT_ID="87bb243619c37600f637bc129f5516944a4263d2"
+#UGC_COMMIT_ID="ff88e8bafb3c25b04cc3043ba136b44eb614d56f"
 # UGC_PR_COMMITS=(
 # 	c917e096342e5b90eeea91ab1f8516447c8756cf
 # 	5794e9d12bf82620d5f24505798fecb45ca5a22d
 # )
 
-CROMITE_COMMIT_ID="555f445aa033f78991d2df3544fd44b1de0f4340"
+CROMITE_COMMIT_ID="1e918644ff5097fc158fa45432ddd6531211b885"
 
 CHROMIUM_COMMITS=(
 	-da443d7bd3777a5dd0587ecff1fbad1722b106b5
 	-7c6c78ad4e0ed6a0e1204264b02db8f85d34994e
 	-49b23faa16ad14e96601aea8772c7279fcbd6b44
 	-6db9674ad4375d40db7df622652287ccdae82f24
+	-fd011815c455976b15e31966f826628b4f9f61d4
+	-234e68c6b6cf66bec7f367c3be40ff19b5100cc5
 	-be0c460cbca7b0c927e44a529b8489c6d50ea463
+	-4308d83bdf54a2f99329708308a358f930000c63
+	ba427d080df41b82e0e121326e9dd8e1853ea7bc
 )
 
 UGC_PV="${PV/_p/-}"
@@ -450,7 +454,7 @@ src_prepare() {
 	# Calling this here supports resumption via FEATURES=keepwork
 	python_setup
 
-	cp -f "${FILESDIR}/compiler-132.patch" "${T}/compiler.patch"
+	cp -f "${FILESDIR}/compiler-136.patch" "${T}/compiler.patch"
 	if ! use custom-cflags; then #See #25 #92
 		sed -i '/default_stack_frames/Q' "${T}/compiler.patch" || die
 	fi
@@ -464,7 +468,8 @@ src_prepare() {
 		"${FILESDIR}/chromium-131-unbundle-icu-target.patch"
 		"${FILESDIR}/chromium-135-oauth2-client-switches.patch"
 		"${FILESDIR}/chromium-135-map_droppable-glibc.patch"
-		"${FILESDIR}/chromium-135-webrtc-pipewire.patch"
+		"${FILESDIR}/chromium-136-drop-nodejs-ver-check.patch"
+		"${FILESDIR}/chromium-135-gperf.patch"
 		"${FILESDIR}/chromium-125-cloud_authenticator.patch"
 		"${FILESDIR}/chromium-123-qrcode.patch"
 		"${FILESDIR}/perfetto-system-zlib.patch"
@@ -475,9 +480,9 @@ src_prepare() {
 		"${FILESDIR}/restore-x86-r2.patch"
 		"${FILESDIR}/chromium-132-optional-lens.patch"
 		"${FILESDIR}/chromium-133-webrtc-fixes.patch"
-		"${FILESDIR}/chromium-135-no-rust.patch"
-		"${FILESDIR}/chromium-135-fontations.patch"
 		"${FILESDIR}/chromium-135-crabby.patch"
+		"${FILESDIR}/chromium-136-no-rust.patch"
+		"${FILESDIR}/chromium-136-fontations.patch"
 	)
 
 	shopt -s globstar nullglob
@@ -525,7 +530,7 @@ src_prepare() {
 
 	if ! use libcxx ; then
 		PATCHES+=(
-			"${FILESDIR}/chromium-135-libstdc++.patch"
+			"${FILESDIR}/chromium-136-libstdc++.patch"
 			"${FILESDIR}/chromium-134-stdatomic.patch"
 			"${FILESDIR}/font-gc-asan.patch"
 		)
@@ -567,7 +572,7 @@ src_prepare() {
 
 	if ! use bluetooth ; then
 		PATCHES+=(
-			"${FILESDIR}/disable-bluez-r3.patch"
+			"${FILESDIR}/disable-bluez-r4.patch"
 		)
 	fi
 
@@ -671,7 +676,22 @@ src_prepare() {
 
 	fi
 
-	mkdir -p third_party/node/linux/node-linux-x64/bin || die
+	if [[ ${LLVM_SLOT} == "19" ]]; then
+		# Upstream now hard depend on a feature that was added in LLVM 20.1, but we don't want to stabilise that yet.
+		# Do the temp file shuffle in case someone is using something other than `gawk`
+		{
+			awk '/config\("clang_warning_suppression"\) \{/	{ print $0 " }"; sub(/clang/, "xclang"); print; next }
+				{ print }' build/config/compiler/BUILD.gn > "${T}/build.gn" && \
+				mv "${T}/build.gn" build/config/compiler/BUILD.gn
+		} || die "Unable to disable warning suppression"
+	fi
+
+	# Not included in -lite tarballs, but we should check for it anyway.
+	if [[ -f third_party/node/linux/node-linux-x64/bin/node ]]; then
+		rm third_party/node/linux/node-linux-x64/bin/node || die
+	else
+		mkdir -p third_party/node/linux/node-linux-x64/bin || die
+	fi
 	ln -s "${EPREFIX}"/usr/bin/node third_party/node/linux/node-linux-x64/bin/node || die
 
 	# adjust python interpreter version
@@ -887,6 +907,7 @@ src_prepare() {
 		third_party/devtools-frontend/src/front_end/third_party/i18n
 		third_party/devtools-frontend/src/front_end/third_party/intl-messageformat
 		third_party/devtools-frontend/src/front_end/third_party/json5
+		third_party/devtools-frontend/src/front_end/third_party/legacy-javascript
 		third_party/devtools-frontend/src/front_end/third_party/lighthouse
 		third_party/devtools-frontend/src/front_end/third_party/lit
 		third_party/devtools-frontend/src/front_end/third_party/marked
@@ -1737,8 +1758,6 @@ src_compile() {
 	# Don't inherit PYTHONPATH from environment, bug #789021, #812689
 	local -x PYTHONPATH=
 
-	use convert-dict && eninja -C out/Release convert_dict
-
 	# Build mksnapshot and pax-mark it.
 	if use pax-kernel; then
 		local x
@@ -1756,6 +1775,8 @@ src_compile() {
 	# Even though ninja autodetects number of CPUs, we respect
 	# user's options, for debugging with -j 1 or any other reason.
 	eninja -C out/Release chrome
+
+	use convert-dict && eninja -C out/Release convert_dict
 
 	use enable-driver && eninja -C out/Release chromedriver
 	#use suid && eninja -C out/Release chrome_sandbox

@@ -10,32 +10,6 @@ diff -r -u chromium-120.0.6099.129old/components/viz/service/display/surface_agg
  
    base::ElapsedTimer prewalk_timer;
    ResolvedFrameData* resolved_frame = GetResolvedFrame(surface_id);
-diff -r -u chromium-120.0.6099.129old/gpu/command_buffer/service/shared_image/shared_image_backing.cc chromium-120.0.6099.129/gpu/command_buffer/service/shared_image/shared_image_backing.cc
---- chromium-120.0.6099.129old/gpu/command_buffer/service/shared_image/shared_image_backing.cc	2023-12-21 01:49:08.186538700 +0100
-+++ chromium-120.0.6099.129/gpu/command_buffer/service/shared_image/shared_image_backing.cc	2023-12-21 15:59:04.210747172 +0100
-@@ -343,7 +343,7 @@
- 
- void SharedImageBacking::OnWriteSucceeded() {
-   AutoLock auto_lock(this);
--  scoped_write_uma_.emplace();
-+  scoped_write_uma_.emplace(gpu::SharedImageBacking::ScopedWriteUMA{});
- }
- 
- size_t SharedImageBacking::GetEstimatedSize() const {
-diff -r -u chromium-120.0.6099.129old/gpu/command_buffer/service/shared_image/shared_image_backing.h chromium-120.0.6099.129/gpu/command_buffer/service/shared_image/shared_image_backing.h
---- chromium-120.0.6099.129old/gpu/command_buffer/service/shared_image/shared_image_backing.h	2023-12-21 01:49:08.186538700 +0100
-+++ chromium-120.0.6099.129/gpu/command_buffer/service/shared_image/shared_image_backing.h	2023-12-21 15:57:27.336515319 +0100
-@@ -340,8 +340,8 @@
-    public:
-     ScopedWriteUMA() = default;
- 
--    ScopedWriteUMA(const ScopedWriteUMA&) = delete;
--    ScopedWriteUMA& operator=(const ScopedWriteUMA&) = delete;
-+    ScopedWriteUMA(const ScopedWriteUMA&) = default;
-+    ScopedWriteUMA& operator=(const ScopedWriteUMA&) = default;
- 
-     ~ScopedWriteUMA() {
-       UMA_HISTOGRAM_BOOLEAN("GPU.SharedImage.ContentConsumed",
 diff -r -u chromium-120.0.6099.129old/mojo/public/cpp/bindings/lib/multiplex_router.cc chromium-120.0.6099.129/mojo/public/cpp/bindings/lib/multiplex_router.cc
 --- chromium-120.0.6099.129old/mojo/public/cpp/bindings/lib/multiplex_router.cc	2023-12-21 01:49:10.754764600 +0100
 +++ chromium-120.0.6099.129/mojo/public/cpp/bindings/lib/multiplex_router.cc	2023-12-21 13:19:27.412481231 +0100
@@ -70,3 +44,46 @@ diff -r -u chromium-120.0.6099.129old/mojo/public/cpp/bindings/lib/multiplex_rou
      pending_view_state_->state = view_state;
      pending_view_state_->scroll_behavior = scroll_behavior;
    }
+--- a/third_party/blink/renderer/core/layout/inline/line_breaker.cc
++++ b/third_party/blink/renderer/core/layout/inline/line_breaker.cc
+@@ -2620,7 +2620,7 @@
+       if (!trailing_collapsible_space_.has_value() ||
+           trailing_collapsible_space_->item_results != results ||
+           trailing_collapsible_space_->item_result_index != index) {
+-        trailing_collapsible_space_.emplace();
++        trailing_collapsible_space_.emplace(TrailingCollapsibleSpace{});
+         trailing_collapsible_space_->item_results = results;
+         trailing_collapsible_space_->item_result_index = index;
+         if (item_result.EndOffset() - 1 > item_result.StartOffset()) {
+--- a/third_party/webrtc/call/rtp_config.cc
++++ b/third_party/webrtc/call/rtp_config.cc
+@@ -258,7 +258,7 @@
+   stream_config.raw_payload = raw_payload;
+   if (!rtx.ssrcs.empty()) {
+     RTC_DCHECK_EQ(ssrcs.size(), rtx.ssrcs.size());
+-    auto& stream_config_rtx = stream_config.rtx.emplace();
++    auto& stream_config_rtx = stream_config.rtx.emplace(RtpStreamConfig::Rtx{});
+     stream_config_rtx.ssrc = rtx.ssrcs[index];
+     stream_config_rtx.payload_type = rtx.payload_type;
+   }
+--- a/chrome/browser/ui/webui/history/browsing_history_handler.cc
++++ b/chrome/browser/ui/webui/history/browsing_history_handler.cc
+@@ -144,7 +144,7 @@
+     title_to_set.resize(kShortTitleLength);
+   }
+ 
+-  return std::make_tuple(entry.url.spec(), base::UTF16ToUTF8(title_to_set));
++  return std::make_pair(entry.url.spec(), base::UTF16ToUTF8(title_to_set));
+ }
+ 
+ // Helper function to check if entry is present in local database (local-side
+--- a/media/audio/application_loopback_device_helper.h
++++ b/media/audio/application_loopback_device_helper.h
+@@ -5,6 +5,7 @@
+ #ifndef MEDIA_AUDIO_APPLICATION_LOOPBACK_DEVICE_HELPER_H_
+ #define MEDIA_AUDIO_APPLICATION_LOOPBACK_DEVICE_HELPER_H_
+ 
++#include <stdint.h>
+ #include <string>
+ 
+ #include "media/base/media_export.h"
