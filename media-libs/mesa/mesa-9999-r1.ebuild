@@ -3,10 +3,10 @@
 
 EAPI=8
 
-LLVM_COMPAT=( {15..19} )
+LLVM_COMPAT=( {18..20} )
 LLVM_OPTIONAL=1
 CARGO_OPTIONAL=1
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain
 
@@ -54,15 +54,15 @@ SLOT="0"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
 VIDEO_CARDS="${RADEON_CARDS}
-	d3d12 freedreno intel lavapipe lima nouveau nvk panfrost v3d vc4 virgl
-	vivante vmware zink"
+	asahi d3d12 freedreno imagination intel lavapipe lima nouveau nvk panfrost
+	v3d vc4 virgl vivante vmware zink"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
 done
 
 IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 d3d9 debug +llvm
-	lm-sensors opencl +opengl osmesa +proprietary-codecs selinux
+	lm-sensors opencl +opengl +proprietary-codecs
 	test unwind vaapi valgrind vdpau vulkan
 	wayland +X xa +zstd libglvnd"
 RESTRICT="!test? ( test )"
@@ -125,7 +125,7 @@ RDEPEND="
 	vdpau? ( >=x11-libs/libvdpau-1.5:=[${MULTILIB_USEDEP}] )
 	video_cards_radeonsi? ( virtual/libelf:0=[${MULTILIB_USEDEP}] )
 	video_cards_zink? ( media-libs/vulkan-loader:=[${MULTILIB_USEDEP}] )
-	selinux? ( sys-libs/libselinux[${MULTILIB_USEDEP}] )
+	vulkan? ( virtual/libudev:= )
 	wayland? ( >=dev-libs/wayland-1.18.0[${MULTILIB_USEDEP}] )
 	${LIBDRM_DEPSTRING}[video_cards_freedreno?,video_cards_intel?,video_cards_nouveau?,video_cards_vc4?,video_cards_vivante?,video_cards_vmware?,${MULTILIB_USEDEP}]
 	X? (
@@ -151,19 +151,24 @@ RDEPEND="${RDEPEND}
 DEPEND="${RDEPEND}
 	video_cards_d3d12? ( >=dev-util/directx-headers-1.614.1[${MULTILIB_USEDEP}] )
 	valgrind? ( dev-debug/valgrind )
-	wayland? ( >=dev-libs/wayland-protocols-1.38 )
+	wayland? ( >=dev-libs/wayland-protocols-1.41 )
 	X? (
 		x11-libs/libXrandr[${MULTILIB_USEDEP}]
 		x11-base/xorg-proto
 	)
 "
+
+CLC_DEPSTRING="
+	~dev-util/mesa_clc-${PV}[video_cards_asahi?,video_cards_panfrost?]
+	llvm-core/libclc[spirv(-)]
+"
 BDEPEND="
 	${PYTHON_DEPS}
 	opencl? (
+		>=dev-util/bindgen-0.71.0
 		${RUST_DEPEND}
-		>=dev-util/bindgen-0.58.0
 	)
-	>=dev-build/meson-1.4.1
+	>=dev-build/meson-1.7.0
 	app-alternatives/yacc
 	app-alternatives/lex
 	virtual/pkgconfig
@@ -172,17 +177,16 @@ BDEPEND="
 		dev-python/packaging[\${PYTHON_USEDEP}]
 		dev-python/pyyaml[\${PYTHON_USEDEP}]
 	")
-	video_cards_intel? (
-		~dev-util/mesa_clc-${PV}
-		llvm-core/libclc[spirv(-)]
-		$(python_gen_any_dep "dev-python/ply[\${PYTHON_USEDEP}]")
-	)
+	video_cards_asahi? ( ${CLC_DEPSTRING} )
+	video_cards_intel? ( ${CLC_DEPSTRING} )
+	video_cards_panfrost? ( ${CLC_DEPSTRING} )
 	vulkan? (
 		dev-util/glslang
 		video_cards_nvk? (
-			>=dev-util/bindgen-0.68.1
+			>=dev-util/bindgen-0.71.0
 			>=dev-util/cbindgen-0.26.0
 			${RUST_DEPEND}
+			${CLC_DEPSTRING}
 		)
 	)
 	wayland? ( dev-util/wayland-scanner )
@@ -190,8 +194,7 @@ BDEPEND="
 
 QA_WX_LOAD="
 x86? (
-	usr/lib/libglapi.so.0.0.0
-	usr/lib/libOSMesa.so.8.0.0
+	usr/lib/libgallium-*.so
 	libglvnd? ( usr/lib/libGLX_mesa.so.0.0.0 )
 )"
 
@@ -214,8 +217,10 @@ src_unpack() {
 
 pkg_pretend() {
 	if use vulkan; then
-		if ! use video_cards_d3d12 &&
+		if ! use video_cards_asahi &&
+		   ! use video_cards_d3d12 &&
 		   ! use video_cards_freedreno &&
+		   ! use video_cards_imagination &&
 		   ! use video_cards_intel &&
 		   ! use video_cards_lavapipe &&
 		   ! use video_cards_nouveau &&
@@ -224,7 +229,7 @@ pkg_pretend() {
 		   ! use video_cards_radeonsi &&
 		   ! use video_cards_v3d &&
 		   ! use video_cards_virgl; then
-			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain d3d12, freedreno, intel, lavapipe, nouveau, nvk, panfrost, radeonsi, v3d, or virgl"
+			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain asahi, d3d12, freedreno, imagination, intel, lavapipe, nouveau, nvk, panfrost, radeonsi, v3d, or virgl"
 		fi
 	fi
 
@@ -261,19 +266,12 @@ pkg_pretend() {
 	if ! use llvm; then
 		use opencl     && ewarn "Ignoring USE=opencl     since USE does not contain llvm"
 	fi
-
-	if use osmesa && ! use llvm; then
-		ewarn "OSMesa will be slow without enabling USE=llvm"
-	fi
 }
 
 python_check_deps() {
 	python_has_version -b ">=dev-python/mako-0.8.0[${PYTHON_USEDEP}]" &&
 	python_has_version -b "dev-python/packaging[${PYTHON_USEDEP}]" &&
 	python_has_version -b "dev-python/pyyaml[${PYTHON_USEDEP}]" || return 1
-	if use llvm && use vulkan && use video_cards_intel && use amd64; then
-		python_has_version -b "dev-python/ply[${PYTHON_USEDEP}]" || return 1
-	fi
 }
 
 pkg_setup() {
@@ -372,6 +370,7 @@ multilib_src_configure() {
 
 	gallium_enable !llvm softpipe
 	gallium_enable llvm llvmpipe
+	gallium_enable video_cards_asahi asahi
 	gallium_enable video_cards_d3d12 d3d12
 	gallium_enable video_cards_freedreno freedreno
 	gallium_enable video_cards_intel crocus i915 iris
@@ -403,8 +402,10 @@ multilib_src_configure() {
 	fi
 
 	if use vulkan; then
+		vulkan_enable video_cards_asahi asahi
 		vulkan_enable video_cards_d3d12 microsoft-experimental
 		vulkan_enable video_cards_freedreno freedreno
+		vulkan_enable video_cards_imagination imagination-experimental
 		vulkan_enable video_cards_intel intel intel_hasvk
 		vulkan_enable video_cards_lavapipe swrast
 		vulkan_enable video_cards_panfrost panfrost
@@ -440,7 +441,17 @@ multilib_src_configure() {
 		emesonargs+=($(meson_feature video_cards_intel intel-rt))
 	fi
 
-	use debug && EMESON_BUILDTYPE=debug
+	if use video_cards_asahi ||
+	   use video_cards_intel ||
+	   use video_cards_nvk ||
+	   use video_cards_panfrost; then
+	   emesonargs+=(-Dmesa-clc=system)
+	fi
+
+	if use video_cards_asahi ||
+	   use video_cards_panfrost; then
+	    emesonargs+=(-Dprecomp-compiler=system)
+	fi
 
 	if use libglvnd ; then
 		emesonargs+=(-Dglvnd=enabled)
@@ -448,24 +459,23 @@ multilib_src_configure() {
 		emesonargs+=(-Dglvnd=disabled)
 	fi
 
+	use debug && EMESON_BUILDTYPE=debug
 
 	emesonargs+=(
 		$(meson_use test build-tests)
-		-Dshared-glapi=enabled
+		-Dlegacy-x11=dri2
 		-Dexpat=enabled
 		$(meson_use opengl)
 		$(meson_feature opengl gbm)
 		$(meson_feature opengl gles1)
 		$(meson_feature opengl gles2)
+		$(meson_feature opengl glvnd)
 		$(meson_feature opengl egl)
 		$(meson_feature llvm)
 		$(meson_feature lm-sensors lmsensors)
-		$(meson_use osmesa)
-		$(meson_use selinux)
 		$(meson_feature unwind libunwind)
 		$(meson_feature zstd)
 		$(meson_use cpu_flags_x86_sse2 sse2)
-		-Dmesa-clc=$(usex video_cards_intel system auto)
 		-Dvalgrind=$(usex valgrind auto disabled)
 		-Dvideo-codecs=$(usex proprietary-codecs "all" "all_free")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
