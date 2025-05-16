@@ -3,8 +3,8 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-138-patches-01.tar.xz"
-FIREFOX_LOONG_PATCHSET="firefox-137-loong-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-138-patches-03.tar.xz"
+FIREFOX_LOONG_PATCHSET="firefox-138-loong-patches-01.tar.xz"
 
 LLVM_COMPAT=( 19 )
 
@@ -81,7 +81,7 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-jpeg +syst
 IUSE+=" +system-libvpx system-png +system-webp valgrind wayland wifi +X"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264 wasm-sandbox"
+IUSE+=" +gmp-autoupdate gnome-shell jpegxl +jumbo-build openh264 wasm-sandbox"
 
 # "wasm-sandbox? ( llvm_slot_19 )" - most likely due to wasi-sdk-25.0 being llvm-19 based, and
 # llvm/clang-19 turning on reference types for wasm targets. Luckily clang-19 is already stable in
@@ -581,6 +581,9 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
+	#jxl patch fails
+	rm -v "${WORKDIR}"/firefox-patches/*-bgo-*-enable-jxl.patch || die
+
 	# Workaround for bgo#915651 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
@@ -935,6 +938,8 @@ src_configure() {
 		mozconfig_add_options_ac 'no wasm-sandbox' --without-wasm-sandboxed-libraries
 		mozconfig_use_with system-harfbuzz system-graphite2
 	fi
+
+	! use jpegxl && mozconfig_add_options_ac '-jpegxl' --disable-jxl
 
 	if [[ ${use_lto} == "yes" ]] ; then
 		if use clang ; then
