@@ -26,9 +26,6 @@ HOMEPAGE="https://github.com/ungoogled-software/ungoogled-chromium"
 PPC64_HASH="2c25ddd2bbabaef094918fe15eb5de524d16949c"
 LITE_TARBALL=1
 SRC_URI="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${PV/_*}${LITE_TARBALL:+-lite}.tar.xz
-	ppc64? (
-		https://gitlab.raptorengineering.com/raptor-engineering-public/chromium/openpower-patches/-/archive/${PPC64_HASH}/openpower-patches-${PPC64_HASH}.tar.bz2 -> chromium-openpower-${PPC64_HASH:0:10}.tar.bz2
-	)
 "
 # Gentoo tarball:
 # https://chromium-tarballs.distfiles.gentoo.org/chromium-${PV/_*}.tar.xz -> chromium-${PV/_*}-gentoo.tar.xz
@@ -55,13 +52,13 @@ REQUIRED_USE="
 	vaapi? ( !system-av1 !system-libvpx )
 "
 
-#UGC_COMMIT_ID="ff88e8bafb3c25b04cc3043ba136b44eb614d56f"
+# UGC_COMMIT_ID="ecacfbbb500a86d206597e20bc17e53a11c9bac5"
 # UGC_PR_COMMITS=(
 # 	c917e096342e5b90eeea91ab1f8516447c8756cf
 # 	5794e9d12bf82620d5f24505798fecb45ca5a22d
 # )
 
-CROMITE_COMMIT_ID="1e918644ff5097fc158fa45432ddd6531211b885"
+CROMITE_COMMIT_ID="5a6f6870a4185cb7e2411183031581c7963d6cf5"
 
 CHROMIUM_COMMITS=(
 	-da443d7bd3777a5dd0587ecff1fbad1722b106b5
