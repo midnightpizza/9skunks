@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-09.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-11.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
 
@@ -188,7 +188,7 @@ DEPEND="${COMMON_DEPEND}
 		x11-libs/libSM
 	)"
 
-S="${WORKDIR}/Waterfox-${WF_PV}"
+S="${WORKDIR}/waterfox-${WF_PV}"
 MOZ_L10N_SOURCEDIR="${S}/waterfox/browser/locales"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
@@ -225,9 +225,12 @@ llvm_check_deps() {
 WF_LANGS=()
 
 MOZ_LANGS=(
-	ar cs da de el en-GB en-US es-ES es-MX fr hu
-	id it ja ko lt nl nn-NO pl pt-BR pt-PT ru
-	sv-SE th vi zh-CN zh-TW
+	af ar ast be bg br ca cak cs cy da de dsb
+	el en-CA en-GB en-US es-AR es-ES et eu
+	fi fr fy-NL ga-IE gd gl he hr hsb hu
+	id is it ja ka kab kk ko lt lv ms nb-NO nl nn-NO
+	pa-IN pl pt-BR pt-PT rm ro ru
+	sk skr sl sq sr sv-SE th tr uk uz vi zh-CN zh-TW
 )
 
 mozilla_set_globals() {
