@@ -4,7 +4,7 @@
 EAPI=8
 
 FIREFOX_PATCHSET="firefox-139-patches-03.tar.xz"
-FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-01.tar.xz"
+FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
 LLVM_COMPAT=( 19 20 )
 
@@ -80,21 +80,16 @@ SLOT_TMP="0/$(ver_cut 1)"
 
 KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 
-IUSE="+clang dbus debug eme-free +hardened hwaccel jack libproxy pgo pulseaudio sndio selinux"
+IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio sndio selinux"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-jpeg +system-libevent"
 IUSE+=" +system-libvpx system-pipewire system-png +system-webp test valgrind wayland wifi +X"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell jpegxl +jumbo-build openh264 wasm-sandbox -telemetry"
+IUSE+=" +gmp-autoupdate gnome-shell jpegxl +jumbo-build openh264 -telemetry wasm-sandbox"
 
-# "wasm-sandbox? ( llvm_slot_19 )" - most likely due to wasi-sdk-25.0 being llvm-19 based, and
-# llvm/clang-19 turning on reference types for wasm targets. Luckily clang-19 is already stable in
-# Gentoo so it should be widely adopted already - however, it might be possible to workaround
-# the constraint simply by modifying CFLAGS when using clang-17/18. Will need to investigate (bmo#1905251)
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( jumbo-build )
-	wasm-sandbox? ( llvm_slot_19 )
 	wayland? ( dbus )
 	wifi? ( dbus )
 "
@@ -114,7 +109,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.28.0
+	>=dev-util/cbindgen-0.27.0
 	net-libs/nodejs
 	virtual/pkgconfig
 	amd64? ( >=dev-lang/nasm-2.14 )
@@ -138,7 +133,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.110
+	>=dev-libs/nss-3.112
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
