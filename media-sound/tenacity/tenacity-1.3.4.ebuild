@@ -11,16 +11,15 @@ DESCRIPTION="Tenacity a Audacity fork - multi-track audio editor"
 HOMEPAGE="https://codeberg.org/tenacityteam/tenacity"
 
 
-if [[ ${PV} = 9999* ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://codeberg.org/tenacityteam/tenacity.git"
-else
+
+
 	KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
 	MY_P="Tenacity-${PV}"
-	S="${WORKDIR}/${PN}-sources-${PV}"
-	SRC_URI="https://codeberg.org/tenacityteam/tenacity/releases/download/Tenacity-${PV}/${PN}-sources-${PV}.tar.gz"
-fi
-
+	S="${WORKDIR}/tenacity"	
+	SRC_URI="
+  	https://codeberg.org/tenacityteam/tenacity/archive/v${PV}.zip -> ${P}.zip
+  	https://codeberg.org/tenacityteam/libnyquist/archive/main.tar.gz -> libnyquist-main.tar.gz
+	"
 
 # GPL-2+, GPL-3 - Audacity itself
 # ZLIB - The ThreadPool single-header library
@@ -30,7 +29,7 @@ LICENSE="GPL-2+
 "
 SLOT="0"
 IUSE="alsa ffmpeg +flac id3tag +ladspa +lv2 mpg123 ogg
-	opus +portmixer sbsms test twolame vamp +vorbis wavpack"
+	opus +portmixer sbsms test twolame vamp +vorbis wavpack audiocom"
 RESTRICT="!test? ( test )"
 
 RDEPEND="dev-db/sqlite:3
@@ -79,15 +78,14 @@ BDEPEND="
 	sys-devel/gettext
 	virtual/pkgconfig
 "
+src_unpack() {
+    unpack ${P}.zip
+    unpack libnyquist-main.tar.gz
 
-src_prepare() {
-	cmake_src_prepare
-
-	# Remove documentation incorrect installations
-	sed -i -e \
-		'/install( FILES "${topdir}\/LICENSE.txt" "${topdir}\/README.md"/,+1d' \
-		src/CMakeLists.txt || die
+rm -rf "${S}/lib-src/libnyquist" || die "cleanup failed"
+    mv "${WORKDIR}/libnyquist/" "${S}/lib-src/libnyquist" || die "Failed to move libnyquist"
 }
+
 
 src_configure() {
 	# -Werror=strict-aliasing
@@ -104,52 +102,54 @@ src_configure() {
 	#   (this is different from VST3)
 	local mycmakeargs=(
 		# Tell the CMake-based build system it's building a release.
-		-DAUDACITY_BUILD_LEVEL=2
+		-Dtenacity_BUILD_LEVEL=2
+		-Dtenacity_conan_enabled=off
 
-		-Daudacity_conan_enabled=off
-
+		-Dtenacity_has_networking=$(usex audiocom on off)
 		# Not useful on Gentoo.
-		-Daudacity_has_updates_check=OFF
+		-Dtenacity_has_updates_check=OFF
+		-Dtenacity_has_audiocom_upload=$(usex audiocom on off)
 
 		# Disable telemetry features.
-		-Daudacity_has_sentry_reporting=off
-		-Daudacity_has_crashreports=off
+		-Dtenacity_has_sentry_reporting=off
+		-Dtenacity_has_crashreports=off
 
-		-Daudacity_has_tests=$(usex test on off)
+		-Dtenacity_has_tests=$(usex test on off)
 
 		# The VST3 SDK is unpackaged, and it appears to be under a breed
 		# of a proprietary license and the GPL.
-		-Daudacity_has_vst3=off
+		-Dtenacity_has_vst3=off
 
-		-Daudacity_lib_preference=system
-		-Daudacity_obey_system_dependencies=ON
-		-Daudacity_use_expat=system
-		-Daudacity_use_ffmpeg=$(usex ffmpeg loaded off)
-		-Daudacity_use_libid3tag=$(usex id3tag system off)
-		-Daudacity_use_ladspa=$(usex ladspa)
-		-Daudacity_use_lame=system
-		-Daudacity_use_wxwidgets=system
-		-Daudacity_use_libflac=$(usex flac system off)
-		-Daudacity_use_libmp3lame=system
-		-Daudacity_use_libmpg123=$(usex mpg123 system off)
-		-Daudacity_use_libogg=$(usex ogg system off)
-		-Daudacity_use_libopus=$(usex flac system off)
-		-Daudacity_use_libsndfile=system
-		-Daudacity_use_libvorbis=$(usex vorbis system off)
-		-Daudacity_use_lv2=$(usex lv2 system off)
-		-Daudacity_use_midi=system
-		-Daudacity_use_nyquist=local
-		-Daudacity_use_pch=off
-		-Daudacity_use_portaudio=system
-		-Daudacity_use_portmixer=$(usex portmixer system off)
-		-Daudacity_use_portsmf=system
-		-Daudacity_use_rapidjson=system
-		-Daudacity_use_sbsms=$(usex sbsms system off)
-		-Daudacity_use_soundtouch=system
-		-Daudacity_use_soxr=system
-		-Daudacity_use_twolame=$(usex twolame system off)
-		-Daudacity_use_vamp=$(usex vamp system off)
-		-Daudacity_use_wavpack=$(usex wavpack system off)
+		-Dtenacity_lib_preference=system
+		-Dtenacity_obey_system_dependencies=ON
+		-Dtenacity_use_expat=system
+		-Dtenacity_use_ffmpeg=$(usex ffmpeg loaded off)
+		-Dtenacity_use_libid3tag=$(usex id3tag system off)
+		-Dtenacity_use_ladspa=$(usex ladspa)
+		-Dtenacity_use_lame=system
+		-Dtenacity_use_wxwidgets=system
+		-Dtenacity_use_libflac=$(usex flac system off)
+		-Dtenacity_use_libmp3lame=system
+		-Dtenacity_use_libmpg123=$(usex mpg123 system off)
+		-Dtenacity_use_libogg=$(usex ogg system off)
+		-Dtenacity_use_libopus=$(usex opus system off)
+		-Dtenacity_use_libsndfile=system
+		-Dtenacity_use_libvorbis=$(usex vorbis system off)
+		-Dtenacity_use_lv2=$(usex lv2 system off)
+		-Dtenacity_use_midi=system
+		-Dtenacity_use_nyquist=on
+		-Dtenacity_use_opusfile=$(usex opus system off)
+		-Dtenacity_use_pch=off
+		-Dtenacity_use_portaudio=system
+		-Dtenacity_use_portmixer=$(usex portmixer system off)
+		-Dtenacity_use_portsmf=system
+		-Dtenacity_use_rapidjson=system
+		-Dtenacity_use_sbsms=$(usex sbsms system off)
+		-Dtenacity_use_soundtouch=system
+		-Dtenacity_use_soxr=system
+		-Dtenacity_use_twolame=$(usex twolame system off)
+		-Dtenacity_use_vamp=$(usex vamp system off)
+		-Dtenacity_use_wavpack=$(usex wavpack system off)
 
 		# See the allow-overriding-alsa-jack.patch patch
 		-DPA_HAS_ALSA=$(usex alsa on off)
