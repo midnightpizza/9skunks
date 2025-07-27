@@ -133,7 +133,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.112
+	>=dev-libs/nss-3.113
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -986,6 +986,11 @@ src_configure() {
 	if use pgo ; then
 		mozconfig_add_options_ac '+pgo' MOZ_PGO=1
 
+		# Avoid compressing just-built instrumented Firefox with
+		# high levels of compression. Just use tar as a container
+		# to save >=10 minutes.
+		export MOZ_PKG_FORMAT=tar
+
 		if use clang ; then
 			# Used in build/pgo/profileserver.py
 			export LLVM_PROFDATA="llvm-profdata"
@@ -1133,7 +1138,7 @@ src_configure() {
 src_compile() {
 	local virtx_cmd=
 
-	if [[ ${use_lto} == "yes" ]] && tc-ld-is-mold; then
+	if [[ ${use_lto} == "yes" ]] && tc-ld-is-mold ; then
 		# increase ulimit with mold+lto, bugs #892641, #907485
 		if ! ulimit -n 16384 1>/dev/null 2>&1 ; then
 			ewarn "Unable to modify ulimits - building with mold+lto might fail due to low ulimit -n resources."
