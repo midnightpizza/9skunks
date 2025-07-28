@@ -3,24 +3,23 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-11.tar.xz"
+FIREFOX_PATCHSET="firefox-139-patches-03.tar.xz"
+FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
-LLVM_COMPAT=( 17 18 19 )
-
-PYTHON_COMPAT=( python3_{10..12} )
-PYTHON_REQ_USE="ncurses,sqlite,ssl"
+LLVM_COMPAT=( 19 20 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
 # If not building with clang we need at least rust 1.76
-RUST_MIN_VER=1.77.1
-
+RUST_MIN_VER=1.82.0
+PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
-WF_PV="${PV/_beta/b}"
+WF_PV="6.6.0-beta-3"
 WASI_SDK_VER=25.0
 WASI_SDK_LLVM_VER=19
 
@@ -38,7 +37,7 @@ DESCRIPTION="Waterfox Web Browser"
 L10N_COMMIT="3046738340d44e4ac76d29f96abc06a4ae71c1ad"
 
 SRC_URI="
-	${WF_SRC_BASE_URI}/${WF_PV}.tar.gz -> ${P}.tar.gz
+	${WF_SRC_BASE_URI}/${WF_PV}.zip -> ${P}.zip
 	https://github.com/BrowserWorks/l10n/archive/${L10N_COMMIT}.tar.gz -> ${PN}-L10N-${L10N_COMMIT}.tar.gz
 	${PATCH_URIS[@]}
 	wasm-sandbox? (
@@ -54,7 +53,7 @@ KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
 
 IUSE="clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy openh264 pgo"
 IUSE+=" pulseaudio selinux sndio +system-av1 +system-harfbuzz +system-icu +system-jpeg"
-IUSE+=" +system-libevent +system-libvpx system-png +system-webp wayland wifi +X system-python-libs"
+IUSE+=" +system-libevent +system-libvpx system-png +system-webp wayland wifi +X system-python-libs  system-pipewire"
 
 # Firefox-only IUSE
 IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264  system-python-libs wasm-sandbox"
@@ -108,7 +107,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.101
+	>=dev-libs/nss-3.113
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -119,6 +118,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	virtual/freedesktop-icon-theme
 	x11-libs/cairo
 	x11-libs/gdk-pixbuf:2
+	x11-libs/libdrm
 	x11-libs/pango
 	x11-libs/pixman
 	dbus? (
@@ -146,7 +146,8 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
-	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
+	system-pipewire? ( media-video/pipewire:= )
+	system-png? ( >=media-libs/libpng-1.6.45:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	wayland? (
 		>=media-libs/libepoxy-1.5.10-r1
@@ -388,17 +389,13 @@ virtwl() {
 
 pkg_pretend() {
 	if [[ ${MERGE_TYPE} != binary ]] ; then
-		if use pgo ; then
-			if ! has usersandbox $FEATURES ; then
-				die "You must enable usersandbox as X server can not run as root!"
-			fi
-		fi
-
 		# Ensure we have enough disk space to compile
-		if use pgo || tc-is-lto || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif tc-is-lto ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="6600M"
+			CHECKREQS_DISK_BUILD="7400M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -431,8 +428,10 @@ pkg_setup() {
 		fi
 
 		# Ensure we have enough disk space to compile
-		if use pgo || [[ ${use_lto} == "yes" ]] || use debug ; then
-			CHECKREQS_DISK_BUILD="13500M"
+		if use pgo || use debug ; then
+			CHECKREQS_DISK_BUILD="14300M"
+		elif [[ ${use_lto} == "yes" ]] ; then
+			CHECKREQS_DISK_BUILD="10600M"
 		else
 			CHECKREQS_DISK_BUILD="6400M"
 		fi
@@ -514,11 +513,7 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	# Workaround for bgo#917599
-	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
-		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
-	fi
-	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
+	#rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch|| die
 
 	if use x86 && use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*-musl-non-lfs64-api-on-audio_thread_priority-crate.patch || die
@@ -529,11 +524,15 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 	fi
 
-	#//rm -v "${WORKDIR}"/firefox-patches/*-python-3.12.8-mach-fix.patch || die
+	rm -v "${WORKDIR}"/firefox-patches/*-enable-jxl.patch || die
 
-	eapply "${FILESDIR}/waterfox-6.0-fix-langpack-id.patch"
+
+
+	#eapply "${FILESDIR}/waterfox-6.0-fix-langpack-id.patch"
 	eapply "${WORKDIR}/firefox-patches"
-	eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
+	#eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
+	eapply "${FILESDIR}/remove-missing-icons.patch"
+
 
 	# [WFX-400] Revert to FF useragent.
 	echo 'MOZ_APP_UA_NAME="Firefox"' >> "${S}/browser/confvars.sh"
@@ -594,26 +593,11 @@ src_prepare() {
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/build/moz.configure/lto-pgo.configure || die "Failed sedding multiprocessing.cpu_count"
 
-	# Make ICU respect MAKEOPTS
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/intl/icu_sources_data.py || die "Failed sedding multiprocessing.cpu_count"
-
-	# Respect MAKEOPTS all around (maybe some find+sed is better)
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/base.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_concurrent_links.py ||
-			die "Failed sedding multiprocessing.cpu_count"
+		"${S}"/third_party/chromium/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
 
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/third_party/python/gyp/pylib/gyp/input.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/code_analysis/mach_commands.py || die "Failed sedding multiprocessing.cpu_count"
 
 	# sed-in toolchain prefix
 	sed -i \
@@ -752,21 +736,17 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-disk-remnant-avoidance \
 		--disable-geckodriver \
-		--disable-gpsd \
 		--disable-install-strip \
 		--disable-legacy-profile-creation \
 		--disable-parental-controls \
 		--disable-strip \
-		--disable-tests \
 		--disable-updater \
 		--disable-valgrind \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
-		--enable-official-branding \
+		--enable-packed-relative-relocs \
 		--enable-release \
-		--enable-system-ffi \
-		--enable-system-pixman \
 		--enable-system-policies \
 		--host="${CBUILD:-${CHOST}}" \
 		--libdir="${EPREFIX}/usr/$(get_libdir)" \
@@ -775,13 +755,15 @@ src_configure() {
 		--without-ccache \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
+		--with-system-ffi \
+		--with-system-gbm \
+		--with-system-libdrm \
 		--with-system-nspr \
 		--with-system-nss \
+		--with-system-pixman \
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
-		--with-unsigned-addon-scopes=app,system \
-		--x-includes="${ESYSROOT}/usr/include" \
-		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
+		--with-unsigned-addon-scopes=app,system
 
 	# Set update channel
 	local update_channel=release
@@ -1206,17 +1188,6 @@ src_install() {
 	insinto /usr/share/icons/hicolor/symbolic/apps
 	newins "${icon_symbolic_file}" ${PN}-symbolic.svg
 
-	local icon size
-	for icon in "${icon_srcdir}"/default*.png ; do
-		size=${icon%.png}
-		size=${size##*/default}
-
-		if [[ ${size} -eq 48 ]] ; then
-			newicon "${icon}" ${PN}.png
-		fi
-
-		newicon -s ${size} "${icon}" ${PN}.png
-	done
 
 	# Install menu
 	local app_name="Waterfox"
