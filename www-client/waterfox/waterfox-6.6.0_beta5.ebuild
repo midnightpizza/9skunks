@@ -19,7 +19,7 @@ WANT_AUTOCONF="2.1"
 VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
-WF_PV="6.6.0-beta-3"
+WF_PV="6.6.0-beta-5"
 WASI_SDK_VER=25.0
 WASI_SDK_LLVM_VER=19
 
