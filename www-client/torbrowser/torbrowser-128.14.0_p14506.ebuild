@@ -3,11 +3,11 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-11.tar.xz"
+FIREFOX_PATCHSET="firefox-128esr-patches-12.tar.xz"
 
 LLVM_COMPAT=( 17 18 19 )
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
@@ -23,10 +23,10 @@ MOZ_PV="${PV/_p*}esr"
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/firefox/config?ref_type=heads#L17
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/config?ref_type=heads#L114
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="14.5.4"
-TOR_TAG="${TOR_PV%.*}-1-build1"
-NOSCRIPT_VERSION="13.0.8"
-NOSCRIPT_ID="4497468"
+TOR_PV="14.5.6"
+TOR_TAG="${TOR_PV%.*}-1-build2"
+NOSCRIPT_VERSION="13.0.9"
+NOSCRIPT_ID="4551629"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
 inherit autotools check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
@@ -58,7 +58,6 @@ KEYWORDS="~amd64 ~x86 ~arm64"
 IUSE="+clang dbus hardened pulseaudio"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
 IUSE+=" system-png +system-webp wayland +X"
-IUSE+=" +jumbo-build"
 
 REQUIRED_USE="|| ( X wayland )
 	wayland? ( dbus )"
@@ -334,14 +333,12 @@ src_prepare() {
 	# Clear checksums from cargo crates we've manually patched.
 	# moz_clear_vendor_checksums xyz
 
-	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
-	if [[ -n ${FILES_PER_UNIFIED_FILE} ]] && use jumbo-build; then
+	if [[ -n ${FILES_PER_UNIFIED_FILE} ]]; then
 		local my_files_per_unified_file=${FILES_PER_UNIFIED_FILE:=16}
 		elog ""
-		elog "jumbo-build defaults modified to ${my_files_per_unified_file}."
+		elog "build defaults modified to ${my_files_per_unified_file}."
 		elog "if you get a build failure, try undefining FILES_PER_UNIFIED_FILE,"
-		elog "if that fails try -jumbo-build before opening a bug report."
 		elog ""
 
 		sed -i -e "s/\"FILES_PER_UNIFIED_FILE\", 16/\"FILES_PER_UNIFIED_FILE\", "${my_files_per_unified_file}"/" \
@@ -505,8 +502,6 @@ src_configure() {
 	mozconfig_add_options_ac '--enable-audio-backends' --enable-audio-backends="${myaudiobackends::-1}"
 
 	mozconfig_add_options_ac '' --disable-necko-wifi
-
-	! use jumbo-build && mozconfig_add_options_ac '--disable-unified-build' --disable-unified-build
 
 	if use X && use wayland ; then
 		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
