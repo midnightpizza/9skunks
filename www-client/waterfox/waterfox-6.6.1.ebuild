@@ -3,7 +3,8 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-11.tar.xz"
+FIREFOX_PATCHSET="firefox-139-patches-03.tar.xz"
+FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
 LLVM_COMPAT=( 19 20 )
 
@@ -48,7 +49,7 @@ SRC_URI="
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
-KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86"
+KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86 ~loong"
 
 IUSE="clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy openh264 pgo"
 IUSE+=" pulseaudio selinux sndio +system-av1 +system-harfbuzz +system-icu +system-jpeg"
