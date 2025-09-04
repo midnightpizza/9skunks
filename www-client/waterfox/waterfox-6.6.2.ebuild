@@ -524,7 +524,7 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 	fi
 
-	rm -v "${WORKDIR}"/firefox-patches/*-enable-jxl.patch || die
+	# rm -v "${WORKDIR}"/firefox-patches/*-enable-jxl.patch || die
 
 
 
