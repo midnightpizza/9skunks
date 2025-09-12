@@ -513,7 +513,7 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	#rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch|| die
+	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1874059-fix-libcxx-18.patch|| die
 
 	if use x86 && use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*-musl-non-lfs64-api-on-audio_thread_priority-crate.patch || die
