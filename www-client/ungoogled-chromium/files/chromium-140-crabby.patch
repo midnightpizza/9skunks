@@ -1,6 +1,6 @@
 --- a/third_party/blink/renderer/platform/image-decoders/BUILD.gn
 +++ b/third_party/blink/renderer/platform/image-decoders/BUILD.gn
-@@ -79,11 +79,10 @@
+@@ -80,11 +80,10 @@ component("image_decoders") {
  
    if (enable_av1_decoder) {
      sources += [
@@ -13,48 +13,20 @@
 -    deps += [ "//third_party/crabbyavif" ]
 +    libs = [ "avif" ]
    }
+ }
  
-   if (enable_rust_png) {
-@@ -130,6 +129,6 @@
+@@ -124,7 +123,7 @@ source_set("unit_tests") {
    }
  
    if (enable_av1_decoder) {
 -    sources += [ "avif/crabbyavif_image_decoder_test.cc" ]
 +    sources += [ "avif/avif_image_decoder_test.cc" ]
    }
- }
---- a/third_party/blink/renderer/platform/image-decoders/image_decoder.cc
-+++ b/third_party/blink/renderer/platform/image-decoders/image_decoder.cc
-@@ -52,7 +52,7 @@
- #include "ui/gfx/geometry/size_conversions.h"
  
- #if BUILDFLAG(ENABLE_AV1_DECODER)
--#include "third_party/blink/renderer/platform/image-decoders/avif/crabbyavif_image_decoder.h"
-+#include "third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.h"
- #endif
- 
- namespace blink {
-@@ -197,7 +197,7 @@
-     return "image/bmp";
-   }
- #if BUILDFLAG(ENABLE_AV1_DECODER)
--  if (CrabbyAVIFImageDecoder::MatchesAVIFSignature(fast_reader)) {
-+  if (AVIFImageDecoder::MatchesAVIFSignature(fast_reader)) {
-     return "image/avif";
-   }
- #endif
-@@ -307,7 +307,7 @@
-                                                 max_decoded_bytes);
- #if BUILDFLAG(ENABLE_AV1_DECODER)
-   } else if (mime_type == "image/avif") {
--    decoder = std::make_unique<CrabbyAVIFImageDecoder>(
-+    decoder = std::make_unique<AVIFImageDecoder>(
-         alpha_option, high_bit_depth_decoding_option, color_behavior, aux_image,
-         max_decoded_bytes, animation_option);
- #endif
---- a/third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.cc
+   # TODO(crbug.com/40031409): Fix code that adds exit-time destructors and
+--- /dev/null
 +++ b/third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.cc
-@@ -0,0 +1,1294 @@
+@@ -0,0 +1,1290 @@
 +// Copyright 2020 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -89,6 +61,7 @@
 +#include "media/base/video_color_space.h"
 +#include "skia/ext/cicp.h"
 +#include "third_party/blink/public/common/features.h"
++#include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
 +#include "third_party/blink/renderer/platform/image-decoders/fast_shared_buffer_reader.h"
 +#include "third_party/blink/renderer/platform/image-decoders/image_animation.h"
 +#include "third_party/blink/renderer/platform/image-decoders/image_decoder.h"
@@ -540,11 +513,10 @@
 +  // the ftyp box in ISO BMFF for the 'avif' or 'avis' brand. So the maximum
 +  // number of bytes read is 144 bytes (size 4 bytes, type 4 bytes, major brand
 +  // 4 bytes, minor version 4 bytes, and 4 bytes * 32 compatible brands).
-+  char buffer[144];
++  std::array<uint8_t, 144> buffer;
 +  avifROData input;
-+  input.size = std::min(sizeof(buffer), fast_reader.size());
-+  input.data = reinterpret_cast<const uint8_t*>(
-+      fast_reader.GetConsecutiveData(0, input.size, buffer));
++  input.size = std::min(buffer.size(), fast_reader.size());
++  input.data = fast_reader.GetConsecutiveData(0, input.size, buffer).data();
 +  return avifPeekCompatibleFileType(&input);
 +}
 +
@@ -814,8 +786,7 @@
 +    // crbug.com/1198455.
 +    decoder_->strictFlags &= ~AVIF_STRICT_PIXI_REQUIRED;
 +
-+    if (base::FeatureList::IsEnabled(features::kAvifGainmapHdrImages) &&
-+        aux_image_ == cc::AuxImage::kGainmap) {
++    if (aux_image_ == cc::AuxImage::kGainmap) {
 +      decoder_->imageContentToDecode = AVIF_IMAGE_CONTENT_GAIN_MAP;
 +    }
 +
@@ -1263,9 +1234,6 @@
 +bool AVIFImageDecoder::GetGainmapInfoAndData(
 +    SkGainmapInfo& out_gainmap_info,
 +    scoped_refptr<SegmentReader>& out_gainmap_data) const {
-+  if (!base::FeatureList::IsEnabled(features::kAvifGainmapHdrImages)) {
-+    return false;
-+  }
 +  // Ensure that parsing succeeded.
 +  if (!IsDecodedSizeAvailable()) {
 +    return false;
@@ -1349,7 +1317,7 @@
 +AVIFImageDecoder::AvifIOData::~AvifIOData() = default;
 +
 +}  // namespace blink
---- a/third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.h
+--- /dev/null
 +++ b/third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.h
 @@ -0,0 +1,191 @@
 +// Copyright 2020 The Chromium Authors
@@ -1543,3 +1511,32 @@
 +}  // namespace blink
 +
 +#endif  // THIRD_PARTY_BLINK_RENDERER_PLATFORM_IMAGE_DECODERS_AVIF_AVIF_IMAGE_DECODER_H_
+--- a/third_party/blink/renderer/platform/image-decoders/image_decoder.cc
++++ b/third_party/blink/renderer/platform/image-decoders/image_decoder.cc
+@@ -49,7 +49,7 @@
+ #include "ui/gfx/geometry/size_conversions.h"
+ 
+ #if BUILDFLAG(ENABLE_AV1_DECODER)
+-#include "third_party/blink/renderer/platform/image-decoders/avif/crabbyavif_image_decoder.h"
++#include "third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.h"
+ #endif
+ 
+ namespace blink {
+@@ -205,7 +205,7 @@ String SniffMimeTypeInternal(scoped_refp
+     return "image/bmp";
+   }
+ #if BUILDFLAG(ENABLE_AV1_DECODER)
+-  if (CrabbyAVIFImageDecoder::MatchesAVIFSignature(fast_reader)) {
++  if (AVIFImageDecoder::MatchesAVIFSignature(fast_reader)) {
+     return "image/avif";
+   }
+ #endif
+@@ -315,7 +315,7 @@ std::unique_ptr<ImageDecoder> ImageDecod
+                                                 max_decoded_bytes);
+ #if BUILDFLAG(ENABLE_AV1_DECODER)
+   } else if (mime_type == "image/avif") {
+-    decoder = std::make_unique<CrabbyAVIFImageDecoder>(
++    decoder = std::make_unique<AVIFImageDecoder>(
+         alpha_option, high_bit_depth_decoding_option, color_behavior, aux_image,
+         max_decoded_bytes, animation_option);
+ #endif

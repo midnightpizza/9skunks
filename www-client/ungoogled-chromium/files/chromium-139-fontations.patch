@@ -8,7 +8,7 @@
  import("//gpu/vulkan/features.gni")
  import("//skia/skia.gni")
  import("//testing/libfuzzer/fuzzer_test.gni")
-@@ -37,27 +36,6 @@ buildflag_header("buildflags") {
+@@ -38,28 +37,6 @@ buildflag_header("buildflags") {
    ]
  }
  
@@ -23,9 +23,9 @@
 -  cxx_bindings = [ skia_fontations_bridge_root ]
 -  deps = [
 -    ":path_bridge",
--    "//third_party/rust/font_types/v0_8:lib",
--    "//third_party/rust/read_fonts/v0_27:lib",
--    "//third_party/rust/skrifa/v0_29:lib",
+-    "//third_party/rust/font_types/v0_9:lib",
+-    "//third_party/rust/read_fonts/v0_30:lib",
+-    "//third_party/rust/skrifa/v0_32:lib",
 -  ]
 -  configs -= [ "//build/config/compiler:chromium_code" ]
 -  configs += [
@@ -33,18 +33,21 @@
 -    "//build/config/compiler:no_chromium_code",
 -  ]
 -}
- 
+-
  # External-facing config for dependent code.
  config("skia_config") {
-@@ -174,7 +152,6 @@ config("skia_library_config") {
-   if (use_blink && enable_freetype) {
-     defines += [
-       "SK_TYPEFACE_FACTORY_FREETYPE",
--      "SK_TYPEFACE_FACTORY_FONTATIONS",
-       "SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE",
-     ]
+   defines = [
+@@ -185,9 +162,6 @@ config("skia_library_config") {
+     "SK_CODEC_ENCODES_PNG_WITH_LIBPNG",
+   ]
+ 
+-  if (use_blink) {
+-    defines += [ "SK_TYPEFACE_FACTORY_FONTATIONS" ]
+-  }
+   if (use_blink && !use_system_freetype) {
+     defines += [ "SK_FREETYPE_MINIMUM_RUNTIME_VERSION_IS_BUILD_VERSION" ]
    }
-@@ -412,14 +389,6 @@ component("skia") {
+@@ -430,14 +404,6 @@ component("skia") {
        public += skia_ports_fontmgr_empty_public
      }
      sources += skia_ports_typeface_proxy_sources
@@ -59,7 +62,7 @@
    }
  
    if (is_win) {
-@@ -714,13 +683,7 @@ skia_source_set("skia_core_and_effects")
+@@ -733,13 +699,7 @@ skia_source_set("skia_core_and_effects")
      # skia_core_and_effects rather than the other way around.
      public_deps = [ "//third_party/dawn/include/dawn:cpp_headers" ]
    }
@@ -76,68 +79,75 @@
  
 --- a/skia/ext/font_utils.cc
 +++ b/skia/ext/font_utils.cc
-@@ -69,13 +69,7 @@ static sk_sp<SkFontMgr> fontmgr_factory(
+@@ -66,9 +66,7 @@ static sk_sp<SkFontMgr> fontmgr_factory(
    return SkFontMgr_New_CoreText(nullptr);
  #elif BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
    sk_sp<SkFontConfigInterface> fci(SkFontConfigInterface::RefGlobal());
--  if (base::FeatureList::IsEnabled(skia::kFontationsLinuxSystemFonts)) {
--    return fci ? SkFontMgr_New_FCI(std::move(fci),
--                                   SkFontScanner_Make_Fontations())
--               : nullptr;
--  } else {
--    return fci ? SkFontMgr_New_FCI(std::move(fci)) : nullptr;
--  }
+-  return fci ? SkFontMgr_New_FCI(std::move(fci),
+-                                 SkFontScanner_Make_Fontations())
+-             : nullptr;
 +  return fci ? SkFontMgr_New_FCI(std::move(fci)) : nullptr;
  #elif BUILDFLAG(IS_FUCHSIA)
    fuchsia::fonts::ProviderSyncPtr provider;
    base::ComponentContextForProcess()->svc()->Connect(provider.NewRequest());
 --- a/third_party/blink/renderer/platform/fonts/skia/sktypeface_factory.cc
 +++ b/third_party/blink/renderer/platform/fonts/skia/sktypeface_factory.cc
-@@ -29,11 +29,7 @@ sk_sp<SkTypeface> SkTypeface_Factory::Fr
+@@ -27,7 +27,7 @@ sk_sp<SkTypeface> SkTypeface_Factory::Fr
+   SkFontConfigInterface::FontIdentity font_identity;
    font_identity.fID = config_id;
    font_identity.fTTCIndex = ttc_index;
- 
--  if (base::FeatureList::IsEnabled(skia::kFontationsLinuxSystemFonts)) {
--    return fci->makeTypeface(font_identity, SkFontMgr_New_Fontations_Empty());
--  } else {
-     return fci->makeTypeface(font_identity, skia::DefaultFontMgr());
--  }
+-  return fci->makeTypeface(font_identity, SkFontMgr_New_Fontations_Empty());
++  return fci->makeTypeface(font_identity, skia::DefaultFontMgr());
  #else
    NOTREACHED();
  #endif
-@@ -46,12 +42,7 @@ sk_sp<SkTypeface> SkTypeface_Factory::Fr
+@@ -39,8 +39,7 @@ sk_sp<SkTypeface> SkTypeface_Factory::Fr
+     int ttc_index) {
  #if !BUILDFLAG(IS_WIN) && !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_FUCHSIA) && \
      !BUILDFLAG(IS_APPLE)
- 
--  if (base::FeatureList::IsEnabled(skia::kFontationsLinuxSystemFonts)) {
--    return SkFontMgr_New_Fontations_Empty()->makeFromFile(filename.c_str(),
--                                                          ttc_index);
--  } else {
-     return skia::DefaultFontMgr()->makeFromFile(filename.c_str(), ttc_index);
--  }
+-  return SkFontMgr_New_Fontations_Empty()->makeFromFile(filename.c_str(),
+-                                                        ttc_index);
++  return skia::DefaultFontMgr()->makeFromFile(filename.c_str(), ttc_index);
  #else
    NOTREACHED();
  #endif
 --- a/third_party/blink/renderer/platform/fonts/web_font_typeface_factory.cc
 +++ b/third_party/blink/renderer/platform/fonts/web_font_typeface_factory.cc
-@@ -12,7 +12,6 @@
+@@ -11,7 +11,6 @@
+ #include "third_party/blink/renderer/platform/fonts/font_cache.h"
  #include "third_party/blink/renderer/platform/fonts/opentype/font_format_check.h"
- #include "third_party/freetype_buildflags.h"
  #include "third_party/skia/include/core/SkTypeface.h"
 -#include "third_party/skia/include/ports/SkTypeface_fontations.h"
  
  #if BUILDFLAG(IS_WIN)
  #include "third_party/blink/renderer/platform/fonts/win/dwrite_font_format_support.h"
-@@ -46,7 +45,7 @@ bool IsFreeTypeSystemRasterizer() {
+@@ -37,11 +36,7 @@ bool IsWin() {
+ }
+ 
+ bool IsFreeTypeSystemRasterizer() {
+-#if !BUILDFLAG(IS_WIN) && !BUILDFLAG(IS_APPLE)
+   return true;
+-#else
+-  return false;
+-#endif
  }
  
  sk_sp<SkTypeface> MakeTypefaceDefaultFontMgr(sk_sp<SkData> data) {
+@@ -49,13 +44,7 @@ sk_sp<SkTypeface> MakeTypefaceDefaultFon
+   return FontCache::Get().FontManager()->makeFromData(data, 0);
+ #endif
+ 
+-#if BUILDFLAG(IS_APPLE)
+   return skia::DefaultFontMgr()->makeFromData(data, 0);
+-#endif
+-
 -#if !(BUILDFLAG(IS_WIN) || BUILDFLAG(IS_APPLE))
-+#if (BUILDFLAG(IS_WIN) || BUILDFLAG(IS_APPLE))
-   if (RuntimeEnabledFeatures::FontationsFontBackendEnabled()) {
-     return SkTypeface_Make_Fontations(data, SkFontArguments());
-   }
-@@ -72,10 +71,6 @@ sk_sp<SkTypeface> MakeTypefaceFallback(s
+-  return SkTypeface_Make_Fontations(data, SkFontArguments());
+-#endif
+ }
+ 
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_APPLE)
+@@ -64,10 +53,6 @@ sk_sp<SkTypeface> MakeTypefaceFallback(s
  }
  #endif
  
@@ -148,7 +158,7 @@
  sk_sp<SkTypeface> MakeVariationsTypeface(
      sk_sp<SkData> data,
      const WebFontTypefaceFactory::FontInstantiator& instantiator) {
-@@ -95,9 +90,6 @@ sk_sp<SkTypeface> MakeSbixTypeface(
+@@ -87,9 +72,6 @@ sk_sp<SkTypeface> MakeSbixTypeface(
      const WebFontTypefaceFactory::FontInstantiator& instantiator) {
    // If we're on a OS with FreeType as backend, or on Windows, where we used to
    // use FreeType for SBIX, switch to Fontations for SBIX.
@@ -158,7 +168,7 @@
  
    // Remaining case, on Mac, CoreText can handle creating SBIX fonts.
    return instantiator.make_system(data);
-@@ -106,29 +98,21 @@ sk_sp<SkTypeface> MakeSbixTypeface(
+@@ -98,29 +80,21 @@ sk_sp<SkTypeface> MakeSbixTypeface(
  sk_sp<SkTypeface> MakeColrV0Typeface(
      sk_sp<SkData> data,
      const WebFontTypefaceFactory::FontInstantiator& instantiator) {
@@ -189,7 +199,7 @@
  }
  
  }  // namespace
-@@ -138,7 +122,6 @@ bool WebFontTypefaceFactory::CreateTypef
+@@ -130,7 +104,6 @@ bool WebFontTypefaceFactory::CreateTypef
    const FontFormatCheck format_check(data);
    const FontInstantiator instantiator = {
        MakeTypefaceDefaultFontMgr,
