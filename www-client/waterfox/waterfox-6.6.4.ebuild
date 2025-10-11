@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-140esr-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-140esr-patches-03.tar.xz"
 FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
 LLVM_COMPAT=( 19 20 )
@@ -12,7 +12,8 @@ LLVM_COMPAT=( 19 20 )
 RUST_NEEDS_LLVM=1
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.82.0
-PYTHON_COMPAT=( python3_{11..13} )
+
+PYTHON_COMPAT=( python3_{11..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 WANT_AUTOCONF="2.1"
 
@@ -20,12 +21,13 @@ VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
 WF_PV="${PV/_beta/b}"
-WASI_SDK_VER=25.0
-WASI_SDK_LLVM_VER=19
+WASI_SDK_VER=27.0
+WASI_SDK_LLVM_VER=20
 
 WF_SRC_BASE_URI="https://github.com/BrowserWorks/Waterfox/archive/refs/tags/"
 
-inherit autotools check-reqs desktop flag-o-matic gnome2-utils linux-info llvm-r1 multiprocessing optfeature pax-utils python-any-r1 readme.gentoo-r1 rust toolchain-funcs virtualx xdg
+inherit check-reqs desktop flag-o-matic gnome2-utils linux-info llvm-r1 multiprocessing \
+	optfeature pax-utils python-any-r1 readme.gentoo-r1 rust toolchain-funcs virtualx xdg
 
 HOMEPAGE="https://www.waterfox.net"
 
@@ -58,16 +60,12 @@ IUSE+=" +system-libevent +system-libvpx system-png +system-webp wayland wifi +X 
 # Firefox-only IUSE
 IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264  system-python-libs wasm-sandbox"
 
-# "wasm-sandbox? ( llvm_slot_19 )" - most likely due to wasi-sdk-25.0 being llvm-19 based, and
-# llvm/clang-19 turning on reference types for wasm targets. Luckily clang-19 is already stable in
-# Gentoo so it should be widely adopted already - however, it might be possible to workaround
-# the constraint simply by modifying CFLAGS when using clang-17/18. Will need to investigate (bmo#1905251)
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
 	pgo? ( jumbo-build )
-	wasm-sandbox? ( llvm_slot_19 )
 	wayland? ( dbus )
-	wifi? ( dbus )"
+	wifi? ( dbus )
+"
 
 FW_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
@@ -95,10 +93,7 @@ BDEPEND="${PYTHON_DEPS}
 			x11-apps/xhost
 		)
 		!X? (
-			|| (
-				gui-wm/tinywl
-				<gui-libs/wlroots-0.17.3[tinywl(-)]
-			)
+			gui-wm/tinywl
 			x11-misc/xkeyboard-config
 		)
 	)"
@@ -107,7 +102,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.112
+	>=dev-libs/nss-3.112.1
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -136,7 +131,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	system-av1? (
 		>=media-libs/dav1d-1.0.0:=
-		>=media-libs/libaom-1.0.0:=
+		>=media-libs/libaom-3.10.0:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
@@ -175,7 +170,6 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 		x11-libs/libxcb:=
 	)"
 RDEPEND="${COMMON_DEPEND}
-	!www-client/waterfox-g
 	hwaccel? (
 		media-video/libva-utils
 		sys-apps/pciutils
@@ -513,8 +507,6 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1874059-fix-libcxx-18.patch|| die
-
 	if use x86 && use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*-musl-non-lfs64-api-on-audio_thread_priority-crate.patch || die
 	fi
@@ -539,6 +531,7 @@ src_prepare() {
 
 	# Fix Waterfox Version Display
 	echo "${WF_PV}" > "${S}/browser/config/version_display.txt"
+	use loong && eapply "${WORKDIR}/firefox-loong-patches"
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -768,7 +761,8 @@ src_configure() {
 	local update_channel=release
 	mozconfig_add_options_ac '' --update-channel=${update_channel}
 
-	if use amd64 || use arm64 || use ppc64 || use riscv ; then
+	# Whitelist to allow unkeyworded arches to build with "--disable-rust-simd" by default.
+	if use amd64 || use arm64 || use ppc64 || use loong || use riscv ; then
 		mozconfig_add_options_ac '' --enable-rust-simd
 	fi
 
@@ -782,10 +776,11 @@ src_configure() {
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
-	# Enable JIT on riscv64 explicitly, since it's not activated automatically via "known arches" list.
-	# Update 128.1.0: Disable jit on riscv (this line can be blanked to disable by default),
-	# bgo#937867.
-	use riscv && mozconfig_add_options_ac 'Disable JIT for RISC-V 64' --disable-jit
+	# riscv-related options, bgo#947337, bgo#947338
+	if use riscv ; then
+		mozconfig_add_options_ac 'Disable JIT for RISC-V 64' --disable-jit
+		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
+	fi
 
 	if [[ -s "${S}/api-google.key" ]] ; then
 		local key_origin="Gentoo default"
@@ -1099,6 +1094,29 @@ src_compile() {
 	export MOZCONFIG="${S}/.mozconfig"
 
 	${virtx_cmd} ./mach build --verbose || die
+}
+
+src_test() {
+	# https://firefox-source-docs.mozilla.org/testing/automated-testing/index.html
+	local -a failures=()
+
+	# Some tests respect this
+	local -x MOZ_HEADLESS=1
+
+	# Check testing/mach_commands.py
+	einfo "Testing with cppunittest ..."
+	./mach cppunittest
+	local ret=$?
+	if [[ ${ret} -ne 0 ]]; then
+		eerror "Test suite cppunittest failed with error code ${ret}"
+		failures+=( cppunittest )
+	fi
+
+	if [[ ${#failures} -eq 0 ]]; then
+		einfo "Test suites succeeded"
+	else
+		die "Test suites failed: ${failures[@]}"
+	fi
 }
 
 src_install() {
