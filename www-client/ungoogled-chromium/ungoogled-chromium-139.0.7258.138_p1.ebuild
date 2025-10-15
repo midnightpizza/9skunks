@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{9,10,11,12,13} )
+PYTHON_COMPAT=( python3_{10..14} )
 PYTHON_REQ_USE="xml(+)"
 
 CHROMIUM_LANGS="af am ar as az be bg bn bs ca cs cy da de el en-GB es es-419 et eu fa fi fil
@@ -293,7 +293,7 @@ BDEPEND="
 		pgo? ( >llvm-core/clang-19.0.0_pre20240518 >llvm-core/lld-19.0.0_pre20240518	)
 		!pgo? ( llvm-core/clang llvm-core/lld )
 	)
-	cfi? ( llvm-core/clang-runtime[sanitize] )
+	cfi? ( llvm-runtimes/clang-runtime[sanitize] )
 "
 
 if ! has chromium_pkg_die ${EBUILD_DEATH_HOOKS}; then
