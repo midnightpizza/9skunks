@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-143-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-144-patches-01.tar.xz"
 
 LLVM_COMPAT=( 19 20 )
 
@@ -13,7 +13,7 @@ RUST_NEEDS_LLVM=1
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.82.0
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 VIRTUALX_REQUIRED="manual"
@@ -76,9 +76,9 @@ SLOT_TMP="0/$(ver_cut 1)"
 
 KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 
-IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio sndio selinux"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-jpeg +system-libevent"
-IUSE+=" +system-libvpx system-pipewire system-png +system-webp test valgrind wayland wifi +X"
+IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio selinux sndio"
+IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
+IUSE+=" system-pipewire system-png +system-webp test valgrind wayland wifi +X"
 
 # Firefox-only IUSE
 IUSE+=" +gmp-autoupdate gnome-shell jpegxl +jumbo-build openh264 -telemetry wasm-sandbox"
@@ -126,13 +126,13 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.115.1
+	>=dev-libs/nss-3.116
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/mesa
-	media-video/ffmpeg
+	<media-video/ffmpeg-8.0
 	sys-libs/zlib
 	virtual/freedesktop-icon-theme
 	x11-libs/cairo
@@ -155,7 +155,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	system-av1? (
 		>=media-libs/dav1d-1.0.0:=
-		>=media-libs/libaom-1.0.0:=
+		>=media-libs/libaom-3.10.0:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
@@ -574,12 +574,10 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	#jxl patch fails
-	rm -v "${WORKDIR}"/firefox-patches/*-bgo-*-enable-jxl.patch || die
-
-	# Workaround for bgo#915651 on musl
+	# Workaround for bgo#915651 and bmo#1988166 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
+		rm -v "${WORKDIR}"/firefox-patches/*bmo-1988166-musl-remove-nonexisting-system-header-req.patch || die
 	fi
 
 	eapply "${WORKDIR}/firefox-patches"
