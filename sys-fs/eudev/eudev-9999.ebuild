@@ -16,7 +16,7 @@ else
 	S="${WORKDIR}"/${PN}-${MY_PV}
 
 	if [[ ${PV} != *_pre* ]] ; then
-		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 	fi
 fi
 
@@ -58,9 +58,7 @@ RDEPEND="
 	acct-group/usb
 	acct-group/video
 	!sys-apps/systemd-utils[udev]
-	!sys-fs/udev
 	!sys-apps/systemd
-	!sys-apps/hwids[udev]
 "
 BDEPEND="
 	dev-util/gperf
@@ -243,17 +241,6 @@ pkg_postinst() {
 			fi
 		fi
 	done
-
-	if has_version 'sys-apps/hwids[udev]'; then
-		udevadm hwdb --update --root="${ROOT}"
-
-		# https://cgit.freedesktop.org/systemd/systemd/commit/?id=1fab57c209035f7e66198343074e9cee06718bda
-		# reload database after it has be rebuilt, but only if we are not upgrading
-		# also pass if we are -9999 since who knows what hwdb related changes there might be
-		if [[ ${rvres} == doit* ]] && [[ -z ${ROOT} ]] && [[ ${PV} != "9999" ]]; then
-			udevadm control --reload
-		fi
-	fi
 
 	if [[ ${rvres} != doitnew ]]; then
 		ewarn

@@ -6,12 +6,17 @@ KV_MIN=2.6.39
 
 inherit linux-info multilib-minimal toolchain-funcs udev
 
-MY_PV=${PV/_pre/-pre}
-SRC_URI="https://github.com/eudev-project/eudev/releases/download/v${MY_PV}/${PN}-${MY_PV}.tar.gz"
-S="${WORKDIR}"/${PN}-${MY_PV}
+if [[ ${PV} = 9999* ]]; then
+	EGIT_REPO_URI="https://github.com/eudev-project/eudev.git"
+	inherit autotools git-r3
+else
+	MY_PV=${PV/_pre/-pre}
+	SRC_URI="https://github.com/eudev-project/eudev/releases/download/v${MY_PV}/${PN}-${MY_PV}.tar.gz"
+	S="${WORKDIR}"/${PN}-${MY_PV}
 
-if [[ ${PV} != *_pre* ]] ; then
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	if [[ ${PV} != *_pre* ]] ; then
+		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	fi
 fi
 
 DESCRIPTION="Linux dynamic and persistent device naming support (aka userspace devfs)"
@@ -28,6 +33,7 @@ DEPEND="
 	virtual/libcrypt:=
 	kmod? ( >=sys-apps/kmod-16 )
 	selinux? ( >=sys-libs/libselinux-2.1.9 )
+	!sys-apps/gentoo-systemd-integration
 	!sys-apps/systemd
 "
 RDEPEND="
@@ -50,9 +56,8 @@ RDEPEND="
 	acct-group/tty
 	acct-group/usb
 	acct-group/video
-	!sys-fs/udev
+	!sys-apps/systemd-utils[udev]
 	!sys-apps/systemd
-	!sys-apps/hwids[udev]
 "
 BDEPEND="
 	dev-util/gperf
@@ -67,6 +72,11 @@ PDEPEND=">=sys-fs/udev-init-scripts-26"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/udev.h
+)
+
+PATCHES=(
+	"${FILESDIR}"/${P}-DEBUG.patch
+	"${FILESDIR}"/${P}-urandom.patch
 )
 
 pkg_pretend() {
@@ -103,6 +113,10 @@ src_prepare() {
 	# Change rules back to group uucp instead of dialout for now
 	sed -e 's/GROUP="dialout"/GROUP="uucp"/' -i rules/*.rules \
 		|| die "failed to change group dialout to uucp"
+
+	if [[ ${PV} == 9999* ]] ; then
+		eautoreconf
+	fi
 }
 
 rootprefix() {
@@ -231,17 +245,6 @@ pkg_postinst() {
 			fi
 		fi
 	done
-
-	if has_version 'sys-apps/hwids[udev]'; then
-		udevadm hwdb --update --root="${ROOT}"
-
-		# https://cgit.freedesktop.org/systemd/systemd/commit/?id=1fab57c209035f7e66198343074e9cee06718bda
-		# reload database after it has be rebuilt, but only if we are not upgrading
-		# also pass if we are -9999 since who knows what hwdb related changes there might be
-		if [[ ${rvres} == doit* ]] && [[ -z ${ROOT} ]] && [[ ${PV} != "9999" ]]; then
-			udevadm control --reload
-		fi
-	fi
 
 	if [[ ${rvres} != doitnew ]]; then
 		ewarn
