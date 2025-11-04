@@ -30,6 +30,7 @@ src_unpack() {
 	UNIPATCH_STRICTORDER=1
 	UNIPATCH_LIST_DEFAULT="${DISTDIR}/patch-${OKV}-xanmod${XANMOD_VERSION}.xz "
 	UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
+	UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1710_disable_sse4a*"
 	kernel-2_src_unpack
 }
 
