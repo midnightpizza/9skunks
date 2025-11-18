@@ -3,33 +3,33 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-128esr-patches-12.tar.xz"
+FIREFOX_PATCHSET="firefox-140esr-patches-03.tar.xz"
 
-LLVM_COMPAT=( 17 18 19 20 )
-
-PYTHON_COMPAT=( python3_{11..13} )
-PYTHON_REQ_USE="ncurses,sqlite,ssl"
+LLVM_COMPAT=( 19 20 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
-# If not building with clang we need at least rust 1.76
-RUST_MIN_VER=1.77.1
 
-WANT_AUTOCONF="2.1"
+# If not building with clang we need at least rust 1.76
+RUST_MIN_VER=1.82.0
+
+PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 # Convert the ebuild version to the upstream Mozilla version
 MOZ_PV="${PV/_p*}esr"
 
-# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/firefox/config?ref_type=heads#L17
-# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/config?ref_type=heads#L114
+# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/config#L17
+# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/browser/config#L116
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="14.5.8"
-TOR_TAG="${TOR_PV%.*}-1-build6"
-NOSCRIPT_VERSION="13.0.9"
-NOSCRIPT_ID="4551629"
+TOR_PV="15.0.1"
+TOR_TAG="${TOR_PV%.*}-1-build2"
+#TOR_TAG="${TOR_PV}-1-build2"
+NOSCRIPT_VERSION="14.4"
+NOSCRIPT_ID="4597669"
 CHANGELOG_TAG="${TOR_PV}-build1"
 
-inherit autotools check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
+inherit check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
 	pax-utils python-any-r1 rust toolchain-funcs xdg
 
 TOR_SRC_BASE_URI="https://dist.torproject.org/torbrowser/${TOR_PV}"
@@ -53,11 +53,11 @@ SRC_URI="
 S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
 LICENSE="BSD CC-BY-3.0 MPL-2.0 GPL-2 LGPL-2.1"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64"
 
 IUSE="+clang dbus hardened pulseaudio"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
-IUSE+=" system-png +system-webp wayland +X"
+IUSE+=" system-pipewire system-png +system-webp wayland +X"
 
 REQUIRED_USE="|| ( X wayland )
 	wayland? ( dbus )"
@@ -73,7 +73,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.26.0
+	>=dev-util/cbindgen-0.27.0
 	net-libs/nodejs
 	virtual/pkgconfig
 	amd64? ( >=dev-lang/nasm-2.14 )
@@ -84,17 +84,18 @@ COMMON_DEPEND="
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.101
+	>=dev-libs/nss-3.112.2
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/mesa
-	media-video/ffmpeg
+	<media-video/ffmpeg-8.0
 	sys-libs/zlib
 	virtual/freedesktop-icon-theme
 	x11-libs/cairo
 	x11-libs/gdk-pixbuf:2
+	x11-libs/libdrm
 	x11-libs/pango
 	x11-libs/pixman
 	dbus? (
@@ -108,16 +109,18 @@ COMMON_DEPEND="
 	)
 	system-av1? (
 		>=media-libs/dav1d-1.0.0:=
-		>=media-libs/libaom-1.0.0:=
+		>=media-libs/libaom-3.10.0:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
+		>=media-gfx/graphite2-1.3.13
 	)
-	system-icu? ( >=dev-libs/icu-73.1:= )
+	system-icu? ( >=dev-libs/icu-76.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
-	system-png? ( >=media-libs/libpng-1.6.35:0=[apng] )
+	system-pipewire? ( >=media-video/pipewire-1.4.7-r2:= )
+	system-png? ( >=media-libs/libpng-1.6.45:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	wayland? (
 		>=media-libs/libepoxy-1.5.10-r1
@@ -230,7 +233,7 @@ mozconfig_use_with() {
 
 pkg_pretend() {
 	# Ensure we have enough disk space to compile
-	CHECKREQS_DISK_BUILD="6600M"
+	CHECKREQS_DISK_BUILD="7400M"
 
 	check-reqs_pkg_pretend
 }
@@ -275,12 +278,6 @@ pkg_setup() {
 }
 
 src_prepare() {
-	# Workaround for bgo#917599
-	if has_version ">=dev-libs/icu-74.1" && use system-icu ; then
-		eapply "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch
-	fi
-	rm -v "${WORKDIR}"/firefox-patches/*-bmo-1862601-system-icu-74.patch || die
-
 	# Workaround for bgo#915651 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
@@ -288,10 +285,11 @@ src_prepare() {
 
 	eapply "${WORKDIR}/firefox-patches"
 
-	# https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/20497#note_2873088
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/issues/44311
+	# see https://codeberg.org/librewolf/source/src/branch/main/patches/moz-configure.patch
 	sed -i \
-		-e "s/MOZ_APP_VENDOR=\"Tor Project\"/MOZ_APP_VENDOR=\"TorProject\"/" \
-		"${S}"/browser/confvars.sh || die
+		-e "/\"MOZ_APP_PROFILE\",/a \ \ \ \ default=\"torproject/torbrowser\"," \
+		"${S}"/toolkit/moz.configure || die
 
 	# Allow user to apply any additional patches without modifing ebuild
 	eapply_user
@@ -308,30 +306,15 @@ src_prepare() {
 		fi
 	fi
 
-	# Make LTO respect MAKEOPTS
+	# Respect MAKEOPTS
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/build/moz.configure/lto-pgo.configure || die "Failed sedding multiprocessing.cpu_count"
 
-	# Make ICU respect MAKEOPTS
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/intl/icu_sources_data.py || die "Failed sedding multiprocessing.cpu_count"
-
-	# Respect MAKEOPTS all around (maybe some find+sed is better)
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/base.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/third_party/libwebrtc/build/toolchain/get_concurrent_links.py ||
-			die "Failed sedding multiprocessing.cpu_count"
+		"${S}"/third_party/chromium/build/toolchain/get_cpu_count.py || die "Failed sedding multiprocessing.cpu_count"
 
 	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
 		"${S}"/third_party/python/gyp/pylib/gyp/input.py || die "Failed sedding multiprocessing.cpu_count"
-
-	sed -i -e "s/multiprocessing.cpu_count()/$(makeopts_jobs)/" \
-		"${S}"/python/mozbuild/mozbuild/code_analysis/mach_commands.py || die "Failed sedding multiprocessing.cpu_count"
 
 	# sed-in toolchain prefix
 	sed -i \
@@ -454,47 +437,43 @@ src_configure() {
 		--disable-crashreporter \
 		--disable-disk-remnant-avoidance \
 		--disable-geckodriver \
-		--disable-gpsd \
 		--disable-install-strip \
 		--disable-legacy-profile-creation \
 		--disable-parental-controls \
 		--disable-strip \
-		--disable-tests \
 		--disable-updater \
-		--disable-valgrind \
 		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
-		--enable-official-branding \
+		--enable-packed-relative-relocs \
 		--enable-release \
-		--enable-system-pixman \
 		--enable-system-policies \
 		--host="${CBUILD:-${CHOST}}" \
 		--libdir="${EPREFIX}/usr/$(get_libdir)" \
 		--prefix="${EPREFIX}/usr" \
 		--target="${CHOST}" \
 		--without-ccache \
-		--without-wasm-sandboxed-libraries \
 		--with-intl-api \
 		--with-libclang-path="$(llvm-config --libdir)" \
-		--enable-system-ffi \
+		--with-system-ffi \
+		--with-system-gbm \
+		--with-system-libdrm \
 		--with-system-nspr \
 		--with-system-nss \
+		--with-system-pixman \
 		--with-system-zlib \
 		--with-toolchain-prefix="${CHOST}-" \
-		--with-unsigned-addon-scopes=app,system \
-		--x-includes="${ESYSROOT}/usr/include" \
-		--x-libraries="${ESYSROOT}/usr/$(get_libdir)"
+		--with-unsigned-addon-scopes=app,system
 
 	einfo "Building without Mozilla API key ..."
 
 	mozconfig_use_with system-av1
 	mozconfig_use_with system-harfbuzz
-	mozconfig_use_with system-harfbuzz system-graphite2
 	mozconfig_use_with system-icu
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent
 	mozconfig_use_with system-libvpx
+	mozconfig_use_with system-pipewire
 	mozconfig_use_with system-png
 	mozconfig_use_with system-webp
 
@@ -536,27 +515,29 @@ src_configure() {
 	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/issues/40745
 	export MOZ_APP_BASENAME="TorBrowser"
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/firefox/build#L112
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/build#L104
 	mozconfig_add_options_ac 'torbrowser' \
 		--with-base-browser-version=${TOR_PV} \
 		--enable-update-channel=release \
 		--with-branding=browser/branding/tb-release \
 		--without-wasm-sandboxed-libraries
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.9.0esr-14.5-1/browser/config/mozconfigs/tor-browser
-	mozconfig_add_options_mk 'torbrowser' "MOZ_APP_DISPLAYNAME=\"Tor Browser\""
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-140.4.0esr-15.0-1/browser/config/mozconfigs/tor-browser
+	# with-user-appdir is not honored but set it here anyway
+	export MOZ_APP_REMOTINGNAME="Tor Browser"
 	mozconfig_add_options_ac 'torbrowser' \
 		--without-relative-data-dir \
 		--with-user-appdir=.torproject \
 		--with-distribution-id=org.torproject
 
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-128.9.0esr-14.5-1/browser/config/mozconfigs/base-browser
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser/-/blob/tor-browser-140.4.0esr-15.0-1/browser/config/mozconfigs/base-browser
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/mozconfig#L82
 	export MOZILLA_OFFICIAL=1
 	mozconfig_add_options_ac 'torbrowser' \
-		--enable-official-branding \
 		--enable-optimize \
 		--enable-rust-simd \
 		--disable-unverified-updates \
+		--disable-updater \
 		--disable-base-browser-update \
 		--enable-bundled-fonts \
 		--disable-tests \
@@ -569,7 +550,7 @@ src_configure() {
 		--disable-backgroundtasks \
 		MOZ_TELEMETRY_REPORTING= \
 		--disable-legacy-profile-creation \
-		--enable-geckodriver
+		--without-wasm-sandboxed-libraries
 
 	# Avoid auto-magic on linker
 	if use clang ; then
@@ -639,6 +620,11 @@ src_configure() {
 
 	export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE="none"
 
+	mozconfig_add_options_mk '-telemetry setting' "MOZ_CRASHREPORTER=0"
+	mozconfig_add_options_mk '-telemetry setting' "MOZ_DATA_REPORTING=0"
+	mozconfig_add_options_mk '-telemetry setting' "MOZ_SERVICES_HEALTHREPORT=0"
+	mozconfig_add_options_mk '-telemetry setting' "MOZ_TELEMETRY_REPORTING=0"
+
 	# Disable notification when build system has finished
 	export MOZ_NOSPAM=1
 
@@ -688,7 +674,7 @@ src_compile() {
 	./mach build --verbose || die
 
 	# FIXME: add locale support
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-13.5/projects/firefox/build?ref_type=heads#L173
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/build#L112
 	./mach build stage-package || die
 }
 
@@ -744,11 +730,11 @@ src_install() {
 	done
 
 	# Install menu
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-14.5/projects/browser/RelativeLink/start-browser.desktop
+	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/browser/RelativeLink/start-browser.desktop
 	domenu "${FILESDIR}"/torbrowser.desktop
 
 	# Install wrapper
-	# see: https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/RelativeLink/start-browser
+	# see: https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/browser/RelativeLink/start-browser
 	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
 	rm "${ED}"/usr/bin/torbrowser || die # symlink to /usr/lib64/torbrowser/torbrowser
 
