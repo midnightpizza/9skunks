@@ -521,6 +521,8 @@ src_prepare() {
 
 
 	#eapply "${FILESDIR}/waterfox-6.0-fix-langpack-id.patch"
+	rm -v "${WORKDIR}"/firefox-patches/*-python-3.14-support.patch || die
+
 	eapply "${WORKDIR}/firefox-patches"
 	#eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
 	eapply "${FILESDIR}/remove-missing-icons.patch"
