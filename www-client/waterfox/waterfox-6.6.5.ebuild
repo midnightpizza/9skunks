@@ -6,23 +6,23 @@ EAPI=8
 FIREFOX_PATCHSET="firefox-140esr-patches-03.tar.xz"
 FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
-LLVM_COMPAT=( 19 20 )
+LLVM_COMPAT=( 19 20 21 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
+
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.82.0
 
 PYTHON_COMPAT=( python3_{11..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
-WANT_AUTOCONF="2.1"
 
 VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
 WF_PV="${PV/_beta/b}"
-WASI_SDK_VER=27.0
-WASI_SDK_LLVM_VER=20
+WASI_SDK_VER=28.0
+WASI_SDK_LLVM_VER=21
 
 WF_SRC_BASE_URI="https://github.com/BrowserWorks/Waterfox/archive/refs/tags/"
 
@@ -102,7 +102,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.112.1
+	>=dev-libs/nss-3.112.2
 	>=dev-libs/nspr-4.35
 	media-libs/alsa-lib
 	media-libs/fontconfig
