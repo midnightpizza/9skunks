@@ -1,7 +1,7 @@
 # Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit usr-ldscript
 
@@ -19,11 +19,12 @@ BDEPEND="virtual/os-headers"
 src_prepare() {
 	default
 
-	# remove stupid CFLAG hardcodes
+	# remove hardcoded CFLAGS
 	sed -i \
 		-e "/GENERIC_CFLAGS/s@-O3@@" \
 		-e "/^CFLAGS=/s@\"\"@\"${CFLAGS}\"@" \
 		configure || die
+
 	printf '#!/bin/sh\n:\n' > run-ldconfig || die
 }
 
