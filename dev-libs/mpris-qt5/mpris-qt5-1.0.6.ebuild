@@ -1,7 +1,7 @@
 # Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 MY_PN="qtmpris"
 inherit qmake-utils
@@ -15,9 +15,10 @@ SLOT="0"
 KEYWORDS="~arm64 amd64"
 IUSE=""
 
-RDEPEND="dev-qt/qtdbus:5"
-
-DEPEND="${RDEPEND}"
+RDEPEND="
+	dev-qt/qtdbus:5
+"
+# DEPEND is unnecessary in EAPI>=7 when identical to RDEPEND
 
 S="${WORKDIR}/${MY_PN}-${PV}"
 
