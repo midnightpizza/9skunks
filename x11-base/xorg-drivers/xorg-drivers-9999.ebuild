@@ -1,17 +1,18 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 DESCRIPTION="Meta package containing deps on all xorg drivers"
 HOMEPAGE="https://wiki.gentoo.org/wiki/No_homepage"
 
 LICENSE="metapackage"
 SLOT="0"
+
 if [[ ${PV} != 9999 ]]; then
 	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
 else
-	PROPERTIES+=" live"
+	PROPERTIES="live"
 fi
 
 IUSE_INPUT_DEVICES="
@@ -24,6 +25,7 @@ IUSE_INPUT_DEVICES="
 	input_devices_synaptics
 	input_devices_wacom
 "
+
 IUSE_VIDEO_CARDS="
 	video_cards_amdgpu
 	video_cards_ast
@@ -83,7 +85,7 @@ PDEPEND="
 	video_cards_nvidia?        ( x11-drivers/nvidia-drivers )
 	video_cards_r128?          ( >=x11-drivers/xf86-video-r128-6.10.2 )
 	video_cards_radeon?        ( >=x11-drivers/xf86-video-ati-18.0.1-r1 )
-	video_cards_radeonsi?      ( >=x11-drivers/xf86-video-amdgpu-18.0.1-r1 )
+	video_cards_radeonsi?      ( >=x11-drivers/xf86-video-ati-18.0.1-r1 )
 	video_cards_siliconmotion? ( >=x11-drivers/xf86-video-siliconmotion-1.7.9 )
 	video_cards_tegra?         ( >=x11-base/xorg-server-${PV}[-minimal] )
 	video_cards_vc4?           ( >=x11-base/xorg-server-${PV}[-minimal] )
