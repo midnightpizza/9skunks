@@ -22,7 +22,6 @@ VIRTUALX_REQUIRED="manual"
 # Used when cloning patches repository.
 LIBREWOLF_PV="${PV}-2"
 
-
 # Information about the bundled wasi toolchain from
 # https://github.com/WebAssembly/wasi-sdk/
 WASI_SDK_VER=29.0
@@ -59,8 +58,7 @@ MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
 if [[ ${PV} == *_rc* ]] ; then
 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
 fi
-#LIBREWOLF_SRC_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
-LIBREWOLF_SRC_URI="https://codeberg.org/librewolf/source/archive/${PV}-2.tar.gz"
+LIBREWOLF_SRC_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
@@ -74,6 +72,7 @@ SRC_URI="${LIBREWOLF_SRC_URI} -> librewolf-${LIBREWOLF_PV}.source.tar.gz
 		amd64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-x86_64-linux.tar.gz )
 		arm64? ( https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER/.*/}/wasi-sdk-${WASI_SDK_VER}-arm64-linux.tar.gz )
 	)"
+#S="${WORKDIR}/source"
 S="${WORKDIR}/librewolf-${LIBREWOLF_PV}"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 SLOT="rapid"
@@ -680,7 +679,7 @@ src_prepare() {
 			elog "riscv detected, forcing a riscv64 target for now."
 			export RUST_TARGET="riscv64gc-unknown-linux-musl"
 		else
-			elog "Unknown musl chost, please post a new bug with your rustc -vV along with emerge --info"
+			die "Unknown musl chost, please post a new bug with your rustc -vV along with emerge --info"
 		fi
 	fi
 
