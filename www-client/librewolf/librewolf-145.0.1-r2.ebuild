@@ -18,6 +18,10 @@ PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 VIRTUALX_REQUIRED="manual"
 
+# Librewolf version (please rev-bump if changed)
+# Used when cloning patches repository.
+LIBREWOLF_PV="${PV/_p/-}"
+
 # Information about the bundled wasi toolchain from
 # https://github.com/WebAssembly/wasi-sdk/
 WASI_SDK_VER=29.0
@@ -54,7 +58,8 @@ MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/releases/${MOZ_PV}"
 if [[ ${PV} == *_rc* ]] ; then
 	MOZ_SRC_BASE_URI="https://archive.mozilla.org/pub/${MOZ_PN}/candidates/${MOZ_PV}-candidates/build${PV##*_rc}"
 fi
-LIBREWOLF_SRC_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
+#LIBREWOLF_SRC_URI="https://gitlab.com/api/v4/projects/32320088/packages/generic/librewolf-source/${LIBREWOLF_PV}/librewolf-${LIBREWOLF_PV}.source.tar.gz"
+LIBREWOLF_SRC_URI="https://codeberg.org/librewolf/source/archive/${PV}-2.tar.gz"
 
 PATCH_URIS=(
 	https://dev.gentoo.org/~juippis/mozilla/patchsets/${FIREFOX_PATCHSET}
@@ -89,7 +94,6 @@ REQUIRED_USE="|| ( X wayland )
 	wifi? ( dbus )
 "
 
-RESTRICT="!test? ( test )"
 FF_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
 	$(llvm_gen_dep '
@@ -633,14 +637,14 @@ src_unpack() {
 }
 
 src_prepare() {
+	# LibreWolf already has this I think.
+	rm -v "${WORKDIR}/firefox-patches/0019-bgo-928126-enable-jxl.patch"
+
 	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
 
-	#jxl patch fails
-	rm -v "${WORKDIR}"/firefox-patches/*-bgo-*-enable-jxl.patch || die
-
-	# Workaround for bgo#915651 on musl
+	# Workaround for bgo#915651 and bmo#1988166 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 		rm -v "${WORKDIR}"/firefox-patches/*bmo-1988166-musl-remove-nonexisting-system-header-req.patch || die
