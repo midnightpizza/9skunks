@@ -1,9 +1,9 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit gnome2 cmake
+inherit cmake
 
 DESCRIPTION="Maliit framework core libraries and server"
 HOMEPAGE="https://maliit.github.io/"
@@ -13,7 +13,6 @@ LICENSE="LGPL-3 CC-BY-3.0"
 SLOT="0"
 KEYWORDS="arm64 amd64"
 IUSE="dbus doc examples glib qt5 test wayland xcb"
-RESTRICT="!test? ( test )"
 
 RDEPEND="
 	dev-qt/qtcore:5
@@ -39,18 +38,18 @@ RDEPEND="
 	)
 "
 
-DEPEND="${RDEPEND}
+DEPEND="
+	${RDEPEND}
 	doc? ( app-doc/doxygen )
-	test? (
-		dev-qt/qttest:5
-	)
+	test? ( dev-qt/qttest:5 )
 "
 
 S="${WORKDIR}/framework-${PV}"
 
 src_prepare() {
-	default
 	cmake_src_prepare
+	eapply_user
+
 	sed -i \
 		-e "s_/doc/maliit-framework-doc_/doc/${P}_" \
 		-e "s_/doc/maliit-framework_/doc/${P}_" \
@@ -59,14 +58,14 @@ src_prepare() {
 
 src_configure() {
 	local mycmakeargs=(
-		-Denable-dbus-activation:BOOL=$(use dbus && echo ON || echo OFF)
-		-Denable-docs:BOOL=$(use doc && echo ON || echo OFF)
-		-Denable-examples:BOOL=$(use examples && echo ON || echo OFF)
-		-Denable-glib:BOOL=$(use glib && echo ON || echo OFF)
-		-Denable-qt5-inputcontext:BOOL=$(use qt5 && echo ON || echo OFF)
-		-Denable-tests:BOOL=$(use test && echo ON || echo OFF)
-		-Denable-wayland:BOOL=$(use wayland && echo ON || echo OFF)
-		-Denable-xcb:BOOL=$(use xcb && echo ON || echo OFF)
+		-Denable-dbus-activation=$(usex dbus ON OFF)
+		-Denable-docs=$(usex doc ON OFF)
+		-Denable-examples=$(usex examples ON OFF)
+		-Denable-glib=$(usex glib ON OFF)
+		-Denable-qt5-inputcontext=$(usex qt5 ON OFF)
+		-Denable-tests=$(usex test ON OFF)
+		-Denable-wayland=$(usex wayland ON OFF)
+		-Denable-xcb=$(usex xcb ON OFF)
 	)
 
 	cmake_src_configure
