@@ -1,9 +1,9 @@
 # Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit multilib toolchain-funcs usr-ldscript
+inherit multilib toolchain-funcs
 
 DESCRIPTION="reiser4progs: mkfs, fsck, etc..."
 HOMEPAGE="https://sourceforge.net/projects/reiser4/"
@@ -14,18 +14,29 @@ SLOT="0"
 KEYWORDS="amd64 arm ~arm64 ~loong ppc ppc64 -sparc x86"
 IUSE="debug readline static static-libs"
 
-LIB_DEPEND=">=sys-libs/libaal-1.0.7:=[static-libs(+)]
-	readline? ( sys-libs/readline:0=[static-libs(+)] )"
-RDEPEND="!static? ( ${LIB_DEPEND//\[static-libs(+)]} )
-	static-libs? ( >=sys-libs/libaal-1.0.7:=[static-libs(+)] )"
-DEPEND="${RDEPEND}
-	static? ( ${LIB_DEPEND} )"
+LIB_DEPEND="
+	>=sys-libs/libaal-1.0.7:=[static-libs(+)]
+	readline? ( sys-libs/readline:0=[static-libs(+)] )
+"
 
-PATCHES=( "${FILESDIR}"/${PN}-1.0.7-readline-6.3.patch )
+RDEPEND="
+	!static? ( ${LIB_DEPEND//\[static-libs(+)]} )
+	static-libs? ( >=sys-libs/libaal-1.0.7:=[static-libs(+)] )
+"
+
+DEPEND="
+	${RDEPEND}
+	static? ( ${LIB_DEPEND} )
+"
+
+PATCHES=(
+	"${FILESDIR}/${PN}-1.0.7-readline-6.3.patch"
+)
 
 src_prepare() {
-	printf '#!/bin/sh\ntrue\n' > run-ldconfig
-	# Delete hardcoded link/compile flags.
+	printf '#!/bin/sh\ntrue\n' > run-ldconfig || die
+
+	# Remove invalid/forced flags.
 	sed -i -r \
 		-e '/CFLAGS=/s: -static":":' \
 		-e '/CFLAGS/s: (-O[123s]|-g)\>::g' \
@@ -49,6 +60,7 @@ src_configure() {
 
 src_install() {
 	default
-	gen_usr_ldscript -a reiser4{,-minimal} repair
-	find "${ED}" -type f -name "*.la" -delete || die
+
+	# Remove libtool archives
+	find "${ED}" -type f -name '*.la' -delete || die
 }
