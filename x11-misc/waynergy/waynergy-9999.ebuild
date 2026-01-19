@@ -16,7 +16,7 @@ RESTRICT="!test? ( test )"
 KEYWORDS="~amd64 ~x86"
 
 RDEPEND="
-    !libressl? ( dev-libs/libretl )
+    !libressl? ( dev-libs/libretls )
     libressl? ( dev-libs/libressl )
     x11-libs/libxkbcommon
     dev-libs/wayland
