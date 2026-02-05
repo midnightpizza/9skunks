@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -8,8 +8,8 @@ inherit gnustep-2 desktop
 DESCRIPTION="Elite space trading & warfare remake"
 HOMEPAGE="http://oolite.org/"
 FF_JS_URI="http://jens.ayton.se/oolite/deps/firefox-4.0.source.js-only.tbz"
-BINRES_REV=1fe395fe185611b2de54b027cda6c29f15a9f3a0
-OOLITE_REV=1.90
+BINRES_REV=4a48496806fad1dce29a92045909cf2d483d7505
+OOLITE_REV=1.92
 SDLDEL_REV=dd17796b2ee1257bea04aeffaec660f6c75eadf2
 SRC_URI="https://github.com/OoliteProject/oolite/archive/${OOLITE_REV}.tar.gz -> ${P}.tar.gz
 	https://github.com/OoliteProject/oolite-binary-resources/archive/${BINRES_REV}.tar.gz -> oolite-binary-resources-${PV}.tar.gz
