@@ -1,13 +1,11 @@
 # Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-
 EAPI=8
 
 inherit gnustep-2 desktop
-
+LLVM_COMPAT=( {18..21} )
 DESCRIPTION="Elite space trading & warfare remake"
 HOMEPAGE="http://oolite.org/"
-FF_JS_URI="http://jens.ayton.se/oolite/deps/firefox-4.0.source.js-only.tbz"
 BINRES_REV=4a48496806fad1dce29a92045909cf2d483d7505
 OOLITE_REV=1.92
 SDLDEL_REV=dd17796b2ee1257bea04aeffaec660f6c75eadf2
@@ -19,7 +17,7 @@ SRC_URI="https://github.com/OoliteProject/oolite/archive/${OOLITE_REV}.tar.gz ->
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="${IUSE} debug"
+IUSE="${IUSE} clang debug"
 
 RDEPEND="
 	virtual/opengl
@@ -33,11 +31,12 @@ RDEPEND="
 	media-libs/openal
 	dev-lang/spidermonkey
 	sys-libs/zlib[minizip]
+	clang? ( llvm-core/clang )
+	!clang? ( sys-devel/gcc[objc] )
+	gnustep-base/gnustep-make[!clang?(-libobjc2),libobjc2?]
 "
+BDEPEND="${DEPEND}"
 
-DEPEND="${RDEPEND}
-	gnustep-base/gnustep-make[-libobjc2]
-"
 
 PATCHES=(
 	"${FILESDIR}/${P}-gentoo.patch"
