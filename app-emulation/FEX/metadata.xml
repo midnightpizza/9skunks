@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="project">
+  <email>myau at riseup.net</email>
+</maintainer>
+<use>
+  <flag name="fexconfig">Build the FEXConfig tool</flag>
+  <flag name="thunks">Build thunk libraries</flag>
+  <flag name="qt6">Build FEXConfig using Qt 6</flag>
+</use>
+<upstream>
+  <remote-id type="github">FEX-Emu/FEX</remote-id>
+</upstream>
+</pkgmetadata>
