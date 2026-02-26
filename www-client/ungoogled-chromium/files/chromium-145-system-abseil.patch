@@ -46,7 +46,24 @@
 +}
 --- a/build/linux/unbundle/absl_container.gn
 +++ b/build/linux/unbundle/absl_container.gn
-@@ -129,3 +129,13 @@ source_set("raw_hash_set_test") {
+@@ -109,6 +109,16 @@ source_set("node_hash_set") {
+   public_configs = [ ":system_absl_node_hash_set" ]
+ }
+ 
++shim_headers("hash_container_defaults_shim") {
++  root_path = "."
++  prefix = "absl/container/"
++  headers = [ "hash_container_defaults.h" ]
++}
++
++source_set("hash_container_defaults") {
++  deps = [ ":hash_container_defaults_shim" ]
++}
++
+ source_set("common_policy_traits_test") {
+ }
+ source_set("fixed_array_test") {
+@@ -129,3 +139,21 @@ source_set("raw_hash_set_test") {
  }
  source_set("sample_element_size_test") {
  }
@@ -60,9 +77,17 @@
 +}
 +source_set("hashtablez_sampler") {
 +}
++source_set("linked_hash_map") {
++}
++source_set("linked_hash_set") {
++}
++source_set("linked_hash_map_test") {
++}
++source_set("linked_hash_set_test") {
++}
 --- a/build/linux/unbundle/absl_debugging.gn
 +++ b/build/linux/unbundle/absl_debugging.gn
-@@ -50,3 +50,9 @@ source_set("demangle_rust_test") {
+@@ -50,3 +50,11 @@ source_set("demangle_rust_test") {
  }
  source_set("stacktrace_test") {
  }
@@ -71,6 +96,8 @@
 +source_set("decode_rust_punycode_test") {
 +}
 +source_set("utf8_for_code_point_test") {
++}
++source_set("leak_check") {
 +}
 --- a/build/linux/unbundle/absl_flags.gn
 +++ b/build/linux/unbundle/absl_flags.gn
@@ -129,11 +156,23 @@
 +}
 --- a/build/linux/unbundle/absl_log_internal.gn
 +++ b/build/linux/unbundle/absl_log_internal.gn
-@@ -2,3 +2,5 @@ source_set("fnmatch_test") {
+@@ -2,3 +2,7 @@ source_set("fnmatch_test") {
  }
  source_set("stderr_log_sink_test") {
  }
 +source_set("structured_proto_test") {
++}
++source_set("container_test") {
++}
+--- a/build/linux/unbundle/absl_meta.gn
++++ b/build/linux/unbundle/absl_meta.gn
+@@ -18,3 +18,7 @@ source_set("type_traits") {
+ 
+ source_set("type_traits_test") {
+ }
++source_set("constexpr_testing_test") {
++}
++source_set("requires_test") {
 +}
 --- a/build/linux/unbundle/absl_random.gn
 +++ b/build/linux/unbundle/absl_random.gn
@@ -156,7 +195,7 @@
    ]
  }
  
-@@ -136,3 +138,15 @@ source_set("str_replace_test") {
+@@ -136,3 +138,19 @@ source_set("str_replace_test") {
  }
  source_set("string_view_test") {
  }
@@ -171,6 +210,10 @@
 +source_set("str_cat_test") {
 +}
 +source_set("resize_and_overwrite_test") {
++}
++source_set("append_and_overwrite_test") {
++}
++source_set("generic_printer_test") {
 +}
 --- a/build/linux/unbundle/absl_synchronization.gn
 +++ b/build/linux/unbundle/absl_synchronization.gn
@@ -188,9 +231,9 @@
 +}
 --- a/components/proto_extras/proto_extras_lib.h
 +++ b/components/proto_extras/proto_extras_lib.h
-@@ -12,10 +12,8 @@
- #include "base/numerics/safe_conversions.h"
+@@ -13,10 +13,8 @@
  #include "base/strings/string_number_conversions.h"
+ #include "base/strings/stringprintf.h"
  #include "base/values.h"
 +#include "third_party/abseil-cpp/absl/strings/cord.h"
  
@@ -231,6 +274,26 @@
      return !names.contains(key_value.unescaped_key);
    });
  }
+--- a/net/third_party/quiche/src/quiche/blind_sign_auth/cached_blind_sign_auth.cc
++++ b/net/third_party/quiche/src/quiche/blind_sign_auth/cached_blind_sign_auth.cc
+@@ -42,7 +42,7 @@ void CachedBlindSignAuth::GetTokens(std:
+ 
+   std::vector<BlindSignToken> output_tokens;
+   {
+-    absl::WriterMutexLock lock(mutex_);
++    absl::WriterMutexLock lock(&mutex_);
+ 
+     RemoveExpiredTokens();
+     // Try to fill the request from cache.
+@@ -83,7 +83,7 @@ void CachedBlindSignAuth::HandleGetToken
+   std::vector<BlindSignToken> output_tokens;
+   size_t cache_size;
+   {
+-    absl::WriterMutexLock lock(mutex_);
++    absl::WriterMutexLock lock(&mutex_);
+ 
+     // Add returned tokens to cache.
+     for (const BlindSignToken& token : *tokens) {
 --- a/net/third_party/quiche/src/quiche/quic/core/crypto/crypto_secret_boxer.cc
 +++ b/net/third_party/quiche/src/quiche/quic/core/crypto/crypto_secret_boxer.cc
 @@ -68,7 +68,7 @@ bool CryptoSecretBoxer::SetKeys(const st
@@ -400,6 +463,42 @@
    auto it = factories_.find(name);
    return (it != factories_.end())
               ? it->second(settings, model_namespace, model_id)
+--- a/third_party/tflite/src/third_party/xla/third_party/tsl/tsl/platform/mutex.h
++++ b/third_party/tflite/src/third_party/xla/third_party/tsl/tsl/platform/mutex.h
+@@ -222,27 +222,27 @@ inline ConditionResult WaitForMillisecon
+ 
+ inline mutex::mutex() = default;
+ 
+-inline void mutex::lock() TF_EXCLUSIVE_LOCK_FUNCTION() { mu_.lock(); }
++inline void mutex::lock() TF_EXCLUSIVE_LOCK_FUNCTION() { mu_.Lock(); }
+ 
+ inline bool mutex::try_lock() TF_EXCLUSIVE_TRYLOCK_FUNCTION(true) {
+-  return mu_.try_lock();
++  return mu_.TryLock();
+ };
+ 
+-inline void mutex::unlock() TF_UNLOCK_FUNCTION() { mu_.unlock(); }
++inline void mutex::unlock() TF_UNLOCK_FUNCTION() { mu_.Unlock(); }
+ 
+ inline void mutex::assert_held() const TF_ASSERT_EXCLUSIVE_LOCK() {
+   mu_.AssertHeld();
+ }
+ 
+ inline void mutex::lock_shared() TF_SHARED_LOCK_FUNCTION() {
+-  mu_.lock_shared();
++  mu_.ReaderLock();
+ }
+ 
+ inline bool mutex::try_lock_shared() TF_SHARED_TRYLOCK_FUNCTION(true) {
+-  return mu_.try_lock_shared();
++  return mu_.ReaderTryLock();
+ }
+ 
+-inline void mutex::unlock_shared() TF_UNLOCK_FUNCTION() { mu_.unlock_shared(); }
++inline void mutex::unlock_shared() TF_UNLOCK_FUNCTION() { mu_.ReaderUnlock(); }
+ 
+ inline void mutex::assert_held_shared() const TF_ASSERT_SHARED_LOCK() {
+   mu_.AssertReaderHeld();
 --- a/v8/src/base/platform/mutex.cc
 +++ b/v8/src/base/platform/mutex.cc
 @@ -60,17 +60,17 @@ Mutex::Mutex() {

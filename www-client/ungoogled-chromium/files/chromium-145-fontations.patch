@@ -38,7 +38,7 @@
           SkJpegDecoder::IsJpeg(data->data(), data->size()) ||
           SkWebpDecoder::IsWebp(data->data(), data->size());
  }
-@@ -203,8 +203,8 @@ sk_sp<SkImage> DeserializeImage(const vo
+@@ -202,8 +202,8 @@ sk_sp<SkImage> DeserializeImage(const vo
          codec->getInfo().makeAlphaType(kPremul_SkAlphaType);
      return std::get<0>(codec->getImage(targetInfo));
    };
@@ -49,54 +49,81 @@
          std::make_unique<SkMemoryStream>(std::move(data)), nullptr));
    }
    if (SkBmpDecoder::IsBmp(bytes, length)) {
+--- a/content/child/font_data/font_data_manager.cc
++++ b/content/child/font_data/font_data_manager.cc
+@@ -233,14 +233,7 @@ sk_sp<SkTypeface> FontDataManager::onMak
+   // Chromium currently always sets ENABLE_FREETYPE, but nonetheless allow
+   // falling back to fontations if the param is set to freetype but freetype
+   // isn't enabled.
+-#if BUILDFLAG(ENABLE_FREETYPE)
+-  if (features::kFontDataServiceTypefaceType.Get() ==
+-      features::FontDataServiceTypefaceType::kFreetype) {
+     return custom_fnt_mgr_->makeFromStream(std::move(stream), args);
+-  }
+-#endif
+-
+-  return SkTypeface_Make_Fontations(std::move(stream), args);
+ }
+ 
+ sk_sp<SkTypeface> FontDataManager::onMakeFromFile(const char path[],
 --- a/skia/BUILD.gn
 +++ b/skia/BUILD.gn
-@@ -173,17 +173,14 @@ config("skia_library_config") {
-   # `png_decode_rust` and `png_encode_rust` targets.
-   defines += [
+@@ -69,11 +69,9 @@ config("skia_config") {
+     # `third_party/skia/BUILD.gn`'s `png_decode_rust` and `png_encode_rust`
+     # targets.
      "SK_CODEC_DECODES_PNG",
 -    "SK_CODEC_DECODES_PNG_WITH_RUST",
 +    "SK_CODEC_DECODES_PNG_WITH_LIBPNG",
      "SK_CODEC_ENCODES_PNG",
 -    "SK_CODEC_ENCODES_PNG_WITH_RUST",
+-
+-    "SK_CODEC_DECODES_BMP_WITH_RUST",
 +    "SK_CODEC_ENCODES_PNG_WITH_LIBPNG",
- 
-     # https://crbug.com/443057959
-     #"SK_DISABLE_LEGACY_INIT_DECODERS",
    ]
  
+   include_dirs = [
+@@ -169,14 +167,6 @@ config("skia_library_config") {
+     defines += [ "SKCMS_DISABLE_SKX=1" ]
+   }
+ 
+-  defines += [
+-    "SK_DISABLE_LEGACY_INIT_DECODERS",
+-    "SK_DISABLE_LEGACY_PNG_WRITEBUFFER",
+-  ]
+-
 -  if (use_blink) {
 -    defines += [ "SK_TYPEFACE_FACTORY_FONTATIONS" ]
 -  }
    if (use_blink && !use_system_freetype) {
      defines += [ "SK_FREETYPE_MINIMUM_RUNTIME_VERSION_IS_BUILD_VERSION" ]
    }
-@@ -348,10 +345,8 @@ component("skia") {
+@@ -335,9 +325,8 @@ component("skia") {
    public += skia_utils_chromium
    public += skia_discardable_memory_chromium
    public += skia_codec_public
 -  public += skia_codec_rust_png_public
    public += skia_encode_public
-   public += skia_encode_png_public
 -  public += skia_encode_rust_png_public
++  public += skia_encode_png_public
    public += skia_encode_webp_public
-   public += skia_xps_rust_png_public
  
-@@ -363,13 +358,11 @@ component("skia") {
+   # The imported Skia gni source paths are made absolute by gn.
+@@ -347,12 +336,12 @@ component("skia") {
+   sources += skia_sksl_core_module_sources
    sources += skia_codec_shared
    sources += skia_codec_png_base
-   sources += skia_codec_libpng_srcs
 -  sources += skia_codec_rust_png
++  sources += skia_codec_libpng_srcs
    sources += skia_utils_private
    sources += skia_xps_sources
    sources += skia_encode_srcs
    sources += skia_encode_png_base
-   sources += skia_encode_libpng_srcs
 -  sources += skia_encode_rust_png_srcs
++  sources += skia_encode_libpng_srcs
    sources += skia_encode_webp_srcs
  
    sources += [
-@@ -431,8 +424,6 @@ component("skia") {
+@@ -414,8 +403,6 @@ component("skia") {
        public += skia_ports_fontmgr_empty_public
      }
      sources += skia_ports_typeface_proxy_sources
@@ -105,6 +132,24 @@
  
      # Fontations Rust/C++ bridge interfaces.
      deps += [
+@@ -646,7 +633,6 @@ source_set("rust_common_ffi_cpp") {
+   public_deps = [
+     ":skia_core_and_effects",
+     ":skia_core_public_headers",
+-    "//build/rust:cxx_cppdeps",
+   ]
+   configs -= [ "//build/config/compiler:chromium_code" ]
+   configs += [
+@@ -714,9 +700,7 @@ source_set("rust_bmp_ffi_cpp") {
+   public_deps = [
+     ":rust_common_ffi_cpp",
+     ":skia_core_public_headers",
+-    "//build/rust:cxx_cppdeps",
+   ]
+-  deps = [ ":rust_bmp_ffi_cxx_generated_gen" ]
+   check_includes =
+       false  # Logically part of skia, but split out for build reasons
+   configs -= [ "//build/config/compiler:chromium_code" ]
 --- a/skia/ext/codec_utils.cc
 +++ b/skia/ext/codec_utils.cc
 @@ -7,9 +7,9 @@
@@ -167,7 +212,15 @@
  }  // namespace skia
 --- a/skia/ext/font_utils.cc
 +++ b/skia/ext/font_utils.cc
-@@ -66,9 +66,7 @@ static sk_sp<SkFontMgr> fontmgr_factory(
+@@ -29,6 +29,7 @@
+ #include "third_party/skia/include/ports/SkFontConfigInterface.h"
+ #include "third_party/skia/include/ports/SkFontMgr_FontConfigInterface.h"
+ #include "third_party/skia/include/ports/SkFontScanner_Fontations.h"
++#include "third_party/skia/include/ports/SkFontScanner_FreeType.h"
+ #endif
+ 
+ #if BUILDFLAG(IS_FUCHSIA)
+@@ -85,9 +86,7 @@ static sk_sp<SkFontMgr> fontmgr_factory(
    return SkFontMgr_New_CoreText(nullptr);
  #elif BUILDFLAG(IS_CHROMEOS) || BUILDFLAG(IS_LINUX)
    sk_sp<SkFontConfigInterface> fci(SkFontConfigInterface::RefGlobal());
@@ -178,9 +231,27 @@
  #elif BUILDFLAG(IS_FUCHSIA)
    fuchsia::fonts::ProviderSyncPtr provider;
    base::ComponentContextForProcess()->svc()->Connect(provider.NewRequest());
+--- a/third_party/blink/renderer/core/BUILD.gn
++++ b/third_party/blink/renderer/core/BUILD.gn
+@@ -190,6 +190,7 @@ source_set("prerequisites") {
+     "//third_party/blink/renderer/core/probe:generated",
+     "//third_party/blink/renderer/platform",
+     "//third_party/icu",
++    "//third_party/libpng",
+     "//third_party/libwebp",
+     "//third_party/libxml",
+     "//third_party/libxslt",
+@@ -375,6 +376,7 @@ component("core") {
+     "//third_party/blink/renderer/core/xml:xpath_generated",
+     "//third_party/blink/renderer/platform",
+     "//third_party/blink/renderer/platform/wtf",
++    "//third_party/libpng",
+     "//third_party/re2",
+     "//ui/accessibility:ax_base",
+     "//ui/base",
 --- a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
 +++ b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
-@@ -38,7 +38,7 @@
+@@ -33,7 +33,7 @@
  #include "third_party/blink/renderer/platform/wtf/text/base64.h"
  #include "third_party/blink/renderer/platform/wtf/text/strcat.h"
  #include "third_party/skia/include/core/SkSurface.h"
@@ -189,7 +260,7 @@
  
  namespace blink {
  
-@@ -605,8 +605,10 @@ bool CanvasAsyncBlobCreator::InitializeE
+@@ -527,8 +527,10 @@ bool CanvasAsyncBlobCreator::InitializeE
      // TODO(zakerinasab): Progressive encoding on webp image formats
      // (crbug.com/571399)
      DCHECK_EQ(kMimeTypePng, mime_type_);
@@ -202,6 +273,16 @@
    }
  
    return encoder_.get();
+--- a/third_party/blink/renderer/platform/BUILD.gn
++++ b/third_party/blink/renderer/platform/BUILD.gn
+@@ -236,6 +236,7 @@ group("blink_platform_public_deps") {
+     "//third_party/blink/renderer/platform/network:make_generated",
+     "//third_party/blink/renderer/platform/wtf",
+     "//third_party/boringssl",
++    "//third_party/libpng",
+     "//third_party/libwebp",
+     "//third_party/ots",
+     "//ui/gfx/animation/keyframe",
 --- a/third_party/blink/renderer/platform/fonts/skia/sktypeface_factory.cc
 +++ b/third_party/blink/renderer/platform/fonts/skia/sktypeface_factory.cc
 @@ -27,7 +27,7 @@ sk_sp<SkTypeface> SkTypeface_Factory::Fr
@@ -246,7 +327,7 @@
  
  sk_sp<SkTypeface> MakeTypefaceDefaultFontMgr(sk_sp<SkData> data) {
 @@ -49,13 +44,7 @@ sk_sp<SkTypeface> MakeTypefaceDefaultFon
-   return FontCache::Get().FontManager()->makeFromData(data, 0);
+   return skia::DefaultFontMgr()->makeFromData(data, 0);
  #endif
  
 -#if BUILDFLAG(IS_APPLE)
@@ -369,6 +450,36 @@
      return Vector<uint8_t>();
    }
  
+--- a/third_party/blink/renderer/platform/image-decoders/BUILD.gn
++++ b/third_party/blink/renderer/platform/image-decoders/BUILD.gn
+@@ -73,6 +73,7 @@ component("image_decoders") {
+     "//third_party/blink/public:blink_headers",
+     "//third_party/blink/public/common:buildflags",
+     "//third_party/blink/public/common:headers",
++    "//third_party/libpng",
+     "//third_party/libwebp",
+     "//third_party/libyuv",
+     "//ui/gfx/geometry:geometry_skia",
+--- a/third_party/blink/renderer/platform/image-decoders/bmp/bmp_rust_image_decoder.cc
++++ b/third_party/blink/renderer/platform/image-decoders/bmp/bmp_rust_image_decoder.cc
+@@ -5,7 +5,7 @@
+ #include "third_party/blink/renderer/platform/image-decoders/bmp/bmp_rust_image_decoder.h"
+ 
+ #include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
+-#include "third_party/skia/experimental/rust_bmp/decoder/SkBmpRustDecoder.h"
++#include "third_party/skia/include/codec/SkBmpDecoder.h"
+ #include "third_party/skia/include/core/SkStream.h"
+ 
+ namespace blink {
+@@ -25,7 +25,7 @@ std::unique_ptr<SkCodec> BmpRustImageDec
+     std::unique_ptr<SkStream> stream,
+     SkCodec::Result* result) {
+   std::unique_ptr<SkCodec> codec =
+-      SkBmpRustDecoder::Decode(std::move(stream), result);
++      SkBmpDecoder::Decode(std::move(stream), result);
+   return codec;
+ }
+ 
 --- a/third_party/blink/renderer/platform/image-decoders/png/png_image_decoder.cc
 +++ b/third_party/blink/renderer/platform/image-decoders/png/png_image_decoder.cc
 @@ -5,7 +5,7 @@
@@ -459,6 +570,16 @@
  
    bool encodeRows(int numRows) { return encoder_->encodeRows(numRows); }
  
+--- a/third_party/skia/BUILD.gn
++++ b/third_party/skia/BUILD.gn
+@@ -1843,6 +1843,7 @@ skia_component("skia") {
+     ":lasx",
+     ":minify_sksl",
+     ":ndk_images",
++    ":png_decode_libpng",
+     ":png_decode_rust",
+     ":raw",
+     ":rust_icc",
 --- a/ui/gfx/codec/BUILD.gn
 +++ b/ui/gfx/codec/BUILD.gn
 @@ -21,6 +21,7 @@ component("codec") {
