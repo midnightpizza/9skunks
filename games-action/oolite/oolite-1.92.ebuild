@@ -80,6 +80,5 @@ EOF
     dobin "${T}/oolite"
     doicon installers/FreeDesktop/oolite-icon.png
     domenu installers/FreeDesktop/oolite.desktop
-    dodoc Doc/AdviceForNewCommanders.pdf Doc/OoliteReadMe.pdf Doc/OoliteRS.pdf
     fperms 755 "${install_dir}/oolite"
 }
