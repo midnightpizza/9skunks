@@ -637,6 +637,8 @@ src_unpack() {
 }
 
 src_prepare() {
+	#hack musl error away
+	sed -i '1i #include <cstdint>' "${S}/dom/media/webrtc/libwebrtc_overrides/call/call_basic_stats.h" || die "Failed to add missing include"
 	# LibreWolf already has this I think.
 	rm -v "${WORKDIR}/firefox-patches/0017-bgo-928126-enable-jxl.patch"
 
