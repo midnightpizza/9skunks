@@ -20,7 +20,7 @@ VIRTUALX_REQUIRED="manual"
 
 # Librewolf version (please rev-bump if changed)
 # Used when cloning patches repository.
-LIBREWOLF_PV="${PV}-1"
+LIBREWOLF_PV="${PV}-2"
 
 # Information about the bundled wasi toolchain from
 # https://github.com/WebAssembly/wasi-sdk/
