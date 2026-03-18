@@ -78,9 +78,8 @@ src_install() {
 		"${D}/usr/share/doc/mullvad-vpn/CHANGELOG.md" || die
 
 	if [[ -f "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" ]]; then
-		dodir /etc/apparmor.d
-		ln -s "/opt/Mullvad VPN/resources/apparmor_mullvad" \
-			"${D}/etc/apparmor.d/mullvad" || die
+	    insinto /etc/apparmor.d
+	    newins "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" mullvad
 	fi
 
 	if [[ -f "${D}/opt/Mullvad VPN/resources/mullvad-problem-report" ]]; then
