@@ -5,7 +5,6 @@ description="Mullvad VPN daemon"
 
 command="/usr/bin/mullvad-daemon"
 command_args="--disable-stdout-timestamps"
-command_user="mullvad:mullvad"
 pidfile="/run/${RC_SVCNAME}.pid"
 
 supervisor="supervise-daemon"
