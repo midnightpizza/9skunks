@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+
+name="mullvad-daemon"
+description="Mullvad VPN daemon"
+
+command="/usr/bin/mullvad-daemon"
+command_args="--disable-stdout-timestamps"
+command_user="mullvad:mullvad"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
+respawn_period=0
+
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
+
+depend() {
+    need net
+    after firewall
+}
