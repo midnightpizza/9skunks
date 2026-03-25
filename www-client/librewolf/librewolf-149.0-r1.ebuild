@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-147-patches-02.tar.xz"
+FIREFOX_PATCHSET="firefox-149-patches-01.tar.xz"
 
 LLVM_COMPAT=( 20 21 )
 
@@ -11,7 +11,7 @@ LLVM_COMPAT=( 20 21 )
 RUST_NEEDS_LLVM=1
 
 # If not building with clang we need at least rust 1.76
-RUST_MIN_VER=1.87.0
+RUST_MIN_VER=1.90.0
 
 PYTHON_COMPAT=( python3_{11..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -24,8 +24,8 @@ LIBREWOLF_PV="${PV}-1"
 
 # Information about the bundled wasi toolchain from
 # https://github.com/WebAssembly/wasi-sdk/
-WASI_SDK_VER=30.0
-WASI_SDK_LLVM_VER=21
+WASI_SDK_VER=32.0
+WASI_SDK_LLVM_VER=22
 
 MOZ_ESR=
 
@@ -129,7 +129,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.120.1
+	>=dev-libs/nss-3.121
 	>=dev-libs/nspr-4.38
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -637,6 +637,8 @@ src_unpack() {
 }
 
 src_prepare() {
+	#hack musl error away
+	sed -i '1i #include <cstdint>' "${S}/dom/media/webrtc/libwebrtc_overrides/call/call_basic_stats.h" || die "Failed to add missing include"
 	# LibreWolf already has this I think.
 	rm -v "${WORKDIR}/firefox-patches/0017-bgo-928126-enable-jxl.patch"
 
