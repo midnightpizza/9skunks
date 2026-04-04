@@ -1,109 +1,97 @@
-# Copyright 2022-2023 Gentoo Authors
+# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-LUA_COMPAT=( lua5-{1..4} )
+inherit cmake cmake flag-o-matic git-r3
 
-inherit cmake git-r3 lua-single xdg
-
-DESCRIPTION="Sega Dreamcast, Naomi and Atomiswave emulator"
+DESCRIPTION="Sega Dreamcast, Naomi, and Atomiswave emulator"
 HOMEPAGE="https://github.com/flyinghead/flycast"
-EGIT_REPO_URI="https://github.com/flyinghead/flycast"
-EGIT_SUBMODULES=( 'core/deps/breakpad' 'core/deps/volk' 'core/deps/VulkanMemoryAllocator' )
-
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
+EGIT_BRANCH="master"
 
-IUSE="alsa ao opengl +openmp pulseaudio vulkan"
+IUSE="clang sodeps test vulkan"
+REQUIRED_USE="vulkan"
 
-DEPEND="
+RDEPEND="
+	media-libs/alsa-lib
+	dev-util/glslang
+	x11-themes/hicolor-icon-theme
+	media-libs/libao
+	dev-libs/libcdio
+	media-libs/libpulse
 	dev-libs/libzip
-	dev-libs/xxhash
-	media-libs/libsdl2
 	net-libs/miniupnpc
-	sys-libs/zlib
-	alsa? ( media-libs/alsa-lib )
-	ao? ( media-libs/libao )
-	${LUA_DEPS}
-	opengl? ( virtual/opengl )
-	openmp? ( sys-devel/gcc:*[openmp] )
-	pulseaudio? ( media-sound/pulseaudio )
+	media-libs/libsdl2
 	vulkan? (
-		dev-util/glslang
-		dev-util/spirv-headers
+		dev-util/vulkan-headers
+		media-libs/vulkan-loader
+	)
+	sodeps? (
+		net-misc/curl
+		sys-libs/zlib
 	)
 "
-RDEPEND="${DEPEND}"
-BDEPEND=""
+DEPEND="${RDEPEND}"
+BDEPEND="
+	dev-build/cmake
+	dev-vcs/git
+	dev-build/ninja
+	dev-lang/python
+	clang? ( sys-devel/clang sys-devel/lld )
+"
 
-REQUIRED_USE="|| ( opengl vulkan ) || ( ao alsa pulseaudio )"
+EGIT_REPO_URI="https://github.com/flyinghead/flycast.git"
 
-src_unpack() {
-	EGIT_SUBMODULES+=( 'core/deps/luabridge' )
-	git-r3_src_unpack
-}
 src_prepare() {
-	# Ensure unneeded deps are not bundled
-	for dep in chdr dirent glslang libretro-common libzip miniupnpc oboe patches SDL xxHash; do
-		rm -rf core/deps/${dep}
-	done
-
-	# Skip alsa if flag not enabled
-	use !alsa && sed -i -e '/find_package(ALSA)/d' CMakeLists.txt
-
-	# Skip ao if flag not enabled
-	use !ao && sed -i -e '/pkg_check_modules(AO/d' CMakeLists.txt
-
-	## Skip lua if flag not enabled
-	#use !lua && sed -i -e '/find_package(Lua)/d' CMakeLists.txt
-
-	# Skip pulseaudio if flag not enabled
-	use !pulseaudio && sed -i -e '/pkg_check_modules(LIBPULSE/d' CMakeLists.txt
-
-	# Unbundle glslang
-	sed -i -e '/add_subdirectory(core\/deps\/glslang/{N;s/.*/find_library(GLSLANG libglslang.so)\nfind_library(SPIRV libSPIRV.so)\ntarget_link_libraries(${PROJECT_NAME} PRIVATE ${GLSLANG} ${SPIRV})/}' CMakeLists.txt || die
-	sed -i -e '/include.*SPIRV/{s:":<glslang/:;s/"/>/}' core/rend/vulkan/shaders.h \
-		core/rend/vulkan/compiler.cpp || die
-	# Crazy commit fix: 8d0654c
-	sed -i -e '/maxMeshViewCountNV/a256,256,128,128,128,128,128,128,4,' \
-		core/rend/vulkan/compiler.cpp || die
-
-	# Unbundle xxHash
-	sed -i -e '/XXHASH_BUILD_XXHSUM/{N;N;s/.*/target_link_libraries(${PROJECT_NAME} PRIVATE xxhash)/}' \
+	default
+	cmake_src_prepare
+	# Patch CMakeLists to use system VulkanHeaders
+	sed -i -e '/add_subdirectory/s/^.*Vulkan-Headers.*$/find_package(VulkanHeaders)/' \
 		CMakeLists.txt || die
 
-	# Unbundle chdr
-#	sed -i -e '/add_subdirectory.*chdr/d' -e 's/chdr-static/chdr/' \
-#		-e 's:core/deps/chdr/include:/usr/include/chdr:' CMakeLists.txt || die
+	# Fix vk::detail namespace for system Vulkan headers
+	sed -i -e 's/vk::\(resultCheck\|DynamicLoader\)/vk::detail::\1/g' \
+		core/rend/vulkan/vmallocator.cpp \
+		core/rend/vulkan/vmallocator.h \
+		core/rend/vulkan/vulkan_context.cpp || die
 
-	# Do not use ccache
-	sed -i -e '/find_program(CCACHE_FOUND/d' CMakeLists.txt
-
-	# Ensure static libs are not built
-	sed -i -e '/BUILD_SHARED_LIBS/d' CMakeLists.txt
-
-	# Vulkan-header
-	sed -i -e '/add_subdirectory(core.*Vulkan-Headers)$/,/Vulkan::Headers/d' \
-		-e '/core\/deps\/Vulkan-Headers\/include)/d' CMakeLists.txt
-
-	# Do not use ccache
-	sed -i -e '/find_program(CCACHE_PROGRAM ccache)/d' CMakeLists.txt
-
-	# Revert crazy commit: #4408aa7
-	sed -i -e '/if(NOT APPLE AND (/s/.*/if( NOT APPLE )/' CMakeLists.txt
-
-	cmake_src_prepare
 }
 
 src_configure() {
 	local mycmakeargs=(
-		-DUSE_OPENGL=$(usex opengl)
-		-DUSE_OPENMP=$(usex openmp)
-		-DUSE_VULKAN=$(usex vulkan)
-		-DUSE_HOST_LIBZIP=ON
-		-DWITH_SYSTEM_ZLIB=ON
+		-DBUILD_TESTING=$(usex test)
+		-DUSE_BREAKPAD=OFF
+		-DUSE_HOST_GLSLANG=ON
+		-DUSE_HOST_SDL=ON
+		-DUSE_LIBCDIO=ON
+		-DCMAKE_INSTALL_PREFIX="${EPREFIX}/usr"
+		-DCMAKE_BUILD_TYPE=Release
 	)
+
+	if use clang; then
+		export CC=clang
+		export CXX=clang++
+		# Remove any existing -fuse-ld flag and force LLD
+		filter-flags '-fuse-ld*'
+		append-ldflags -fuse-ld=lld
+	fi
+
 	cmake_src_configure
+}
+
+src_compile() {
+	cmake_src_compile
+}
+
+src_install() {
+	cmake_src_install
+
+	# Remove unwanted directories as per the PKGBUILD
+	rm -rf "${ED}"/usr/include \
+	"${ED}"/usr/lib \
+	"${ED}"/usr/share/pixmaps || die
+	rm -f "${ED}"/usr/lib64/libusb-1.0.so || die #why the fuck did flycat bundle this
 }
