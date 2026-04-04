@@ -1,4 +1,3 @@
-# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,19 +10,19 @@ inherit flag-o-matic cmake toolchain-funcs llvm-r1 check-reqs
 DESCRIPTION="A fast usermode x86 and x86-64 emulator for Arm64 Linux"
 HOMEPAGE="https://fex-emu.com"
 
-JEMALLOC_HASH="97d986993dc735a2022856e7e9fdfa1180e8527a"
+RPMALLOC_HASH="1f6fb494f2a4237c35494786a3c8f1eba048b217"
 JEMALLOC_GLIBC_HASH="8436195ad5e1bc347d9b39743af3d29abee59f06"
 CPP_OPTPARSE_HASH="9f94388a339fcbb0bc95c17768eb786c85988f6e"
-ROBIN_MAP_HASH="d5683d9f1891e5b04e3e3b2192b5349dc8d814ea"
+UNORDERED_DENSE_HASH="3234af2c03549bc85656bfd3a86993bf1cd8aef1"
 
 # This need to be vendored since thunk generator does not support the latest version
 VULKAN_HEADERS_HASH="450bd2232225d6c7728a4108055ac2e37cef6475"
 
 SRC_URI="
-	https://github.com/FEX-Emu/jemalloc/archive/${JEMALLOC_HASH}.tar.gz -> jemalloc-${JEMALLOC_HASH}.tar.gz
+	https://github.com/FEX-Emu/rpmalloc/archive/${RPMALLOC_HASH}.tar.gz -> rpmalloc-${RPMALLOC_HASH}.tar.gz
 	https://github.com/FEX-Emu/jemalloc/archive/${JEMALLOC_GLIBC_HASH}.tar.gz -> jemalloc-glibc-${JEMALLOC_GLIBC_HASH}.tar.gz
 	https://github.com/Sonicadvance1/cpp-optparse/archive/${CPP_OPTPARSE_HASH}.tar.gz -> cpp-optparse-${CPP_OPTPARSE_HASH}.tar.gz
-	https://github.com/FEX-Emu/robin-map/archive/${ROBIN_MAP_HASH}.tar.gz -> robin-map-${ROBIN_MAP_HASH}.tar.gz
+	https://github.com/martinus/unordered_dense/archive/${UNORDERED_DENSE_HASH}.tar.gz -> unordered_dense-${UNORDERED_DENSE_HASH}.tar.gz
 	thunks? (
 		https://github.com/KhronosGroup/Vulkan-Headers/archive/${VULKAN_HEADERS_HASH}.tar.gz -> Vulkan-Headers-${VULKAN_HEADERS_HASH}.tar.gz
 	)
@@ -98,9 +97,9 @@ pkg_setup() {
 src_unpack() {
 	default
 	local -A deps=(
-		jemalloc "jemalloc-${JEMALLOC_HASH}"
+		rpmalloc "rpmalloc-${RPMALLOC_HASH}"
 		jemalloc_glibc "jemalloc-${JEMALLOC_GLIBC_HASH}"
-		robin-map "robin-map-${ROBIN_MAP_HASH}"
+		unordered_dense "unordered_dense-${UNORDERED_DENSE_HASH}"
 	)
 	use thunks && deps[Vulkan-Headers]="Vulkan-Headers-${VULKAN_HEADERS_HASH}"
 	for dep in "${!deps[@]}"; do
