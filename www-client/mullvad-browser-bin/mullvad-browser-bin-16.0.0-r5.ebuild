@@ -5,9 +5,10 @@ EAPI=8
 
 inherit desktop optfeature toolchain-funcs xdg
 
+ALPHA_VERSION="16.0a5"
 DESCRIPTION="The Mullvad Browser is developed to minimize tracking and fingerprinting."
 HOMEPAGE="https://github.com/mullvad/mullvad-browser/ https://mullvad.net/"
-SRC_URI="https://github.com/mullvad/mullvad-browser/releases/download/${PV}/mullvad-browser-linux-x86_64-${PV}.tar.xz -> ${P}.tar.xz"
+SRC_URI="https://github.com/mullvad/mullvad-browser/releases/download/${ALPHA_VERSION}/mullvad-browser-linux-x86_64-${ALPHA_VERSION}.tar.xz -> ${P}.tar.xz"
 
 S="${WORKDIR}"
 LICENSE="MPL-2.0"
