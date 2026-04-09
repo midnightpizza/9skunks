@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,12 +6,12 @@ EAPI=8
 inherit linux-info usr-ldscript
 
 DESCRIPTION="A New Implementation of a Log-structured File System for Linux"
-HOMEPAGE="http://nilfs.sourceforge.net/"
-SRC_URI="http://nilfs.sourceforge.net/download/${P}.tar.bz2"
+HOMEPAGE="https://nilfs.sourceforge.net/"
+SRC_URI="https://nilfs.sourceforge.net/download/${P}.tar.bz2"
 
 LICENSE="GPL-2 LGPL-2.1"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ppc ~ppc64 ~x86"
+KEYWORDS="~alpha amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~x86"
 IUSE="static-libs"
 
 RDEPEND="
@@ -28,7 +28,7 @@ src_configure() {
 	econf \
 		--enable-static=yes \
 		--libdir="${EPREFIX}"/$(get_libdir) \
-		--enable-libmount
+		--with-libmount
 }
 
 src_install() {
