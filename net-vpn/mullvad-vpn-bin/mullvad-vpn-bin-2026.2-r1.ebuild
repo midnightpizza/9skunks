@@ -9,8 +9,8 @@ DESCRIPTION="Mullvad VPN client (GUI, daemon, and CLI) – binary package"
 HOMEPAGE="https://www.mullvad.net"
 BETA="-beta1"
 SRC_URI="
-	amd64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_amd64.deb )
-	arm64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_arm64.deb )
+	amd64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_amd64.deb ->  MullvadVPN-${PV}_amd64.deb )
+	arm64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_arm64.deb -> MullvadVPN-${PV}_arm64.deb )
 "
 
 LICENSE="GPL-3"
@@ -41,9 +41,9 @@ pkg_setup() {
 
 src_unpack() {
 	if use amd64; then
-		DEB_SRC="${DISTDIR}/MullvadVPN-${PV}${BETA}_amd64.deb"
+		DEB_SRC="${DISTDIR}/MullvadVPN-${PV}_amd64.deb"
 	elif use arm64; then
-		DEB_SRC="${DISTDIR}/MullvadVPN-${PV}$(BETA)_arm64.deb"
+		DEB_SRC="${DISTDIR}/MullvadVPN-${PV}_arm64.deb"
 	else
 		die "No compatible architecture selected (amd64 or arm64 required)"
 	fi
