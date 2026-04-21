@@ -25,6 +25,7 @@ RDEPEND="
 	gnome-base/librsvg[introspection]
 	media-libs/mutagen:0[${PYTHON_USEDEP}]
 	x11-libs/gdk-pixbuf:2[introspection,jpeg,tiff]
+	media-libs/exiftool
 "
 BDEPEND="
 	test? (
