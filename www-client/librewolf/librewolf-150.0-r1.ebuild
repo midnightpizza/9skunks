@@ -3,9 +3,9 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-149-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-150-patches-01.tar.xz"
 
-LLVM_COMPAT=( 20 21 )
+LLVM_COMPAT=( 20 21 22 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
@@ -13,7 +13,7 @@ RUST_NEEDS_LLVM=1
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.90.0
 
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 VIRTUALX_REQUIRED="manual"
@@ -129,7 +129,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.121
+	>=dev-libs/nss-3.122.1
 	>=dev-libs/nspr-4.38
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -446,7 +446,7 @@ pkg_pretend() {
 	if [[ ${MERGE_TYPE} != binary ]] ; then
 		# Ensure we have enough disk space to compile
 		if use pgo || use debug ; then
-			CHECKREQS_DISK_BUILD="14300M"
+			CHECKREQS_DISK_BUILD="18700M"
 
 			if ! use clang ; then
 				if tc-is-gcc && ver_test "$(gcc-major-version)" -eq 15 && has_version -b "<sys-devel/gcc-15.2.1_p20251108-r1:15"; then
@@ -482,7 +482,7 @@ pkg_pretend() {
 				fi
 			fi
 		else
-			CHECKREQS_DISK_BUILD="7400M"
+			CHECKREQS_DISK_BUILD="9700M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -548,11 +548,11 @@ pkg_setup() {
 
 		# Ensure we have enough disk space to compile
 		if use pgo || use debug ; then
-			CHECKREQS_DISK_BUILD="14300M"
+			CHECKREQS_DISK_BUILD="18700M"
 		elif [[ ${use_lto} == "yes" ]] ; then
 			CHECKREQS_DISK_BUILD="10600M"
 		else
-			CHECKREQS_DISK_BUILD="7400M"
+			CHECKREQS_DISK_BUILD="9700M"
 		fi
 
 		check-reqs_pkg_setup
@@ -637,8 +637,13 @@ src_unpack() {
 }
 
 src_prepare() {
-	#hack musl error away
+	#hack musl error away because we  need to add the include to avoid include maze
 	sed -i '1i #include <cstdint>' "${S}/dom/media/webrtc/libwebrtc_overrides/call/call_basic_stats.h" || die "Failed to add missing include"
+	#patch glean error
+	#Fix duplicate glean_disable_upload feature
+	sed -i '/^gkrust_features += \["glean_disable_upload"\]$/d' \
+		toolkit/library/rust/gkrust-features.mozbuild || die
+	#
 	# LibreWolf already has this I think.
 	rm -v "${WORKDIR}/firefox-patches/0017-bgo-928126-enable-jxl.patch"
 
@@ -731,7 +736,8 @@ src_prepare() {
 	# moz_clear_vendor_checksums xyz
 	# glslopt: bgo#969412
 	moz_clear_vendor_checksums glslopt
-
+	# moz_clear_vendor_checksums glean
+	
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
 	if [[ -n ${FILES_PER_UNIFIED_FILE} ]] && use jumbo-build; then
