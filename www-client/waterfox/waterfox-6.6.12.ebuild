@@ -1,12 +1,12 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-140esr-patches-05.tar.xz"
+FIREFOX_PATCHSET="firefox-140esr-patches-07.tar.xz"
 FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
-LLVM_COMPAT=( 19 20 21 )
+LLVM_COMPAT=( 20 21 22 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
@@ -21,8 +21,8 @@ VIRTUALX_REQUIRED="manual"
 
 WF_PN="Waterfox"
 WF_PV="${PV/_beta/b}"
-WASI_SDK_VER=28.0
-WASI_SDK_LLVM_VER=21
+WASI_SDK_VER=32.0
+WASI_SDK_LLVM_VER=22
 
 WF_SRC_BASE_URI="https://github.com/BrowserWorks/Waterfox/archive/refs/tags/"
 
@@ -99,17 +99,16 @@ BDEPEND="${PYTHON_DEPS}
 	)"
 COMMON_DEPEND="${WF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
-	dev-libs/expat
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.112.2
+	>=dev-libs/nss-3.112.4
 	>=dev-libs/nspr-4.36
 	media-libs/alsa-lib
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/mesa
 	media-video/ffmpeg
-	virtual/zlib
+	virtual/zlib:=
 	virtual/freedesktop-icon-theme
 	x11-libs/cairo
 	x11-libs/gdk-pixbuf:2
@@ -385,11 +384,11 @@ pkg_pretend() {
 	if [[ ${MERGE_TYPE} != binary ]] ; then
 		# Ensure we have enough disk space to compile
 		if use pgo || use debug ; then
-			CHECKREQS_DISK_BUILD="14300M"
+			CHECKREQS_DISK_BUILD="17000M"
 		elif tc-is-lto ; then
-			CHECKREQS_DISK_BUILD="10600M"
+			CHECKREQS_DISK_BUILD="9900M"
 		else
-			CHECKREQS_DISK_BUILD="7400M"
+			CHECKREQS_DISK_BUILD="9000M"
 		fi
 
 		check-reqs_pkg_pretend
@@ -423,11 +422,11 @@ pkg_setup() {
 
 		# Ensure we have enough disk space to compile
 		if use pgo || use debug ; then
-			CHECKREQS_DISK_BUILD="14300M"
+			CHECKREQS_DISK_BUILD="17000M"
 		elif [[ ${use_lto} == "yes" ]] ; then
-			CHECKREQS_DISK_BUILD="10600M"
+			CHECKREQS_DISK_BUILD="9900M"
 		else
-			CHECKREQS_DISK_BUILD="7400M"
+			CHECKREQS_DISK_BUILD="9000M"
 		fi
 
 		check-reqs_pkg_setup
@@ -614,6 +613,8 @@ src_prepare() {
 
 	# Clear checksums from cargo crates we've manually patched.
 	# moz_clear_vendor_checksums xyz
+	# glslopt: bgo#969412
+	moz_clear_vendor_checksums glslopt
 
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
