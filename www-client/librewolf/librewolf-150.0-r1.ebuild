@@ -83,7 +83,7 @@ KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 
 IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio selinux sndio"
 IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
-IUSE+=" system-pipewire system-png +system-webp test valgrind wayland wifi +X"
+IUSE+=" system-pipewire system-png +system-webp test valgrind wayland wifi +X rust-simd"
 
 # Firefox-only IUSE
 IUSE+=" +gmp-autoupdate gnome-shell jpegxl +jumbo-build openh264 -telemetry wasm-sandbox"
@@ -900,10 +900,6 @@ src_configure() {
 	[[ -n ${MOZ_ESR} ]] && update_channel=esr
 	mozconfig_add_options_ac '' --enable-update-channel=${update_channel}
 
-	# Whitelist to allow unkeyworded arches to build with "--disable-rust-simd" by default.
-	if use amd64 || use arm64 || use ppc64 || use loong || use riscv ; then
-		mozconfig_add_options_ac '' --enable-rust-simd
-	fi
 
 	# For future keywording: This is currently (97.0) only supported on:
 	# amd64, arm, arm64 & x86.
@@ -988,6 +984,12 @@ src_configure() {
 	use sndio && myaudiobackends+="sndio,"
 	use pulseaudio && myaudiobackends+="pulseaudio,"
 	! use pulseaudio && myaudiobackends+="alsa,"
+
+	if use rust-simd && ( use amd64 || use arm64 || use ppc64 || use loong || use riscv ); then
+    mozconfig_add_options_ac '' --enable-rust-simd
+		else
+    mozconfig_add_options_ac '' --disable-rust-simd
+	fi
 
 	mozconfig_add_options_ac '--enable-audio-backends' --enable-audio-backends="${myaudiobackends::-1}"
 
