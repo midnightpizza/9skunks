@@ -1,20 +1,23 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 JAVA_PKG_IUSE="test"
 
-inherit java-pkg-2 systemd toolchain-funcs
+inherit java-pkg-2 systemd toolchain-funcs verify-sig
 
 DESCRIPTION="A privacy-centric, anonymous network"
-HOMEPAGE="https://geti2p.net"
-SRC_URI="https://files.i2p-projekt.de/${PV}/i2psource_${PV}.tar.bz2"
+HOMEPAGE="https://i2p.net"
+SRC_URI="
+	https://files.i2p.net/${PV}/i2psource_${PV}.tar.bz2
+	verify-sig? ( https://files.i2p.net/${PV}/i2psource_${PV}.tar.bz2.sig )
+"
 
 LICENSE="Apache-2.0 Artistic BSD CC-BY-2.5 CC-BY-3.0 CC-BY-SA-3.0 EPL-1.0 GPL-2 GPL-3 LGPL-2.1 LGPL-3 MIT public-domain WTFPL-2"
 SLOT="0"
 
-KEYWORDS="amd64 ~arm ~arm64 ~x86"
+KEYWORDS="amd64 arm64"
 LANGS=(
 	ar az bg ca cs da de el en es es-AR et fa fi fr gl he hi hr hu id it ja ko ku mg nb nl nn pl pt pt-BR ro ru sk sl sq
 	sr sv tk tr uk vi zh zh-TW
@@ -30,18 +33,20 @@ CP_DEPEND="
 	dev-java/jbcrypt:0
 	dev-java/json-simple:2.3
 	dev-java/jsonrpc2-server:1
-	dev-java/jstl:0
 	dev-java/jstl-api:0
+	dev-java/jstl:0
 	dev-java/minidns-core:1
+	dev-java/slf4j-api:0
 	dev-java/zxing-core:3
 	dev-java/zxing-javase:3
 	sys-devel/gettext:0[java]
 	www-servers/tomcat:9
 "
+# jdk-11 for bug #932030
 DEPEND="
 	dev-libs/gmp:0=
 	${CP_DEPEND}
-	>=virtual/jdk-11:*
+	>=virtual/jdk-17:*
 	test? (
 		dev-java/hamcrest:0
 		dev-java/junit:4
@@ -49,21 +54,30 @@ DEPEND="
 	)
 "
 BDEPEND="
-	>=dev-java/ant-1.10.14-r3:0
-	test? (
-		>=dev-java/ant-1.10.14-r3:0[junit4]
-	)
+	dev-java/ant:0
+	sys-apps/which
+	sys-devel/gettext
+	test? ( dev-java/ant:0[junit,junit4] )
+	verify-sig? ( sec-keys/openpgp-keys-i2p )
 "
 RDEPEND="
 	${CP_DEPEND}
 	acct-user/i2p
 	acct-group/i2p
-	>=virtual/jre-11:*
+	>=virtual/jre-17:*
 "
 
-PATCHES=( "${FILESDIR}/${PV}-force-gentoo-classpath.patch" )
+PATCHES=( "${FILESDIR}/2.12.0-force-gentoo-classpath.patch" )
 
 DOCS=( README.md history.txt )
+
+JAVA_PKG_NO_CLEAN=(
+	# need to package jetty
+	'./apps/jetty/jetty-home-*/start.jar'
+	'./apps/jetty/jetty-home-*/lib/jetty-*.jar'
+)
+
+VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/openpgp-keys/i2p.asc"
 
 src_prepare() {
 	default # apply PATCHES
@@ -88,18 +102,19 @@ src_prepare() {
 	# router/java/src/org/cybergarage unable to find version 3
 	# router/java/src/org/freenetproject too big to pull
 	# router/java/src/org/xlattice changed interface
-	java-pkg_clean ! \
-		-path "./apps/jetty/jetty-distribution-*" # need to package jetty
+	java-pkg_clean
 	rm -r installer/lib || die 'unbundle installer libs'
 	( cat >> override.properties || die 'set unbundled properties' ) <<- EOF
 		require.gettext=true
+		with-gettext-base=true
+		with-libslf4j2-java=true
+		with-libbcprov-java=true
 		with-libgetopt-java=true
 		with-libjakarta-taglibs-standard-java=true
 		with-libjson-simple-java=true
 		with-libtomcat9-java=true
-		with-gettext-base=true
 		# with-geoip-database=true need std geoip use
-		# with-libjetty9-java=true needs a jetty ebuild
+		# with-libjetty12-java=true needs a jetty ebuild
 	EOF
 
 	# bcprov
@@ -175,7 +190,7 @@ src_configure() {
 src_compile() {
 	local libs='bcprov,gettext,hashcash-1,httpcomponents-client-4'
 	libs+=',java-getopt-1,java-service-wrapper,jbcrypt,jsonrpc2-server-1'
-	libs+=',tomcat-9,minidns-core-1,zxing-javase-3'
+	libs+=',minidns-core-1,slf4j-api,tomcat-9,zxing-javase-3'
 	eant \
 		-Dgentoo.classpath=`java-pkg_getjars --with-dependencies "${libs}"` \
 		preppkg-base
