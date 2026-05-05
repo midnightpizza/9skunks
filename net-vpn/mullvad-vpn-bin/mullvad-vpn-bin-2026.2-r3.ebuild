@@ -7,7 +7,7 @@ inherit systemd user
 
 DESCRIPTION="Mullvad VPN client (GUI, daemon, and CLI) – binary package"
 HOMEPAGE="https://www.mullvad.net"
-BETA="-beta1"
+BETA=""
 SRC_URI="
 	amd64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_amd64.deb ->  MullvadVPN-${PV}_amd64.deb )
 	arm64? ( https://github.com/mullvad/mullvadvpn-app/releases/download/${PV}${BETA}/MullvadVPN-${PV}${BETA}_arm64.deb -> MullvadVPN-${PV}_arm64.deb )
