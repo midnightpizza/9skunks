@@ -15,7 +15,39 @@ respawn_period=0
 output_log="/var/log/${RC_SVCNAME}.log"
 error_log="/var/log/${RC_SVCNAME}.log"
 
+cgroup_base="/sys/fs/cgroup/net_cls"
+cgroup_dir="${cgroup_base}/mullvad-exclusions"
+
 depend() {
     need net
     after firewall
+}
+
+start_pre() {
+    # Detect cgroup version
+    if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
+        # cgroup v2
+        cgroup_base="/sys/fs/cgroup"
+        cgroup_dir="${cgroup_base}/mullvad.slice"
+        for dir in "${cgroup_base}/mullvad.slice" "${cgroup_base}/system.slice/mullvad-exclusions"; do
+            if [ -d "$dir" ]; then
+                chown root:mullvad "$dir" 2>/dev/null
+                chmod 775 "$dir" 2>/dev/null
+            fi
+        done
+    elif [ -d /sys/fs/cgroup/net_cls ]; then
+        # cgroup v1
+        cgroup_base="/sys/fs/cgroup/net_cls"
+        cgroup_dir="${cgroup_base}/mullvad-exclusions"
+        mkdir -p "$cgroup_dir"
+        chown root:mullvad "$cgroup_dir"
+        chmod 775 "$cgroup_dir"
+    else
+        eerror "Neither cgroup v2 nor net_cls v1 found – what mutant machine is this?"
+        return 1
+    fi
+}
+
+stop_post() {
+    return 0
 }
