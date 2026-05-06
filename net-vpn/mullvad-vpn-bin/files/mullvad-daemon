@@ -15,39 +15,78 @@ respawn_period=0
 output_log="/var/log/${RC_SVCNAME}.log"
 error_log="/var/log/${RC_SVCNAME}.log"
 
-cgroup_base="/sys/fs/cgroup/net_cls"
-cgroup_dir="${cgroup_base}/mullvad-exclusions"
-
 depend() {
     need net
     after firewall
 }
 
-start_pre() {
-    # Detect cgroup version
-    if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
-        # cgroup v2
-        cgroup_base="/sys/fs/cgroup"
-        cgroup_dir="${cgroup_base}/mullvad.slice"
-        for dir in "${cgroup_base}/mullvad.slice" "${cgroup_base}/system.slice/mullvad-exclusions"; do
-            if [ -d "$dir" ]; then
-                chown root:mullvad "$dir" 2>/dev/null
-                chmod 775 "$dir" 2>/dev/null
-            fi
-        done
-    elif [ -d /sys/fs/cgroup/net_cls ]; then
-        # cgroup v1
-        cgroup_base="/sys/fs/cgroup/net_cls"
-        cgroup_dir="${cgroup_base}/mullvad-exclusions"
-        mkdir -p "$cgroup_dir"
-        chown root:mullvad "$cgroup_dir"
-        chmod 775 "$cgroup_dir"
-    else
-        eerror "Neither cgroup v2 nor net_cls v1 found – what mutant machine is this?"
-        return 1
+setup_cgroup_v1() {
+    local cg_dir="/sys/fs/cgroup/net_cls/mullvad-exclusions"
+    local max_wait=10
+    local i=0
+    while [ ! -d "$cg_dir" ] && [ $i -lt $max_wait ]; do
+        sleep 1
+        i=$((i+1))
+    done
+    if [ -d "$cg_dir" ]; then
+        chown root:mullvad "$cg_dir"
+        chmod 775 "$cg_dir"
+        [ -f "$cg_dir/cgroup.procs" ] && chown root:mullvad "$cg_dir/cgroup.procs" && chmod 664 "$cg_dir/cgroup.procs"
+        [ -f "$cg_dir/net_cls.classid" ] && chown root:mullvad "$cg_dir/net_cls.classid" && chmod 664 "$cg_dir/net_cls.classid"
+        return 0
     fi
+    return 1
 }
 
-stop_post() {
-    return 0
+setup_cgroup_v2() {
+    local candidates=(
+        "/sys/fs/cgroup/mullvad.slice"
+        "/sys/fs/cgroup/mullvad-exclusions"
+        "/sys/fs/cgroup/system.slice/mullvad-daemon.service"
+    )
+    local cg_dir=""
+    local max_wait=10
+    local i=0
+    while [ -z "$cg_dir" ] && [ $i -lt $max_wait ]; do
+        for cand in "${candidates[@]}"; do
+            if [ -d "$cand" ]; then
+                cg_dir="$cand"
+                break
+            fi
+        done
+        sleep 1
+        i=$((i+1))
+    done
+    if [ -d "$cg_dir" ]; then
+        chown root:mullvad "$cg_dir"
+        chmod 775 "$cg_dir"
+        [ -f "$cg_dir/cgroup.procs" ] && chown root:mullvad "$cg_dir/cgroup.procs" && chmod 664 "$cg_dir/cgroup.procs"
+        [ -f "$cg_dir/cgroup.threads" ] && chown root:mullvad "$cg_dir/cgroup.threads" && chmod 664 "$cg_dir/cgroup.threads"
+        return 0
+    fi
+    return 1
+}
+
+start_post() {
+    # Detect cgroup version
+    if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
+        if setup_cgroup_v2; then
+            ebegin "Set group write on cgroup v2 directory"
+            eend 0
+        else
+            eerror "Mullvad cgroup v2 directory not found after waiting"
+            return 1
+        fi
+    elif [ -d /sys/fs/cgroup/net_cls ]; then
+        if setup_cgroup_v1; then
+            ebegin "Set group write on cgroup v1 directory"
+            eend 0
+        else
+            eerror "Mullvad cgroup v1 directory not found after waiting"
+            return 1
+        fi
+    else
+        eerror "No supported cgroup hierarchy found (need net_cls or unified v2) Mullvad exclude will not function."
+        return 1
+    fi
 }
