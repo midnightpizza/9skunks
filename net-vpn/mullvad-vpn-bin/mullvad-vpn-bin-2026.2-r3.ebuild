@@ -22,6 +22,7 @@ IUSE="systemd +tray"
 REQUIRED_USE="|| ( amd64 arm64 )"
 
 RDEPEND="
+	net-print/cups
 	dev-libs/nss
 	gui-libs/gtk
 	media-libs/alsa-lib
