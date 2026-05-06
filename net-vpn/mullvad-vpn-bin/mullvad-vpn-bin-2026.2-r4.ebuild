@@ -18,6 +18,23 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 RESTRICT="mirror binchecks strip"
 
+QA_PREBUILT="
+    usr/bin/mullvad-daemon
+    usr/bin/mullvad
+    usr/bin/mullvad-exclude
+    opt/Mullvad VPN/libvk_swiftshader.so
+    opt/Mullvad VPN/mullvad-gui
+    opt/Mullvad VPN/resources/mullvad-problem-report
+    opt/Mullvad VPN/resources/mullvad-setup
+    opt/Mullvad VPN/libffmpeg.so
+    opt/Mullvad VPN/libEGL.so
+    opt/Mullvad VPN/chrome-sandbox
+    opt/Mullvad VPN/chrome_crashpad_handler
+    opt/Mullvad VPN/libvulkan.so.1
+    opt/Mullvad VPN/libGLESv2.so
+"
+QA_PRESTRIPPED="${QA_PREBUILT}"
+
 IUSE="systemd +tray"
 REQUIRED_USE="|| ( amd64 arm64 )"
 
@@ -61,48 +78,45 @@ src_unpack() {
 }
 
 src_install() {
-	cd "${WORKDIR}/data" || die
-	cp -a . "${D}/" || die "Failed to install package files"
+    cd "${WORKDIR}/data" || die
+    cp -a . "${D}/" || die "Failed to install package files"
 
-	# Set suid on chrome-sandbox
-	if [[ -f "${D}/opt/Mullvad VPN/chrome-sandbox" ]]; then
-		fperms 4755 "/opt/Mullvad VPN/chrome-sandbox"
-	else
-		ewarn "chrome-sandbox not found – sandboxing may fail"
-	fi
+    rm -rf "${D}/usr/local" || die
+    rm -rf "${D}/usr/share/doc/mullvad-vpn" || die 
 
-	rm -f "${D}/usr/bin/mullvad-vpn"
-	newbin "${FILESDIR}/mullvad-vpn.sh" mullvad-vpn
+    if [[ -f "${D}/opt/Mullvad VPN/chrome-sandbox" ]]; then
+        fperms 4755 "/opt/Mullvad VPN/chrome-sandbox"
+    else
+        ewarn "chrome-sandbox not found – sandboxing may fail"
+    fi
 
-	rm -f "${D}/usr/share/doc/mullvad-vpn/changelog.gz"
-	dodir /usr/share/doc/mullvad-vpn
-	ln -s "/opt/Mullvad VPN/resources/CHANGELOG.md" \
-		"${D}/usr/share/doc/mullvad-vpn/CHANGELOG.md" || die
+    rm -f "${D}/usr/bin/mullvad-vpn"
+    newbin "${FILESDIR}/mullvad-vpn.sh" mullvad-vpn
 
-	if [[ -f "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" ]]; then
-	    insinto /etc/apparmor.d
-	    newins "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" mullvad
-	fi
+    dosym "/opt/Mullvad VPN/resources/CHANGELOG.md" \
+          "/usr/share/doc/${PF}/CHANGELOG.md"
 
-	if [[ -f "${D}/opt/Mullvad VPN/resources/mullvad-problem-report" ]]; then
-		rm -f "${D}/usr/bin/mullvad-problem-report"
-		ln -s "/opt/Mullvad VPN/resources/mullvad-problem-report" \
-			"${D}/usr/bin/mullvad-problem-report" || die
-	fi
+    if [[ -f "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" ]]; then
+        insinto /etc/apparmor.d
+        newins "${D}/opt/Mullvad VPN/resources/apparmor_mullvad" mullvad
+    fi
 
-	if use systemd; then
-		systemd_dounit "${D}/usr/lib/systemd/system/mullvad-daemon.service"
-		systemd_dounit "${D}/usr/lib/systemd/system/mullvad-early-boot-blocking.service"
-		rm -f "${D}/usr/lib/systemd/system/mullvad-daemon.service"
-		rm -f "${D}/usr/lib/systemd/system/mullvad-early-boot-blocking.service"
-	fi
+    if [[ -f "${D}/opt/Mullvad VPN/resources/mullvad-problem-report" ]]; then
+        rm -f "${D}/usr/bin/mullvad-problem-report"
+        dosym "/opt/Mullvad VPN/resources/mullvad-problem-report" \
+              "/usr/bin/mullvad-problem-report"
+    fi
 
-	doinitd "${FILESDIR}/mullvad-daemon"
-	keepdir /var/lib/mullvad
-	fowners mullvad:mullvad /var/lib/mullvad
-	fperms 755 /var/lib/mullvad
+    if use systemd; then
+        systemd_dounit "${D}/usr/lib/systemd/system/mullvad-daemon.service"
+        systemd_dounit "${D}/usr/lib/systemd/system/mullvad-early-boot-blocking.service"
+    fi
+
+    doinitd "${FILESDIR}/mullvad-daemon"
+    keepdir /var/lib/mullvad
+    fowners mullvad:mullvad /var/lib/mullvad
+    fperms 755 /var/lib/mullvad
 }
-
 pkg_postinst() {
 	if use systemd; then
 		elog "Systemd units have been installed but not enabled."
