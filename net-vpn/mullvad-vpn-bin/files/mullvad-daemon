@@ -20,73 +20,34 @@ depend() {
     after firewall
 }
 
-setup_cgroup_v1() {
+start_post() {
     local cg_dir="/sys/fs/cgroup/net_cls/mullvad-exclusions"
     local max_wait=10
     local i=0
+
     while [ ! -d "$cg_dir" ] && [ $i -lt $max_wait ]; do
         sleep 1
         i=$((i+1))
     done
-    if [ -d "$cg_dir" ]; then
-        chown root:mullvad "$cg_dir"
-        chmod 775 "$cg_dir"
-        [ -f "$cg_dir/cgroup.procs" ] && chown root:mullvad "$cg_dir/cgroup.procs" && chmod 664 "$cg_dir/cgroup.procs"
-        [ -f "$cg_dir/net_cls.classid" ] && chown root:mullvad "$cg_dir/net_cls.classid" && chmod 664 "$cg_dir/net_cls.classid"
-        return 0
-    fi
-    return 1
-}
 
-setup_cgroup_v2() {
-    local candidates=(
-        "/sys/fs/cgroup/mullvad.slice"
-        "/sys/fs/cgroup/mullvad-exclusions"
-        "/sys/fs/cgroup/system.slice/mullvad-daemon.service"
-    )
-    local cg_dir=""
-    local max_wait=10
-    local i=0
-    while [ -z "$cg_dir" ] && [ $i -lt $max_wait ]; do
-        for cand in "${candidates[@]}"; do
-            if [ -d "$cand" ]; then
-                cg_dir="$cand"
-                break
-            fi
-        done
-        sleep 1
-        i=$((i+1))
-    done
-    if [ -d "$cg_dir" ]; then
-        chown root:mullvad "$cg_dir"
-        chmod 775 "$cg_dir"
-        [ -f "$cg_dir/cgroup.procs" ] && chown root:mullvad "$cg_dir/cgroup.procs" && chmod 664 "$cg_dir/cgroup.procs"
-        [ -f "$cg_dir/cgroup.threads" ] && chown root:mullvad "$cg_dir/cgroup.threads" && chmod 664 "$cg_dir/cgroup.threads"
-        return 0
-    fi
-    return 1
-}
-
-start_post() {
-    # Detect cgroup version
-    if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
-        if setup_cgroup_v2; then
-            ebegin "Set group write on cgroup v2 directory"
-            eend 0
-        else
-            eerror "Mullvad cgroup v2 directory not found after waiting"
-            return 1
-        fi
-    elif [ -d /sys/fs/cgroup/net_cls ]; then
-        if setup_cgroup_v1; then
-            ebegin "Set group write on cgroup v1 directory"
-            eend 0
-        else
-            eerror "Mullvad cgroup v1 directory not found after waiting"
-            return 1
-        fi
-    else
-        eerror "No supported cgroup hierarchy found (need net_cls or unified v2) Mullvad exclude will not function."
+    if [ ! -d "$cg_dir" ]; then
+        eerror "Mullvad cgroup directory not found after ${max_wait}s"
         return 1
     fi
+
+    chown root:mullvad "$cg_dir"
+    chmod 775 "$cg_dir"
+
+    if [ -f "$cg_dir/cgroup.procs" ]; then
+        chown root:mullvad "$cg_dir/cgroup.procs"
+        chmod 664 "$cg_dir/cgroup.procs"
+    fi
+
+    if [ -f "$cg_dir/net_cls.classid" ]; then
+        chown root:mullvad "$cg_dir/net_cls.classid"
+        chmod 664 "$cg_dir/net_cls.classid"
+    fi
+
+    ebegin "Applied group write permissions to Mullvad cgroup for mullvad-exclude"
+    eend 0
 }
