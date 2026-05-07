@@ -48,7 +48,6 @@ DEPEND="
 "
 RDEPEND="
 	sys-apps/dbus
-	sys-libs/glibc
 	gui? (
 		dev-util/electron:${ELECTRON_SLOT}
 		x11-themes/hicolor-icon-theme
