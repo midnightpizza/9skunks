@@ -1,3 +1,2 @@
 #!/bin/sh
-export NODE_ENV=production
-exec electron@_electronver@ /usr/lib/mullvad-vpn/app.asar "$@"
+exec /usr/lib/mullvad-vpn/gui/mullvad-gui "$@"
