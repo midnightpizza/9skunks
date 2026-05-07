@@ -5,10 +5,9 @@ EAPI=8
 
 inherit git-r3 systemd user
 
-DESCRIPTION="Mullvad VPN client (daemon, CLI, and optional GUI)"
+DESCRIPTION="Mullvad VPN client (daemon and CLI) – source build"
 HOMEPAGE="https://www.mullvad.net"
 
-ELECTRON_SLOT="39"
 EGIT_NO_SUBMODULES="1"
 EGIT_REPO_URI=(
 	"https://github.com/mullvad/mullvadvpn-app.git"
@@ -26,57 +25,39 @@ EGIT_CHECKOUT_DIR=(
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="gui systemd"
+IUSE="systemd"
 
-# Network access is needed for cargo, npm, go module downloads
 RESTRICT="network-sandbox"
 
-# Dependencies (mirrors PKGBUILD + electron)
 DEPEND="
-	gui? ( dev-util/electron:${ELECTRON_SLOT} )
 	dev-lang/go
-	net-libs/libnftnl
-	net-libs/libmnl
 	dev-lang/rust
 	dev-libs/protobuf
-	net-libs/nodejs
-	sys-apps/dbus
-	virtual/libc
-	dev-libs/protobuf
-
-	x11-themes/hicolor-icon-theme
+	net-libs/libnftnl
+	net-libs/libmnl
 "
 RDEPEND="
+	${DEPEND}
 	sys-apps/dbus
-	gui? (
-		dev-util/electron:${ELECTRON_SLOT}
-		x11-themes/hicolor-icon-theme
-		dev-libs/libayatana-indicator
-	)
+	sys-libs/glibc
 "
 BDEPEND="virtual/pkgconfig"
-
-src_unpack() {
-	git-r3_src_unpack
-}
 
 pkg_setup() {
 	enewgroup mullvad
 	enewuser mullvad -1 -1 /var/lib/mullvad mullvad
 }
 
+src_unpack() {
+	git-r3_src_unpack
+}
+
 src_prepare() {
 	default
 	rmdir dist-assets/binaries 2>/dev/null || true
-	if ! grep -qE '"electron": "\^?'${ELECTRON_SLOT} \
-		desktop/packages/mullvad-vpn/package.json; then
-		eerror "Electron version mismatch in package.json"
-		die "Electron version mismatch"
-	fi
 }
 
 src_compile() {
-
 	einfo "Building libwg.a"
 	cd wireguard-go-rs/libwg || die
 	export CGO_LDFLAGS="${LDFLAGS}"
@@ -87,7 +68,6 @@ src_compile() {
 	local GO_LDFLAGS="-compressdwarf=false -linkmode=external"
 	go mod vendor -v || die
 
-	# Copy maybenot-ffi header for DAITA support
 	cp -vr wireguard-go/maybenot-ffi vendor/golang.zx2c4.com/wireguard/ || die
 
 	go build \
@@ -110,23 +90,6 @@ src_compile() {
 	for sh in bash zsh fish; do
 		target/release/mullvad shell-completions ${sh} build/ || die
 	done
-
-	if use gui; then
-		einfo "Building Electron desktop app"
-		cd desktop || die
-		npm clean-install --ignore-scripts || die
-		npm rebuild grpc-tools || die
-		npm run build -w management-interface || die
-		npm run build-typescript -w windows-utils || die
-
-		cd packages/mullvad-vpn || die
-		npm run build || die
-		npx electron-builder --linux dir \
-			-c.electronDist="/usr/lib/electron${ELECTRON_SLOT}" \
-			-c.electronVersion="${ELECTRON_SLOT}" \
-			-c.extraMetadata.version="${PV}" || die
-		cd "${S}" || die
-	fi
 }
 
 src_install() {
@@ -142,16 +105,21 @@ src_install() {
 	doexe target/release/mullvad-exclude
 	fperms 4755 /usr/bin/mullvad-exclude
 
-	dobashcomp build/mullvad.bash
+	insinto /usr/share/bash-completion/completions
+	doins build/mullvad.bash
+
 	insinto /usr/share/zsh/site-functions
 	doins build/_mullvad
+
 	insinto /usr/share/fish/vendor_completions.d
 	doins build/mullvad.fish
 
-	insinto /etc/apparmor.d
-	doins dist-assets/linux/apparmor_mullvad
-	newinitd "${FILESDIR}/mullvad-daemon" mullvad-daemon
+	if [[ -f dist-assets/linux/apparmor_mullvad ]]; then
+		insinto /etc/apparmor.d
+		newins dist-assets/linux/apparmor_mullvad mullvad
+	fi
 
+	newinitd "${FILESDIR}/mullvad-daemon" mullvad-daemon
 	if use systemd; then
 		if [[ -f dist-assets/linux/mullvad-daemon.service ]]; then
 			systemd_dounit dist-assets/linux/mullvad-daemon.service
@@ -161,16 +129,6 @@ src_install() {
 		fi
 	fi
 
-	if use gui; then
-		insinto /usr/lib/mullvad-vpn
-		doins desktop/packages/mullvad-vpn/dist/linux-unpacked/resources/app.asar
-		newbin "${FILESDIR}/mullvad-vpn.sh" mullvad-vpn
-		domenu "${FILESDIR}/mullvad-vpn.desktop"
-		for size in 16 32 128 256 512; do
-			newicon -s ${size} graphics/macOS/icon-${size}.png mullvad-vpn.png
-		done
-	fi
-
 	keepdir /var/lib/mullvad
 	fowners mullvad:mullvad /var/lib/mullvad
 	fperms 755 /var/lib/mullvad
@@ -178,17 +136,13 @@ src_install() {
 
 pkg_postinst() {
 	if use systemd; then
-		elog "Systemd units have been installed but not enabled."
+		elog "Systemd units installed. To activate:"
 		elog "  systemctl enable --now mullvad-daemon.service"
 		elog "  systemctl enable mullvad-early-boot-blocking.service"
 	else
-		elog "OpenRC init script installed as /etc/init.d/mullvad-daemon:"
+		elog "OpenRC init script installed:"
 		elog "  rc-service mullvad-daemon start"
 		elog "  rc-update add mullvad-daemon default"
-	fi
-	if use gui; then
-		elog ""
-		elog "GUI:  mullvad-vpn"
 	fi
 	elog "CLI:  mullvad"
 }
