@@ -1,0 +1,53 @@
+#!/sbin/openrc-run
+
+name="mullvad-daemon"
+description="Mullvad VPN daemon"
+
+command="/usr/bin/mullvad-daemon"
+command_args="--disable-stdout-timestamps"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
+respawn_period=0
+
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
+
+depend() {
+    need net
+    after firewall
+}
+
+start_post() {
+    local cg_dir="/sys/fs/cgroup/net_cls/mullvad-exclusions"
+    local max_wait=10
+    local i=0
+
+    while [ ! -d "$cg_dir" ] && [ $i -lt $max_wait ]; do
+        sleep 1
+        i=$((i+1))
+    done
+
+    if [ ! -d "$cg_dir" ]; then
+        eerror "Mullvad cgroup directory not found after ${max_wait}s"
+        return 1
+    fi
+
+    chown root:mullvad "$cg_dir"
+    chmod 775 "$cg_dir"
+
+    if [ -f "$cg_dir/cgroup.procs" ]; then
+        chown root:mullvad "$cg_dir/cgroup.procs"
+        chmod 664 "$cg_dir/cgroup.procs"
+    fi
+
+    if [ -f "$cg_dir/net_cls.classid" ]; then
+        chown root:mullvad "$cg_dir/net_cls.classid"
+        chmod 664 "$cg_dir/net_cls.classid"
+    fi
+
+    ebegin "Applied group write permissions to Mullvad cgroup for mullvad-exclude"
+    eend 0
+}
