@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-140esr-patches-07.tar.xz"
+FIREFOX_PATCHSET="firefox-140esr-patches-10.tar.xz"
 
 LLVM_COMPAT=( 20 21 )
 
@@ -21,11 +21,9 @@ MOZ_PV="${PV/_p*}esr"
 
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/config#L21
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/browser/config#L120
-# and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tags
-TOR_PV="15.0.10"
-TOR_TAG="${TOR_PV%.*}-1-build2"
-NOSCRIPT_VERSION="13.6.15.1984"
-CHANGELOG_TAG="${TOR_PV}-build1"
+TOR_PV="15.0.12"
+TOR_TAG="${TOR_PV%.*}-1-build1"
+NOSCRIPT_VERSION="13.6.19.1984"
 
 inherit check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
 	pax-utils python-any-r1 rust toolchain-funcs xdg
@@ -45,7 +43,6 @@ SRC_URI="
 	${TOR_SRC_BASE_URI}/tor-browser-linux-x86_64-${TOR_PV}.tar.xz
 	${TOR_SRC_ARCHIVE_URI}/tor-browser-linux-x86_64-${TOR_PV}.tar.xz
 	https://dist.torproject.org/torbrowser/noscript/noscript-${NOSCRIPT_VERSION}.xpi
-	https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/tbb-${CHANGELOG_TAG}/projects/browser/Bundle-Data/Docs-TBB/ChangeLog.txt -> ${P}-ChangeLog.txt
 	${PATCH_URIS[@]}"
 
 S="${WORKDIR}/firefox-tor-browser-${MOZ_PV}-${TOR_TAG}"
@@ -81,7 +78,7 @@ COMMON_DEPEND="
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.112.4
+	>=dev-libs/nss-3.112.5
 	>=dev-libs/nspr-4.36
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -117,7 +114,7 @@ COMMON_DEPEND="
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
 	system-pipewire? ( >=media-video/pipewire-1.4.7-r2:= )
-	system-png? ( >=media-libs/libpng-1.6.45:0=[apng] )
+	system-png? ( >=media-libs/libpng-1.6.58:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	wayland? (
 		>=media-libs/libepoxy-1.5.10-r1
@@ -780,9 +777,6 @@ src_install() {
 	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/tree/main/projects/fonts
 	insinto /usr/$(get_libdir)/torbrowser/
 	doins -r "${WORKDIR}/tor-browser/Browser/fonts"
-
-	# see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/main/projects/browser/Bundle-Data/Docs/ChangeLog.txt
-	newdoc "${DISTDIR}/${P}-ChangeLog.txt" ChangeLog.txt
 
 	# see: https://github.com/Whonix/anon-ws-disable-stacked-tor/blob/master/usr/libexec/anon-ws-disable-stacked-tor/torbrowser.sh
 	dodoc "${FILESDIR}/99torbrowser.example"
