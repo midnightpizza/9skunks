@@ -647,6 +647,9 @@ src_prepare() {
 	# LibreWolf already has this I think.
 	rm -v "${WORKDIR}/firefox-patches/0017-bgo-928126-enable-jxl.patch"
 
+	#fails 0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch
+	rm -v "${WORKDIR}/firefox-patches/0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch" || die
+
 	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
