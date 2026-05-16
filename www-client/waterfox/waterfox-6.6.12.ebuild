@@ -670,6 +670,11 @@ src_configure() {
 		[[ -n ${version_clang} ]] && version_clang=$(ver_cut 1 "${version_clang}")
 		[[ -z ${version_clang} ]] && die "Failed to read clang version!"
 
+    	if [[ ${version_clang} -eq 22 ]]; then
+        	append-cxxflags -DSKCMS_DISABLE_HSW
+			einfo "Added -DSKCMS_DISABLE_HSW"
+		fi
+
 		if tc-is-gcc; then
 			have_switched_compiler=yes
 		fi
