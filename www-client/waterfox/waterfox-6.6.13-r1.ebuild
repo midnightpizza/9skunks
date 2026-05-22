@@ -3,7 +3,6 @@
 
 EAPI=8
 
-
 FIREFOX_PATCHSET="firefox-140esr-patches-10.tar.xz"
 FIREFOX_LOONG_PATCHSET="firefox-139-loong-patches-02.tar.xz"
 
@@ -15,7 +14,7 @@ RUST_NEEDS_LLVM=1
 # If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.82.0
 
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
 
 VIRTUALX_REQUIRED="manual"
@@ -37,7 +36,7 @@ PATCH_URIS=(
 )
 
 DESCRIPTION="Waterfox Web Browser"
-L10N_COMMIT="3046738340d44e4ac76d29f96abc06a4ae71c1ad"
+L10N_COMMIT="f17435e34afd3fa3a307905a26f5ad489239b45a"
 
 SRC_URI="
 	${WF_SRC_BASE_URI}/${WF_PV}.zip -> ${P}.zip
@@ -52,7 +51,7 @@ SRC_URI="
 SLOT="0"
 LICENSE="MPL-2.0 GPL-2 LGPL-2.1"
 RESTRICT="mirror"
-KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~x86 ~loong"
+KEYWORDS="amd64 arm64 ~loong ~ppc64 ~riscv ~x86"
 
 IUSE="clang dbus debug eme-free hardened hwaccel jack +jumbo-build libproxy openh264 pgo"
 IUSE+=" pulseaudio selinux sndio +system-av1 +system-harfbuzz +system-icu +system-jpeg"
@@ -98,7 +97,7 @@ BDEPEND="${PYTHON_DEPS}
 			x11-misc/xkeyboard-config
 		)
 	)"
-COMMON_DEPEND="${WF_ONLY_DEPEND}
+COMMON_DEPEND="${FW_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
@@ -116,9 +115,7 @@ COMMON_DEPEND="${WF_ONLY_DEPEND}
 	x11-libs/libdrm
 	x11-libs/pango
 	x11-libs/pixman
-	dbus? (
-		sys-apps/dbus
-	)
+	dbus? ( sys-apps/dbus )
 	jack? ( virtual/jack )
 	pulseaudio? (
 		|| (
@@ -186,8 +183,6 @@ DEPEND="${COMMON_DEPEND}
 S="${WORKDIR}/waterfox-${WF_PV}"
 MOZ_L10N_SOURCEDIR="${S}/waterfox/browser/locales"
 
-# Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
-# overridden in the enviromnent (advanced hackers only)
 if [[ -z "${MOZ_GMP_PLUGIN_LIST+set}" ]] ; then
 	MOZ_GMP_PLUGIN_LIST=( gmp-gmpopenh264 gmp-widevinecdm )
 fi
@@ -524,8 +519,8 @@ src_prepare() {
 	rm -v "${WORKDIR}"/firefox-patches/*-python-3.14-support.patch || die
 
 	eapply "${WORKDIR}/firefox-patches"
-	#eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
-	eapply "${FILESDIR}/remove-missing-icons.patch"
+	# eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
+	# eapply "${FILESDIR}/remove-missing-icons.patch"
 
 
 	# [WFX-400] Revert to FF useragent.
@@ -580,7 +575,6 @@ src_prepare() {
 		else
 			die "wasm-sandbox enabled on unknown/unsupported arch!"
 		fi
-
 		sed -i \
 			-e "s:%%PORTAGE_WORKDIR%%:${WORKDIR}:" \
 			-e "s:%%WASI_ARCH%%:${wasi_arch}:" \
