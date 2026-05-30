@@ -46,7 +46,6 @@ DEPEND="
 RDEPEND="
 	${DEPEND}
 	sys-apps/dbus
-	sys-libs/glibc
 	net-libs/libnftnl
 	net-libs/libmnl
 	gui? (
