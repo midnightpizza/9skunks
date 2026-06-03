@@ -3,7 +3,8 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_10 python3_11 python3_12 )
+PYTHON_COMPAT=( python3_{10..14} )
+
 inherit python-any-r1 cmake
 
 if [[ "${PV}" == "9999" ]]; then
