@@ -45,7 +45,7 @@ EPYTEST_PLUGINS=()
 distutils_enable_tests pytest
 
 PATCHES=(
-	"${FILESDIR}"/${P}-tomllib.patch
+#	"${FILESDIR}"/${P}-tomllib.patch
 )
 
 pkg_setup() {
