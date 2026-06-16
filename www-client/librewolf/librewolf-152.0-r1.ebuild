@@ -3,14 +3,12 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-151-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-152-patches-01.tar.xz"
 
 LLVM_COMPAT=( 21 22 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
-
-# If not building with clang we need at least rust 1.76
 RUST_MIN_VER=1.90.0
 
 PYTHON_COMPAT=( python3_{12..14} )
@@ -109,7 +107,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.29.1
+	>=dev-util/cbindgen-0.29.4
 	net-libs/nodejs
 	virtual/pkgconfig
 	amd64? ( >=dev-lang/nasm-2.14 )
@@ -129,7 +127,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.123.1
+	>=dev-libs/nss-3.124
 	>=dev-libs/nspr-4.39
 	media-libs/alsa-lib
 	media-libs/fontconfig
