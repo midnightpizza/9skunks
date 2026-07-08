@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-152-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-152-patches-03.tar.xz"
 
 LLVM_COMPAT=( 21 22 )
 
@@ -641,10 +641,6 @@ src_prepare() {
 	#Fix duplicate glean_disable_upload feature
 	sed -i '/^gkrust_features += \["glean_disable_upload"\]$/d' \
 		toolkit/library/rust/gkrust-features.mozbuild || die
-	#
-	# LibreWolf already has this I think.
-	rm -v "${WORKDIR}/firefox-patches/0017-bgo-928126-enable-jxl.patch"
-
 	#fails 0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch
 	#rm -v "${WORKDIR}/firefox-patches/0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch" || die
 
@@ -655,7 +651,6 @@ src_prepare() {
 	# Workaround for bgo#915651 and bmo#1988166 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
-		rm -v "${WORKDIR}"/firefox-patches/*bmo-1988166-musl-remove-nonexisting-system-header-req.patch || die
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-967694-musl-prctrl-exception-on-musl.patch || die
 	fi
 
@@ -918,6 +913,7 @@ src_configure() {
 	# riscv-related options, bgo#947337, bgo#947338
 	if use riscv ; then
 		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
+		mozconfig_add_options_ac 'Disable JIT for RISC-V' --disable-jit
 	fi
 
 	if [[ -s "${S}/api-google.key" ]] ; then
