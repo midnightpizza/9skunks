@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-140esr-patches-10.tar.xz"
+FIREFOX_PATCHSET="firefox-140esr-patches-12.tar.xz"
 
 LLVM_COMPAT=( 20 21 )
 
@@ -21,9 +21,9 @@ MOZ_PV="${PV/_p*}esr"
 
 # see https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/firefox/config#L21
 # and https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/blob/maint-15.0/projects/browser/config#L120
-TOR_PV="15.0.14"
+TOR_PV="15.0.18"
 TOR_TAG="${TOR_PV%.*}-1-build3"
-NOSCRIPT_VERSION="13.6.19.1984"
+NOSCRIPT_VERSION="13.6.30.1984"
 
 inherit check-reqs desktop flag-o-matic linux-info llvm-r1 multiprocessing \
 	pax-utils python-any-r1 rust toolchain-funcs xdg
@@ -68,7 +68,7 @@ BDEPEND="${PYTHON_DEPS}
 	app-alternatives/awk
 	app-arch/unzip
 	app-arch/zip
-	>=dev-util/cbindgen-0.27.0
+	>=dev-util/cbindgen-0.29.4
 	net-libs/nodejs
 	virtual/pkgconfig
 	amd64? ( >=dev-lang/nasm-2.14 )
@@ -273,6 +273,9 @@ pkg_setup() {
 }
 
 src_prepare() {
+	# fails with torbrowser 15.0.18
+	rm -v "${WORKDIR}"/firefox-patches/*bmo-2046162-remove-some-redundant-pub-qualifiers-cbindgen-0.29.4.patch || die
+
 	# Workaround for bgo#915651 on musl
 	if use elibc_glibc ; then
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
