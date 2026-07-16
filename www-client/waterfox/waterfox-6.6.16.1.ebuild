@@ -514,7 +514,7 @@ src_prepare() {
 	fi
 
 	# rm -v "${WORKDIR}"/firefox-patches/*-enable-jxl.patch || die
-
+	rm -v "${WORKDIR}"/firefox-patches/*-remove-some-redundant-pub-qualifiers-cbindgen-0.29.4.patch || die
 
 
 	#eapply "${FILESDIR}/waterfox-6.0-fix-langpack-id.patch"
