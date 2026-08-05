@@ -897,6 +897,12 @@ src_configure() {
 	[[ -n ${MOZ_ESR} ]] && update_channel=esr
 	mozconfig_add_options_ac '' --enable-update-channel=${update_channel}
 
+	if use rust-simd && ( use amd64 || use arm64 || use ppc64 || use loong || use riscv ); then
+    mozconfig_add_options_ac '' --enable-rust-simd
+		else
+    mozconfig_add_options_ac '' --disable-rust-simd
+	fi
+
 
 	# For future keywording: This is currently (97.0) only supported on:
 	# amd64, arm, arm64 & x86.
@@ -910,7 +916,7 @@ src_configure() {
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
-	# riscv-related options, bgo#947337, bgo#947338
+	# riscv-related options, bgo#947337, bgo#947338, bgo#977845
 	if use riscv ; then
 		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
 		mozconfig_add_options_ac 'Disable JIT for RISC-V' --disable-jit
@@ -982,12 +988,6 @@ src_configure() {
 	use sndio && myaudiobackends+="sndio,"
 	use pulseaudio && myaudiobackends+="pulseaudio,"
 	! use pulseaudio && myaudiobackends+="alsa,"
-
-	if use rust-simd && ( use amd64 || use arm64 || use ppc64 || use loong || use riscv ); then
-    mozconfig_add_options_ac '' --enable-rust-simd
-		else
-    mozconfig_add_options_ac '' --disable-rust-simd
-	fi
 
 	mozconfig_add_options_ac '--enable-audio-backends' --enable-audio-backends="${myaudiobackends::-1}"
 
