@@ -15,7 +15,7 @@ EGIT_REPO_URI=(
 	"https://github.com/mullvad/wireguard-go.git"
 )
 EGIT_COMMIT=(
-	"2026.3"
+	"2026.4"
 	""
 )
 EGIT_CHECKOUT_DIR=(
