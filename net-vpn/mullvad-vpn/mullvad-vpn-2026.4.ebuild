@@ -3,25 +3,14 @@
 
 EAPI=8
 
-inherit git-r3 systemd user
+inherit git-r3 systemd user xdg-utils
 
 DESCRIPTION="Mullvad VPN client (daemon and CLI built from source, GUI from official binary)"
 HOMEPAGE="https://www.mullvad.net"
 
-
-EGIT_NO_SUBMODULES="1"
-EGIT_REPO_URI=(
-	"https://github.com/mullvad/mullvadvpn-app.git"
-	"https://github.com/mullvad/wireguard-go.git"
-)
-EGIT_COMMIT=(
-	"2026.4"
-	""
-)
-EGIT_CHECKOUT_DIR=(
-	"${S}"
-	"${S}/wireguard-go-rs/libwg/wireguard-go"
-)
+EGIT_REPO_URI="https://github.com/mullvad/mullvadvpn-app.git"
+EGIT_COMMIT="2026.4"
+EGIT_SUBMODULES=("*")
 
 SRC_URI="
 	gui? (
@@ -94,24 +83,7 @@ src_prepare() {
 }
 
 src_compile() {
-	einfo "Building libwg.a"
-	cd wireguard-go-rs/libwg || die
-	export CGO_LDFLAGS="${LDFLAGS}"
-	export CGO_CFLAGS="${CFLAGS}"
-	export CGO_CPPFLAGS="${CPPFLAGS}"
-	export CGO_CXXFLAGS="${CXXFLAGS}"
-	export GOFLAGS="-buildmode=pie -mod=mod -modcacherw"
-	local GO_LDFLAGS="-compressdwarf=false -linkmode=external"
-	go mod vendor -v || die
-
-	cp -vr wireguard-go/maybenot-ffi vendor/golang.zx2c4.com/wireguard/ || die
-
-	go build \
-		-ldflags "${GO_LDFLAGS}" \
-		-o "${S}/build/lib/${ARCH}-unknown-linux-gnu/libwg.a" \
-		-buildmode c-archive || die
-	cd "${S}" || die
-
+	# The Go libwg.a build step is removed (obsolete).
 	einfo "Fetching Rust crates"
 	cargo fetch --locked --target "$(rustc --print host-tuple)" || die
 
@@ -123,6 +95,7 @@ src_compile() {
 		-p mullvad-problem-report --bin mullvad-problem-report \
 		-p mullvad-exclude --bin mullvad-exclude || die
 
+	mkdir -p build || die
 	for sh in bash zsh fish; do
 		target/release/mullvad shell-completions ${sh} build/ || die
 	done
@@ -171,29 +144,23 @@ src_install() {
 		local src_dir="${deb_data}/opt/Mullvad VPN"
 		local dst_dir="${ED}/usr/lib/mullvad-vpn/gui"
 
-		# Create destination and copy the whole Electron app
 		dodir /usr/lib/mullvad-vpn/gui
 		cp -a "${src_dir}"/. "${dst_dir}"/ || die "Failed to copy GUI files"
 
-		# Required executables
 		fperms 755 /usr/lib/mullvad-vpn/gui/mullvad-gui
 		fperms 755 /usr/lib/mullvad-vpn/gui/chrome-sandbox
 		fperms 755 /usr/lib/mullvad-vpn/gui/chrome_crashpad_handler
 		fperms 755 /usr/lib/mullvad-vpn/gui/resources/mullvad-problem-report
 		fperms 755 /usr/lib/mullvad-vpn/gui/resources/mullvad-setup
-
-		# setuid for sandbox
 		fperms 4755 /usr/lib/mullvad-vpn/gui/chrome-sandbox
 
-		# Custom launcher (make sure it calls the correct binary)
 		newbin "${FILESDIR}/mullvad-vpn.sh" mullvad-vpn
-
-		# Desktop file
 		domenu "${FILESDIR}/mullvad-vpn.desktop"
 
-		# Icons from the .deb
+		# Install icons using insinto/doins to ensure the destination exists
 		if [[ -d "${deb_data}/usr/share/icons" ]]; then
-			cp -a "${deb_data}/usr/share/icons/." "${ED}/usr/share/icons/" || die
+			insinto /usr/share/icons
+			doins -r "${deb_data}/usr/share/icons/"*
 		fi
 	fi
 
