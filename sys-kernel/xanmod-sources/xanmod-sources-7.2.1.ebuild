@@ -4,7 +4,7 @@
 EAPI="8"
 
 K_WANT_GENPATCHES="base extras"
-K_GENPATCHES_VER="55"
+K_GENPATCHES_VER="2"
 
 XANMOD_VERSION="1"
 
@@ -30,6 +30,7 @@ src_unpack() {
 	UNIPATCH_STRICTORDER=1
 	UNIPATCH_LIST_DEFAULT="${DISTDIR}/patch-${OKV}-xanmod${XANMOD_VERSION}.xz "
 	UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1*_linux-${KV_MAJOR}.${KV_MINOR}.*.patch"
+	UNIPATCH_EXCLUDE="${UNIPATCH_EXCLUDE} 1710_disable_sse4a*"
 	kernel-2_src_unpack
 }
 
