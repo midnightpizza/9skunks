@@ -545,7 +545,6 @@ pkg_setup() {
 		# Ensure we use C locale when building, bug #746215
 		export LC_ALL=C
 	fi
-
 	export use_lto
 
 	CONFIG_CHECK="~SECCOMP"
@@ -573,6 +572,11 @@ src_prepare() {
 		rm -v "${WORKDIR}"/firefox-patches/*bgo-967694-musl-prctrl-exception-on-musl.patch || die
 	fi
 
+
+if use elibc_musl ; then
+    sed -i '1i#include <stdint.h>' \
+        "${S}"/mfbt/SplayTree.h || die
+fi
 
 	eapply "${WORKDIR}/firefox-patches"
 	# eapply "${FILESDIR}/waterfox-g5_beta-fix-gtk-icons.patch"
