@@ -1244,12 +1244,12 @@ src_install() {
 
 		# Install the vaapitest binary on supported arches (122.0 supports all platforms, bmo#1865969)
 		exeinto "${MOZILLA_FIVE_HOME}"
-		doexe "${BUILD_DIR}"/dist/bin/vaapitest
+		nonfatal doexe  "${BUILD_DIR}"/dist/bin/vaapitest
 
 		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
 		if use arm64 ; then
 			exeinto "${MOZILLA_FIVE_HOME}"
-			doexe "${BUILD_DIR}"/dist/bin/v4l2test
+			nonfatal doexe "${BUILD_DIR}"/dist/bin/v4l2test
 		fi
 	fi
 
