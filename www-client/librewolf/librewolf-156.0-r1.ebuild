@@ -3,9 +3,9 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-155-patches-04.tar.xz"
+FIREFOX_PATCHSET="firefox-156-patches-01.tar.xz"
 
-LLVM_COMPAT=( 21 22 )
+LLVM_COMPAT=( 22 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
@@ -129,7 +129,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.127
+	>=dev-libs/nss-3.128
 	>=dev-libs/nspr-4.39
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -157,8 +157,8 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	selinux? ( sec-policy/selinux-mozilla )
 	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	system-av1? (
-		>=media-libs/dav1d-1.0.0:=
-		>=media-libs/libaom-3.10.0:=
+		>=media-libs/dav1d-1.5.4:=
+		>=media-libs/libaom-3.12.1:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
@@ -168,7 +168,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
-	system-pipewire? ( >=media-video/pipewire-1.4.7-r2:= )
+	system-pipewire? ( >=media-video/pipewire-1.6.8:= )
 	system-png? ( >=media-libs/libpng-1.6.45:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	valgrind? ( dev-debug/valgrind )
@@ -573,15 +573,6 @@ src_unpack() {
 }
 
 src_prepare() {
-	#hack musl error away because we  need to add the include to avoid include maze
-	#sed -i '1i #include <cstdint>' "${S}/dom/media/webrtc/libwebrtc_overrides/call/call_basic_stats.h" || die "Failed to add missing include"
-	#patch glean error
-	#Fix duplicate glean_disable_upload feature
-	sed -i '/^gkrust_features += \["glean_disable_upload"\]$/d' \
-		toolkit/library/rust/gkrust-features.mozbuild || die
-	#fails 0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch
-	#rm -v "${WORKDIR}/firefox-patches/0027-bmo-2033279-make-rust-simd-work-with-rust-1.95.patch" || die
-
 	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
@@ -850,7 +841,6 @@ src_configure() {
 	# riscv-related options, bgo#947337, bgo#947338, bgo#977845
 	if use riscv ; then
 		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
-		mozconfig_add_options_ac 'Disable JIT for RISC-V' --disable-jit
 	fi
 
 	mozconfig_use_enable valgrind
@@ -1237,7 +1227,7 @@ src_install() {
 
 	# Force hwaccel prefs if USE=hwaccel is enabled
 	if use hwaccel ; then
-		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js \
+		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js-r4 \
 		>>"${GENTOO_PREFS}" \
 		|| die "failed to add prefs to force hardware-accelerated rendering to all-gentoo.js"
 
@@ -1251,15 +1241,9 @@ src_install() {
 			EOF
 		fi
 
-		# Install the vaapitest binary on supported arches (122.0 supports all platforms, bmo#1865969)
+		# Install the gfxtest binary on supported arches
 		exeinto "${MOZILLA_FIVE_HOME}"
-		doexe "${BUILD_DIR}"/dist/bin/vaapitest
-
-		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
-		if use arm64 ; then
-			exeinto "${MOZILLA_FIVE_HOME}"
-			doexe "${BUILD_DIR}"/dist/bin/v4l2test
-		fi
+		doexe "${BUILD_DIR}"/dist/bin/gfxtest
 	fi
 
 	if ! use gmp-autoupdate ; then
