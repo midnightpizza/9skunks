@@ -498,6 +498,9 @@ src_prepare() {
 	cp -r ${WORKDIR}/l10n-${L10N_COMMIT}/* ${MOZ_L10N_SOURCEDIR}
 	rm -rf ${WORKDIR}/l10n-${L10N_COMMIT}
 
+	#0025-bmo-2053518-handle-oe-linux-rust-targets-added-in-rustc-1.98.patch 
+	rm -v "${WORKDIR}"/firefox-patches/*-bmo-2053518-handle-oe-linux-rust-targets-added-in-rustc-1.98.patch 
+
 	if [[ ${use_lto} == "yes" ]]; then
 		rm -v "${WORKDIR}"/firefox-patches/*-LTO-Only-enable-LTO-*.patch || die
 	fi
@@ -512,7 +515,7 @@ src_prepare() {
 		if ver_test "${rustver}" -ge 1.98 ; then
 			rm -v "${WORKDIR}"/firefox-patches/*bgo-748849-RUST_TARGET_override.patch || die
 		else
-			rm -v "${WORKDIR}"/firefox-patches/*-bmo-2053518-handle-oe-linux-rust-targets-added-in-rustc-1.98.patch || die
+			rm -v "${WORKDIR}"/firefox-patches/*-bmo-2053518-handle-oe-linux-rust-targets-added-in-rustc-1.98.patch
 		fi
 	fi
 
