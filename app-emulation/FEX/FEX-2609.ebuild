@@ -3,7 +3,7 @@
 
 EAPI=8
 
-LLVM_COMPAT=( 19 20 21 )
+LLVM_COMPAT=( 18 )
 LLVM_OPTIONAL=1
 
 inherit flag-o-matic cmake toolchain-funcs llvm-r1 check-reqs
@@ -129,6 +129,7 @@ src_configure() {
 	fi
 
 	local mycmakeargs=(
+		-DCMAKE_CXX_FLAGS="-stdlib=libc++"
 		-DBUILD_TESTS=False
 		-DBUILD_TESTING=False
 		-DENABLE_CCACHE=False
