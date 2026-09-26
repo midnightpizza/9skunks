@@ -70,8 +70,6 @@ DEPEND="
 "
 
 PATCHES="
-	${FILESDIR}/${PN}-2601-unvendor-drm-headers.patch
-	${FILESDIR}/${PN}-2503-thunkgen-gcc-install-dir.patch
 "
 
 IUSE="+fexconfig +qt6 +thunks"
