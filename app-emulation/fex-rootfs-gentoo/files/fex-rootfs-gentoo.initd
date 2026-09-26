@@ -1,0 +1,33 @@
+#!/sbin/openrc-run
+
+description="Mount the FEX Gentoo rootfs squashfs image"
+name="fex-rootfs-gentoo"
+
+BASE="/usr/share/fex-emu-rootfs-layers/gentoo"
+IMAGE="${BASE}/images/00-base.sqfs"
+MOUNTPOINT="${BASE}/layers/00-base"
+
+depend() {
+	need localmount
+	after bootmisc
+	before fex-emu
+}
+
+start() {
+	ebegin "Mounting FEX rootfs"
+	mkdir -p "${MOUNTPOINT}"
+	if mountpoint -q "${MOUNTPOINT}" ; then
+		eend 0 "already mounted"
+		return
+	fi
+	mount -t squashfs "${IMAGE}" "${MOUNTPOINT}"
+	eend $?
+}
+
+stop() {
+	ebegin "Unmounting FEX rootfs"
+	if mountpoint -q "${MOUNTPOINT}" ; then
+		umount "${MOUNTPOINT}"
+	fi
+	eend $?
+}
