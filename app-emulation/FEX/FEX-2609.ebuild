@@ -69,9 +69,9 @@ DEPEND="
 	${RDEPEND}
 "
 
-PATCHES="
-"
-
+PATCHES=(
+    "${FILESDIR}/${PN}-2601-unvendor-drm-headers.patch"
+)
 IUSE="+fexconfig +qt6 +thunks"
 
 REQUIRED_USE="
