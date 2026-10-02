@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-155-patches-05.tar.xz"
+FIREFOX_PATCHSET="firefox-157-patches-01.tar.xz"
 
 LLVM_COMPAT=( 22 )
 
@@ -129,7 +129,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.127
+	>=dev-libs/nss-3.129
 	>=dev-libs/nspr-4.39
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -157,8 +157,8 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	selinux? ( sec-policy/selinux-mozilla )
 	sndio? ( >=media-sound/sndio-1.8.0-r1 )
 	system-av1? (
-		>=media-libs/dav1d-1.0.0:=
-		>=media-libs/libaom-3.10.0:=
+		>=media-libs/dav1d-1.5.4:=
+		>=media-libs/libaom-3.12.1:=
 	)
 	system-harfbuzz? (
 		>=media-libs/harfbuzz-2.8.1:0=
@@ -168,7 +168,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
 	system-libevent? ( >=dev-libs/libevent-2.1.12:0=[threads(+)] )
 	system-libvpx? ( >=media-libs/libvpx-1.8.2:0=[postproc] )
-	system-pipewire? ( >=media-video/pipewire-1.4.7-r2:= )
+	system-pipewire? ( >=media-video/pipewire-1.6.8:= )
 	system-png? ( >=media-libs/libpng-1.6.45:0=[apng] )
 	system-webp? ( >=media-libs/libwebp-1.1.0:0= )
 	valgrind? ( dev-debug/valgrind )
@@ -212,7 +212,7 @@ DEPEND="${COMMON_DEPEND}
 	)"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
-# overridden in the enviromnent (advanced hackers only)
+# overridden in the environment (advanced hackers only)
 if [[ -z "${MOZ_GMP_PLUGIN_LIST+set}" ]] ; then
 	MOZ_GMP_PLUGIN_LIST=( gmp-gmpopenh264 gmp-widevinecdm )
 fi
@@ -496,7 +496,7 @@ pkg_setup() {
 		rust_pkg_setup
 		python-any-r1_pkg_setup
 
-		# Avoid PGO profiling problems due to enviroment leakage
+		# Avoid PGO profiling problems due to environment leakage
 		# These should *always* be cleaned up anyway
 		unset \
 			DBUS_SESSION_BUS_ADDRESS \
@@ -585,7 +585,7 @@ src_prepare() {
 
 	eapply "${WORKDIR}/firefox-patches"
 
-	# Allow user to apply any additional patches without modifing ebuild
+	# Allow user to apply any additional patches without modifying ebuild
 	eapply_user
 
 	# Make cargo respect MAKEOPTS
@@ -659,6 +659,7 @@ src_prepare() {
 
 	# Clear checksums from cargo crates we've manually patched.
 	# moz_clear_vendor_checksums xyz
+	moz_clear_vendor_checksums bindgen
 
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
@@ -841,7 +842,6 @@ src_configure() {
 	# riscv-related options, bgo#947337, bgo#947338, bgo#977845
 	if use riscv ; then
 		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
-		mozconfig_add_options_ac 'Disable JIT for RISC-V' --disable-jit
 	fi
 
 	mozconfig_use_enable valgrind
@@ -1228,7 +1228,7 @@ src_install() {
 
 	# Force hwaccel prefs if USE=hwaccel is enabled
 	if use hwaccel ; then
-		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js \
+		cat "${FILESDIR}"/gentoo-hwaccel-prefs.js-r4 \
 		>>"${GENTOO_PREFS}" \
 		|| die "failed to add prefs to force hardware-accelerated rendering to all-gentoo.js"
 
@@ -1242,15 +1242,9 @@ src_install() {
 			EOF
 		fi
 
-		# Install the vaapitest binary on supported arches (122.0 supports all platforms, bmo#1865969)
+		# Install the gfxtest binary on supported arches
 		exeinto "${MOZILLA_FIVE_HOME}"
-		nonfatal doexe  "${BUILD_DIR}"/dist/bin/vaapitest
-
-		# Install the v4l2test on supported arches (+ arm, + riscv64 when keyworded)
-		if use arm64 ; then
-			exeinto "${MOZILLA_FIVE_HOME}"
-			nonfatal doexe "${BUILD_DIR}"/dist/bin/v4l2test
-		fi
+		doexe "${BUILD_DIR}"/dist/bin/gfxtest
 	fi
 
 	if ! use gmp-autoupdate ; then
