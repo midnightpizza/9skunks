@@ -3,7 +3,7 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-156-patches-01.tar.xz"
+FIREFOX_PATCHSET="firefox-157-patches-01.tar.xz"
 
 LLVM_COMPAT=( 22 )
 
@@ -129,7 +129,7 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
-	>=dev-libs/nss-3.128
+	>=dev-libs/nss-3.129
 	>=dev-libs/nspr-4.39
 	media-libs/alsa-lib
 	media-libs/fontconfig
@@ -212,7 +212,7 @@ DEPEND="${COMMON_DEPEND}
 	)"
 
 # Allow MOZ_GMP_PLUGIN_LIST to be set in an eclass or
-# overridden in the enviromnent (advanced hackers only)
+# overridden in the environment (advanced hackers only)
 if [[ -z "${MOZ_GMP_PLUGIN_LIST+set}" ]] ; then
 	MOZ_GMP_PLUGIN_LIST=( gmp-gmpopenh264 gmp-widevinecdm )
 fi
@@ -496,7 +496,7 @@ pkg_setup() {
 		rust_pkg_setup
 		python-any-r1_pkg_setup
 
-		# Avoid PGO profiling problems due to enviroment leakage
+		# Avoid PGO profiling problems due to environment leakage
 		# These should *always* be cleaned up anyway
 		unset \
 			DBUS_SESSION_BUS_ADDRESS \
@@ -585,7 +585,7 @@ src_prepare() {
 
 	eapply "${WORKDIR}/firefox-patches"
 
-	# Allow user to apply any additional patches without modifing ebuild
+	# Allow user to apply any additional patches without modifying ebuild
 	eapply_user
 
 	# Make cargo respect MAKEOPTS
@@ -659,6 +659,7 @@ src_prepare() {
 
 	# Clear checksums from cargo crates we've manually patched.
 	# moz_clear_vendor_checksums xyz
+	moz_clear_vendor_checksums bindgen
 
 	# Respect choice for "jumbo-build"
 	# Changing the value for FILES_PER_UNIFIED_FILE may not work, see #905431
@@ -781,7 +782,6 @@ src_configure() {
 		--disable-parental-controls \
 		--disable-strip \
 		--disable-updater \
-		--disable-wmf \
 		--enable-negotiateauth \
 		--enable-new-pass-manager \
 		--enable-packed-relative-relocs \
