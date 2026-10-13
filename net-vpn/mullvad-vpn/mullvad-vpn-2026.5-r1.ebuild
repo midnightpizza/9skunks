@@ -9,7 +9,7 @@ DESCRIPTION="Mullvad VPN client (daemon and CLI built from source, GUI from offi
 HOMEPAGE="https://www.mullvad.net"
 
 EGIT_REPO_URI="https://github.com/mullvad/mullvadvpn-app.git"
-EGIT_COMMIT="2026.4"
+EGIT_COMMIT="2026.5"
 EGIT_SUBMODULES=("*")
 
 SRC_URI="
