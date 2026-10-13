@@ -89,7 +89,7 @@ src_compile() {
 
 	einfo "Building Rust components"
 	cargo build --frozen --release \
-		--features mullvad-daemon/cgroup2 \
+		--features mullvad-daemon/cgroup2,mullvad-exclude/cgroup2 \
 		-p mullvad-daemon --bin mullvad-daemon \
 		-p mullvad-cli --bin mullvad \
 		-p mullvad-setup --bin mullvad-setup \
