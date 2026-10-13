@@ -20,8 +20,18 @@ depend() {
     after firewall
 }
 
+start_pre() {
+    # Delegation is required so the daemon (running as mullvad) can create
+    # its own cgroups under the unified hierarchy.
+    if ! grep -q nsdelegate /proc/self/mountinfo | grep /sys/fs/cgroup; then
+        ebegin "Remounting /sys/fs/cgroup with nsdelegate"
+        mount -o remount,nsdelegate /sys/fs/cgroup
+        eend $?
+    fi
+}
+
 start_post() {
-    local cg_dir="/sys/fs/cgroup/net_cls/mullvad-exclusions"
+    local cg_dir="/sys/fs/cgroup/mullvad-exclusions"
     local max_wait=10
     local i=0
 
@@ -31,23 +41,15 @@ start_post() {
     done
 
     if [ ! -d "$cg_dir" ]; then
-        eerror "Mullvad cgroup directory not found after ${max_wait}s"
+        eerror "Mullvad cgroup2 directory not found after ${max_wait}s at ${cg_dir}"
         return 1
     fi
 
     chown root:mullvad "$cg_dir"
     chmod 775 "$cg_dir"
 
-    if [ -f "$cg_dir/cgroup.procs" ]; then
-        chown root:mullvad "$cg_dir/cgroup.procs"
-        chmod 664 "$cg_dir/cgroup.procs"
-    fi
+    [ -f "$cg_dir/cgroup.procs" ] && chown root:mullvad "$cg_dir/cgroup.procs" && chmod 664 "$cg_dir/cgroup.procs"
 
-    if [ -f "$cg_dir/net_cls.classid" ]; then
-        chown root:mullvad "$cg_dir/net_cls.classid"
-        chmod 664 "$cg_dir/net_cls.classid"
-    fi
-
-    ebegin "Applied group write permissions to Mullvad cgroup for mullvad-exclude"
+    ebegin "Applied group write permissions to Mullvad cgroup2"
     eend 0
 }
