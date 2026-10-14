@@ -82,7 +82,7 @@ SLOT_TMP="0/$(ver_cut 1)"
 KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 
 IUSE="+clang dbus debug eme-free hardened hwaccel jack libproxy pgo pulseaudio selinux sndio"
-IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +system-libvpx"
+IUSE+=" +system-av1 +system-icu +system-jpeg +system-libevent +system-libvpx"
 IUSE+=" system-pipewire system-png +system-webp test wayland wifi +X rust-simd"
 
 # Firefox-only IUSE
@@ -159,10 +159,6 @@ COMMON_DEPEND="${FF_ONLY_DEPEND}
 	system-av1? (
 		>=media-libs/dav1d-1.5.4:=
 		>=media-libs/libaom-3.12.1:=
-	)
-	system-harfbuzz? (
-		>=media-libs/harfbuzz-2.8.1:0=
-		!wasm-sandbox? ( >=media-gfx/graphite2-1.3.13 )
 	)
 	system-icu? ( >=dev-libs/icu-78.1:= )
 	system-jpeg? ( >=media-libs/libjpeg-turbo-1.2.1:= )
@@ -889,7 +885,6 @@ src_configure() {
 	fi
 
 	mozconfig_use_with system-av1
-	mozconfig_use_with system-harfbuzz
 	mozconfig_use_with system-icu
 	mozconfig_use_with system-jpeg
 	mozconfig_use_with system-libevent
@@ -937,7 +932,6 @@ src_configure() {
 		mozconfig_add_options_ac '+wasm-sandbox' --with-wasi-sysroot="${WORKDIR}/wasi-sdk-${WASI_SDK_VER}-${wasi_arch}-linux/share/wasi-sysroot/"
 	else
 		mozconfig_add_options_ac 'no wasm-sandbox' --without-wasm-sandboxed-libraries
-		mozconfig_use_with system-harfbuzz system-graphite2
 	fi
 
 	! use jpegxl && mozconfig_add_options_ac '-jpegxl' --disable-jxl
@@ -1254,13 +1248,6 @@ src_install() {
 			pref("media.${plugin}.autoupdate", false);
 			EOF
 		done
-	fi
-
-	# Force the graphite pref if USE=system-harfbuzz is enabled, since the pref cannot disable it
-	if use system-harfbuzz ; then
-		cat >>"${GENTOO_PREFS}" <<-EOF || die "failed to set gfx.font_rendering.graphite.enabled pref"
-		sticky_pref("gfx.font_rendering.graphite.enabled", true);
-		EOF
 	fi
 
 	# Add telemetry config prefs, just in case something happens in future and telemetry build
