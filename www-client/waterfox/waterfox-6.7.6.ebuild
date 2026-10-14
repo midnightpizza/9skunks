@@ -3,13 +3,13 @@
 
 EAPI=8
 
-FIREFOX_PATCHSET="firefox-153esr-patches-03.tar.xz"
+FIREFOX_PATCHSET="firefox-153esr-patches-04.tar.xz"
 
-LLVM_COMPAT=( 22 )
+LLVM_COMPAT=( 22 23 )
 
 # This will also filter rust versions that don't match LLVM_COMPAT in the non-clang path; this is fine.
 RUST_NEEDS_LLVM=1
-RUST_MIN_VER=1.90.0
+RUST_MIN_VER=1.98.0
 
 PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE="ncurses,sqlite,ssl"
@@ -64,7 +64,7 @@ REQUIRED_USE="|| ( X wayland )
 	wifi? ( dbus )
 "
 
-FW_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
+WF_ONLY_DEPEND="selinux? ( sec-policy/selinux-mozilla )"
 BDEPEND="${PYTHON_DEPS}
 	$(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}
@@ -94,7 +94,7 @@ BDEPEND="${PYTHON_DEPS}
 			x11-misc/xkeyboard-config
 		)
 	)"
-COMMON_DEPEND="${FW_ONLY_DEPEND}
+COMMON_DEPEND="${WF_ONLY_DEPEND}
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	dev-libs/glib:2
 	dev-libs/libffi:=
@@ -430,7 +430,7 @@ pkg_setup() {
 		rust_pkg_setup
 		python-any-r1_pkg_setup
 
-		# Avoid PGO profiling problems due to enviroment leakage
+		# Avoid PGO profiling problems due to environment leakage
 		# These should *always* be cleaned up anyway
 		unset \
 			DBUS_SESSION_BUS_ADDRESS \
@@ -494,6 +494,19 @@ src_unpack() {
 }
 
 src_prepare() {
+
+	# Lower Mozilla's hard-coded Rust MSRV from 1.99.0 to 1.98.0
+	sed -i -E 's/^(MINIMUM_RUST_VERSION *= *)"1\.99(\.0)?"/\1"1.98.0"/' \
+		"${S}"/python/mozboot/mozboot/util.py \
+		|| die "Failed to lower MINIMUM_RUST_VERSION"
+
+	# Lower Cargo workspace MSRV from 1.99.0 to 1.98.0
+	if grep -qE '^rust-version *= *"1\.99(\.0)?"' "${S}/Cargo.toml"; then
+		einfo "Lowering workspace rust-version in ${S}/Cargo.toml"
+		sed -i -E 's/^rust-version *= *"1\.99(\.0)?"/rust-version = "1.98.0"/' \
+			"${S}/Cargo.toml" || die "Failed to lower workspace rust-version"
+	fi
+	
 	# Move L10N files into the source tree
 	cp -r ${WORKDIR}/l10n-${L10N_COMMIT}/* ${MOZ_L10N_SOURCEDIR}
 	rm -rf ${WORKDIR}/l10n-${L10N_COMMIT}
@@ -788,7 +801,7 @@ src_configure() {
 		mozconfig_add_options_ac '' --enable-sandbox
 	fi
 
-	# riscv-related options, bgo#947337, bgo#947338
+	# riscv-related options, bgo#947337, bgo#947338, bgo#977845
 	if use riscv ; then
 		mozconfig_add_options_ac 'Disable JIT for RISC-V 64' --disable-jit
 		mozconfig_add_options_ac 'Disable webrtc for RISC-V' --disable-webrtc
