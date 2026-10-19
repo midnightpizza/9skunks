@@ -33,7 +33,7 @@ PATCH_URIS=(
 )
 
 DESCRIPTION="Waterfox Web Browser"
-L10N_COMMIT="962f4ccea8bc3a7ffa812f7712059342437db765"
+L10N_COMMIT="080c5fef8dad71ec354acff9897c6b61fb64e73c"
 
 SRC_URI="
 	${WF_SRC_BASE_URI}/${WF_PV}.zip -> ${P}.zip
