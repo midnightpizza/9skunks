@@ -7,12 +7,19 @@ inherit desktop optfeature toolchain-funcs xdg
 
 DESCRIPTION="The Mullvad Browser is developed to minimize tracking and fingerprinting."
 HOMEPAGE="https://github.com/mullvad/mullvad-browser/ https://mullvad.net/"
-SRC_URI="https://github.com/mullvad/mullvad-browser/releases/download/${PV}/mullvad-browser-linux-x86_64-${PV}.tar.xz -> ${P}.tar.xz"
+
+
+UPSTREAM_TAG="${PV/_alpha/a}"
+
+SRC_URI="
+    amd64? ( https://github.com/mullvad/mullvad-browser/releases/download/${UPSTREAM_TAG}/mullvad-browser-linux-x86_64-${UPSTREAM_TAG}.tar.xz -> ${P}-x86_64.tar.xz )
+    arm64? ( https://github.com/mullvad/mullvad-browser/releases/download/${UPSTREAM_TAG}/mullvad-browser-linux-aarch64-${UPSTREAM_TAG}.tar.xz -> ${P}-arm64.tar.xz )
+"
 
 S="${WORKDIR}"
 LICENSE="MPL-2.0"
 SLOT="0"
-KEYWORDS="-* ~amd64"
+KEYWORDS="-* ~amd64 ~arm64"
 
 IUSE="X"
 
@@ -46,21 +53,27 @@ RDEPEND="
 
 QA_PREBUILT="*"
 
-src_install() {
-	# Install profiles to home dir
-	touch mullvad-browser/Browser/is-packaged-app || die
+src_unpack() {
+	local arch_dir
+	case ${ARCH} in
+		amd64|x86_64)   arch_dir="x86_64" ;;
+		arm64|aarch64)  arch_dir="arm64" ;;
+		*)              ewarn "Unrecognised ARCH='${ARCH}' – assuming x86_64"; arch_dir="x86_64" ;;
+	esac
 
-	# Fix desktop file vars
+	local tarball="${DISTDIR}/${P}-${arch_dir}.tar.xz"
+	[[ -f "${tarball}" ]] || die "Missing ${tarball} – run: emerge --fetchonly ${PN}"
+	einfo "Extracting ${P}-${arch_dir}.tar.xz ..."
+	tar -xf "${tarball}" || die "Failed to extract tarball"
+}
+
+src_install() {
+	touch mullvad-browser/Browser/is-packaged-app || die
 	sed -i \
 		-e 's|Name=.*|Name=Mullvad Browser|g' \
 		-e 's|Exec=.*|Exec=/opt/mullvad-browser/Browser/start-mullvad-browser --detach|g' \
 		-e 's|Icon=.*|Icon=mullvad-browser|g' \
 		mullvad-browser/start-mullvad-browser.desktop || die
-
-	# Install shim for X11. Browser doesn't seem to launch without it, see upstream issue:
-	# https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/issues/40565
-	#
-	# The X11 shim below does not affect the browser's fingerprint or functionality.
 	if use X ; then
 		echo "#include <stdlib.h>
 		      void gdk_wayland_display_get_wl_compositor() { abort(); }
@@ -70,17 +83,14 @@ src_install() {
 		$(tc-getCC) -shared -o mullvad-browser/X11shim.so X11shim.c || die
 		sed -i '1iexport LD_PRELOAD=/opt/mullvad-browser/X11shim.so' mullvad-browser/Browser/start-mullvad-browser  || die
 	fi
-
 	insinto /opt/
 	doins -r mullvad-browser
-
 	dosym ../../opt/mullvad-browser/Browser/start-mullvad-browser /usr/bin/${PN}
 	domenu mullvad-browser/start-mullvad-browser.desktop
 	local x
 	for x in 16 32 48 64 128; do
 		newicon -s ${x} mullvad-browser/Browser/browser/chrome/icons/default/default${x}.png mullvad-browser.png
 	done
-
 	fperms 755 /opt/mullvad-browser/Browser/abicheck
 	fperms +x /opt/mullvad-browser/Browser/start-mullvad-browser
 	fperms +x /opt/mullvad-browser/Browser/mullvadbrowser
@@ -89,6 +99,5 @@ src_install() {
 
 pkg_postinst() {
 	xdg_pkg_postinst
-
 	optfeature "wayland screensharing support" sys-apps/xdg-desktop-portal
 }
