@@ -3,10 +3,10 @@
 
 EAPI=8
 
-LLVM_COMPAT=( 18 19 )
+LLVM_COMPAT=( 19 20 21 22 )
 LLVM_OPTIONAL=1
 
-inherit flag-o-matic cmake toolchain-funcs llvm-r1 check-reqs
+inherit flag-o-matic cmake toolchain-funcs llvm-r2 check-reqs
 
 DESCRIPTION="A fast usermode x86 and x86-64 emulator for Arm64 Linux"
 HOMEPAGE="https://fex-emu.com"
@@ -89,7 +89,7 @@ pkg_setup() {
 	use thunks || return
 	CHECKREQS_DISK_BUILD=4G
 	check-reqs_pkg_setup
-	llvm-r1_pkg_setup
+	llvm-r2_pkg_setup
 }
 
 src_unpack() {
