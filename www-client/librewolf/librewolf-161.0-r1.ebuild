@@ -86,7 +86,7 @@ IUSE+=" +system-av1 +system-harfbuzz +system-icu +system-jpeg +system-libevent +
 IUSE+=" system-pipewire system-png +system-webp test wayland wifi +X rust-simd"
 
 # Firefox-only IUSE
-IUSE+=" +gmp-autoupdate gnome-shell jumbo-build openh264 +telemetry valgrind wasm-sandbox"
+IUSE+=" +gmp-autoupdate gnome-shell +jumbo-build openh264 +telemetry valgrind wasm-sandbox"
 
 REQUIRED_USE="|| ( X wayland )
 	debug? ( !system-av1 )
