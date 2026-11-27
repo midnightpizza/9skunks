@@ -28,7 +28,7 @@ RUST_OPTIONAL=1
 inherit cargo
 
 DESCRIPTION="OpenGL-like graphic library for Linux"
-HOMEPAGE="https://www.mesa3d.org/ https://mesa.freedesktop.org/"
+HOMEPAGE="https://mesa3d.org/"
 
 if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://gitlab.freedesktop.org/mesa/mesa.git"
@@ -177,7 +177,7 @@ BDEPEND="
 		video_cards_imagination? ( ${CLC_DEPSTRING} )
 		video_cards_nvk? (
 			>=dev-util/bindgen-0.71.1
-			>=dev-util/cbindgen-0.26.0
+			>=dev-util/cbindgen-0.28.0
 			${RUST_DEPEND}
 			${CLC_DEPSTRING}
 		)
@@ -417,7 +417,7 @@ multilib_src_configure() {
 		$(meson_feature opengl gbm)
 		$(meson_feature opengl gles1)
 		$(meson_feature opengl gles2)
-		$(meson_feature opengl glvnd)
+		$(meson_use libglvnd glvnd)
 		$(meson_feature opengl egl)
 		$(meson_feature llvm)
 		$(meson_feature lm-sensors lmsensors)
